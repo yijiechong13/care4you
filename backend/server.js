@@ -15,4 +15,10 @@ app.get("/test-db", async (req, res) => {
   }
 });
 
-app.listen(3000, () => console.log("Server running on port 3000"));
+// 1. Get the port from Google's environment variable (default to 8080)
+const port = process.env.PORT || 8080;
+
+// 2. IMPORTANT: Listen on '0.0.0.0' so Google can reach your app
+app.listen(port, "0.0.0.0", () => {
+  console.log(`Server is running live on port ${port}`);
+});
