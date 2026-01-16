@@ -5,7 +5,7 @@ import { HelloWave } from '@/components/hello-wave';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -18,6 +18,7 @@ import { supabase } from '@/lib/supabase';
 const { width, height } = Dimensions.get('window');
 
 export default function HomeScreen() {
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const themeColour = Colors[colorScheme ?? 'light'].themeColor;
   const currTime = new Date();
@@ -30,7 +31,7 @@ export default function HomeScreen() {
   const SNAP_INTERVAL = EVENT_CARD_WIDTH + SPACING;
 
   const handleCreateEvent = () => {
-    console.log("Create event button pressed");
+    router.push("/eventCreation/basicInfo");
   }
 
   const handleRegister = () => {
@@ -197,7 +198,14 @@ export default function HomeScreen() {
                   </TouchableOpacity>
                 </View>
               ) : (
-                <View />
+                <View style={styles.staffButton}>
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>STAFF</Text>
+                  </View>
+                  <TouchableOpacity style={styles.createBtn} onPress={handleCreateEvent}>
+                    <Text style={styles.createBtnText}>+ CREATE</Text>
+                  </TouchableOpacity>
+                </View>
               )}
             </View>
 
@@ -242,7 +250,11 @@ export default function HomeScreen() {
                         <Ionicons name="people" size={20} color="#002147" style={styles.infoIcon} />
                         <View>
                           <Text style={styles.infoLabel}>AVAILABILITY</Text>
-                          <Text style={styles.infoText}>{item.totalSlots - item.takenSlots}/{item.totalSlots} slots</Text>
+                          {item.totalSlots ? (
+                            <Text style={styles.infoText}>{item.totalSlots - item.takenSlots}/{item.totalSlots} slots</Text>
+                          ) : (
+                            <Text style={styles.infoText}>No capacity!</Text>
+                          )}
                         </View>
                       </View>
 

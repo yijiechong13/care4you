@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 
+// CHANGE TO DEPLOYED BACKEND URL
 const API_URL = 'http://172.31.91.190:8080/api/events';
 
 export const fetchEvents = async () => {
@@ -38,5 +39,35 @@ export const fetchEvents = async () => {
   } catch (error) {
     console.error("Fetch Failed:", error);
     return [];
+  }
+};
+
+export const publishEvent = async (eventData: any, questions: any[]) => {
+  try {
+    const payload = {
+      ...eventData,
+      questions: questions
+    };
+
+    console.log("🚀 Sending to backend:", JSON.stringify(payload, null, 2));
+
+    const response = await fetch(`${API_URL}/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "Failed to publish event");
+    }
+
+    return result;
+  } catch (error) {
+    console.error("Service Error:", error);
+    throw error;
   }
 };

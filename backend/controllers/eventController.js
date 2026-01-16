@@ -12,11 +12,17 @@ const getEvents = async (req, res) => {
 
 const createEvent = async (req, res) => {
   try {
-    if (!req.body.title) return res.status(400).send("Title required");
+    const { questions, ...eventData } = req.body;
 
-    const newEvent = await EventModel.create(req.body);
-    res.status(201).json(newEvent);
+    const eventId = await EventModel.createWithQuestions(eventData, questions);
+
+    res.status(201).json({ 
+      message: "Event published successfully", 
+      eventId 
+    });
+
   } catch (error) {
+    console.error("❌ Controller Error:", error.message);
     res.status(500).json({ error: error.message });
   }
 };
