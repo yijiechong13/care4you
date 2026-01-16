@@ -1,24 +1,27 @@
-const express = require("express");
-const cors = require("cors");
-const pool = require("./db"); // This pulls in your connection logic
+const express = require('express');
+const cors = require('cors');
+const dotenv = require('dotenv');
+
+// We only import the Route, not the DB file
+const eventRoute = require('./routes/eventRoute'); 
+
+dotenv.config();
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
-app.get("/test-db", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT NOW()");
-    res.json({ success: true, time: result.rows[0].now });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+// Mount the route
+app.use('/api/events', eventRoute);
+
+// Simple test route (No DB required)
+app.get("/", (req, res) => {
+  res.send("Server is running!");
 });
 
-// 1. Get the port from Google's environment variable (default to 8080)
 const port = process.env.PORT || 8080;
 
-// 2. IMPORTANT: Listen on '0.0.0.0' so Google can reach your app
 app.listen(port, "0.0.0.0", () => {
   console.log(`Server is running live on port ${port}`);
 });
