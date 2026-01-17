@@ -1,18 +1,28 @@
 const express = require("express");
 const cors = require("cors");
-const pool = require("./db"); // This pulls in your connection logic
+const db = require("./db"); // This pulls in your connection logic
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get("/test-db", async (req, res) => {
+const eventRoute = require('./routes/eventRoute');
+const registrationRoute = require('./routes/registrationRoute');
+
+app.use('/api/events', eventRoute);
+app.use('/api/registrations', registrationRoute);
+
+app.get("/api/v1", async (req, res) => {
   try {
-    const result = await pool.query("SELECT NOW()");
+    const result = await db.query("SELECT NOW()");
     res.json({ success: true, time: result.rows[0].now });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-app.listen(3000, () => console.log("Server running on port 3000"));
+const port = process.env.PORT || 8080;
+
+app.listen(port, "0.0.0.0", () => {
+  console.log(`Server is running live on port ${port}`);
+});

@@ -5,19 +5,23 @@ import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Dimensions } from 'react-native';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const { width, height } = Dimensions.get("window");
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
         tabBarButton: HapticTab,
+        tabBarStyle: { backgroundColor: Colors[colorScheme ?? 'light'].themeColor, height: height * 0.08 },
+        tabBarItemStyle: { justifyContent: "center", alignItems: "center" },
+        tabBarInactiveTintColor: "#fff"
       }}>
       <Tabs.Screen
-        name="index"
+        name="home"
         options={{
           title: 'Home',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
@@ -31,10 +35,10 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="announcement"
         options={{
-          title: 'Announcement',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Announcements',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="newspaper" color={color} />,
         }}
       />
       <Tabs.Screen

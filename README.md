@@ -1,4 +1,5 @@
-# Welcome to your Expo app 👋
+# Hello everyone, welcome to our Expo app 👋 we are building Care4Fun as our Hack4Good hackathon project.
+# Team Lead: Yi Jie Chong
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 

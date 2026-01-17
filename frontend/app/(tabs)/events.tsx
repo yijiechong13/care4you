@@ -1,68 +1,132 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { EventCard } from '@/components/event-card';
 import { Event, FilterTab, filterTabs } from '@/types/event';
-import { eventListStyles as styles } from '@/styles';
-
-// Mock data
-const mockEvents: Event[] = [
-  {
-    id: '1',
-    title: 'Bowling',
-    date: new Date(),
-    startTime: '2:00pm',
-    endTime: '5:00pm',
-    status: 'upcoming',
-    icon: '🎳',
-    importantNotice: 'Please bring your own water if needed.',
-    venue: 'Yishun SAFRA',
-    meetingPoint: 'Woodlands North MRT Exit 1',
-  },
-  {
-    id: '2',
-    title: 'Bowling',
-    date: new Date(),
-    startTime: '2:00pm',
-    endTime: '5:00pm',
-    status: 'completed',
-    icon: '🎳',
-    importantNotice: 'Please bring your own water if needed.',
-    venue: 'Yishun SAFRA',
-    meetingPoint: 'Yishun SAFRA',
-  },
-    {
-    id: '3',
-    title: 'Bowling',
-    date: new Date(),
-    startTime: '2:00pm',
-    endTime: '5:00pm',
-    status: 'completed',
-    icon: '🎳',
-    importantNotice: 'Please bring your own water if needed.',
-    venue: 'Yishun SAFRA',
-    meetingPoint: 'Yishun SAFRA',
-  }
-];
+import { borderRadius, colors, fontSize, fontWeight, spacing } from '@/constants/theme';
+import { supabase } from '@/lib/supabase';
+import { fetchUserRegistrations, fetchEvents } from '@/services/eventService';
 
 export default function EventsScreen() {
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isStaff, setIsStaff] = useState(false);
+
+  useEffect(() => {
+    checkUserAndLoadEvents();
+  }, []);
+
+  const checkUserAndLoadEvents = async () => {
+    setLoading(true);
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+
+      if (authUser) {
+        // Fetch user_type from your users table
+        const { data: userData } = await supabase
+          .from('users')
+          .select('user_type')
+          .eq('id', authUser.id)
+          .single();
+
+        const staffRole = userData?.user_type === 'staff';
+        setIsStaff(staffRole);
+
+        if (staffRole) {
+          // Staff sees ALL events
+          const allEvents = await fetchEvents();
+          // Transform to match Event type with status
+          const transformedEvents = allEvents.map((event: any) => {
+            const dateObj = new Date(event.date);
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const eventDate = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+
+            let status: 'today' | 'upcoming' | 'completed';
+            if (eventDate.getTime() === today.getTime()) {
+              status = 'today';
+            } else if (eventDate < today) {
+              status = 'completed';
+            } else {
+              status = 'upcoming';
+            }
+
+            return {
+              ...event,
+              date: dateObj,
+              status,
+            };
+          });
+          setEvents(transformedEvents);
+        } else {
+          // Regular user sees only their registered events
+          const userEvents = await fetchUserRegistrations(authUser.id);
+          setEvents(userEvents);
+        }
+      } else {
+        // TODO: REMOVE THIS - Mock staff view for testing when not logged in
+        setIsStaff(true);
+        const allEvents = await fetchEvents();
+        const transformedEvents = allEvents.map((event: any) => {
+          const dateObj = new Date(event.date);
+          const now = new Date();
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          const eventDate = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+
+          let status: 'today' | 'upcoming' | 'completed';
+          if (eventDate.getTime() === today.getTime()) {
+            status = 'today';
+          } else if (eventDate < today) {
+            status = 'completed';
+          } else {
+            status = 'upcoming';
+          }
+
+          return { ...event, date: dateObj, status };
+        });
+        setEvents(transformedEvents);
+      }
+    } catch (error) {
+      console.error("Error loading events:", error);
+      setEvents([]);
+    }
+    setLoading(false);
+  };
 
   //filtering for each tab
-  const filteredEvents = mockEvents
-    .filter((event) => {
+  const filteredEvents = events
+    .filter((event: Event) => {
       if (activeFilter === 'all') return event.status !== 'completed';
       return event.status === activeFilter;
     })
-    .sort((event1, event2) => event1.date.getTime() - event2.date.getTime());
+    .sort((event1: Event, event2: Event) => event1.date.getTime() - event2.date.getTime());
+
+  const activeEventCount = events.filter((e: Event) => e.status !== 'completed').length;
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>{isStaff ? 'All Events' : 'My Events'}</Text>
+          </View>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Loading events...</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>My Events</Text>
+          <Text style={styles.headerTitle}>{isStaff ? 'All Events' : 'My Events'}</Text>
           <View style={styles.eventCountBadge}>
-            <Text style={styles.eventCountText}>{mockEvents.filter(e => e.status !== 'completed').length} Events</Text>
+            <Text style={styles.eventCountText}>{activeEventCount} Events</Text>
           </View>
         </View>
       </View>
@@ -111,3 +175,88 @@ export default function EventsScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  header: {
+    backgroundColor: colors.primary,
+    paddingTop: 60,
+    paddingBottom: spacing.xl,
+    paddingHorizontal: spacing.lg,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: fontSize.xxl,
+    fontWeight: fontWeight.bold,
+    color: colors.white,
+  },
+  eventCountBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+  },
+  eventCountText: {
+    fontSize: fontSize.sm,
+    color: colors.white,
+    fontWeight: fontWeight.medium,
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    gap: spacing.sm,
+  },
+  filterTab: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.gray[100],
+  },
+  filterTabActive: {
+    backgroundColor: colors.primary,
+  },
+  filterTabText: {
+    fontSize: fontSize.md,
+    color: colors.gray[500],
+    fontWeight: fontWeight.medium,
+  },
+  filterTabTextActive: {
+    color: colors.white,
+  },
+  listContainer: {
+    flex: 1,
+  },
+  listContent: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: 100,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: spacing.xxl * 2,
+  },
+  emptyText: {
+    fontSize: fontSize.lg,
+    color: colors.gray[400],
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: spacing.md,
+    fontSize: fontSize.md,
+    color: colors.gray[500],
+  },
+});
