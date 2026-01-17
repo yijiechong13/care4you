@@ -1,0 +1,25 @@
+// const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+const BASE_URL = "http://localhost:8080/api/v1"; // Adjust as needed
+
+export const signupUser = async (userData: any) => {
+  try {
+    const response = await fetch(`${BASE_URL}/signup`, {
+      method: "POST", // Telling the server we are sending new data
+      headers: {
+        "Content-Type": "application/json", // Telling the server to expect JSON
+      },
+      body: JSON.stringify(userData), // Turning our JS object into a string
+    });
+
+    if (!response.ok) {
+      // If the server sends an error (like 400 or 500), we jump to the catch block
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Registration failed");
+    }
+
+    return await response.json();
+  } catch (error: any) {
+    console.error("API Register Error:", error.message);
+    throw error; // Passing the error back to the Sign-Up screen to show an Alert
+  }
+};

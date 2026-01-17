@@ -1,102 +1,128 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  Dimensions,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const { width } = Dimensions.get("window");
 
-export default function HomeScreen() {
+export default function ProfileScreen() {
+  // Static data for UI building - we will replace this with real data later
+  const userData = {
+    name: "Jane Cooper",
+    email: "janeper01@gmail.com",
+    phone: "+65 XXXX XXXX",
+    address: "19 Kent Ridge Cres, 119278",
+    emergencyContact: "+65 XXXX XXXX",
+    stats: { upcoming: 6, registered: 2, total: 12 },
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <ScrollView style={styles.container}>
+      {/* Blue Header Section */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.editButton}>
+          <Ionicons name="pencil" size={20} color="black" />
+        </TouchableOpacity>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        <View style={styles.avatarContainer}>
+          <Ionicons name="person-circle" size={120} color="white" />
+        </View>
+
+        <View style={styles.statsContainer}>
+          <View style={styles.statBox}>
+            <Text style={styles.statNumber}>{userData.stats.upcoming}</Text>
+            <Text style={styles.statLabel}>UPCOMING</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={styles.statNumber}>{userData.stats.registered}</Text>
+            <Text style={styles.statLabel}>REGISTERED{"\n"}this month</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={styles.statNumber}>{userData.stats.total}</Text>
+            <Text style={styles.statLabel}>TOTAL{"\n"}REGISTERED</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Info List Section */}
+      <View style={styles.infoSection}>
+        <InfoItem label="Full Name" value={userData.name} />
+        <InfoItem label="Email" value={userData.email} />
+        <InfoItem label="Phone" value={userData.phone} />
+        <InfoItem label="Address" value={userData.address} />
+        <InfoItem label="Emergency Contact" value={userData.emergencyContact} />
+      </View>
+    </ScrollView>
+  );
+}
+
+// Sub-component for info rows to keep code clean
+function InfoItem({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.infoItem}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={styles.infoValue}>{value}</Text>
+      <View style={styles.separator} />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: { flex: 1, backgroundColor: "#F8F9FA" },
+  header: {
+    backgroundColor: "#002B5B",
+    paddingTop: 60,
+    paddingBottom: 30,
+    alignItems: "center",
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  editButton: {
+    position: "absolute",
+    top: 50,
+    right: 30,
+    backgroundColor: "white",
+    padding: 5,
+    borderRadius: 5,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  avatarContainer: { marginBottom: 20 },
+  statsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    width: "90%",
+    marginTop: 10,
   },
+  statBox: {
+    backgroundColor: "white",
+    borderRadius: 10,
+    padding: 10,
+    width: width * 0.25,
+    alignItems: "center",
+    height: 70,
+    justifyContent: "center",
+  },
+  statNumber: { fontSize: 18, fontWeight: "bold", color: "#002B5B" },
+  statLabel: {
+    fontSize: 8,
+    color: "#002B5B",
+    textAlign: "center",
+    fontWeight: "600",
+  },
+  infoSection: { padding: 25 },
+  infoItem: { marginBottom: 20 },
+  infoLabel: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#002B5B",
+    marginBottom: 5,
+  },
+  infoValue: { fontSize: 14, color: "#6C757D" },
+  separator: { height: 1, backgroundColor: "#DEE2E6", marginTop: 15 },
 });
-
-
-
-

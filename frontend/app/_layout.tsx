@@ -20,38 +20,30 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [isReady, setIsReady] = useState(false);
   const [hasUser, setHasUser] = useState(false);
-
   const segments = useSegments();
   const router = useRouter();
 
-  // 1. Check for existing session on startup
   useEffect(() => {
     const checkUser = async () => {
-      try {
-        const userId = await AsyncStorage.getItem("userId");
-        setHasUser(!!userId); // Converts string to boolean
-      } catch (e) {
-        console.error("Error checking login state", e);
-      } finally {
-        setIsReady(true);
-      }
+      const userId = await AsyncStorage.getItem("userId");
+      setHasUser(!!userId); // true if ID exists
+      setIsReady(true);
     };
     checkUser();
-  }, []);
+  }, [segments]); // 🚀 KEY: Re-check storage whenever the path changes
 
-  // 2. Handle Redirection
   useEffect(() => {
     if (!isReady) return;
 
-    // Check if the user is currently in the main app area
-    const inAuthGroup = segments[0] === "(tabs)";
+    // Use .includes to catch your folder groups safely
+    const inTabsGroup = (segments as string[]).includes("(tabs)");
 
-    if (!hasUser && inAuthGroup) {
-      // No user found? Kick them to login
+    if (!hasUser && inTabsGroup) {
+      // No user? Stay at/go to login
       router.replace("/login");
-    } else if (hasUser && !inAuthGroup) {
-      // User found? Send them to home
-      router.replace("/(tabs)/home");
+    } else if (hasUser && !inTabsGroup) {
+      // User found but on login? Force them into the app
+      router.replace("/home");
     }
   }, [hasUser, segments, isReady]);
 
@@ -66,15 +58,11 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack>
+      <Stack screenOptions={{ headerShown: false }}>
         {/* Add your login and signup screens here */}
-        <Stack.Screen name="login" options={{ headerShown: false }} />
-        <Stack.Screen name="signup" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="modal"
-          options={{ presentation: "modal", title: "Modal" }}
-        />
+        <Stack.Screen name="modal" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
