@@ -73,6 +73,12 @@ export default function CreateEventScreen() {
       return;
     }
 
+    // Validate end date/time is after start date/time
+    if (endDate <= startDate) {
+      Alert.alert("Invalid Date/Time", "End date and time must be after start date and time.");
+      return;
+    }
+
     const finalParticipants = noCap ? null : (participants ? parseInt(participants) : null);
     const finalVolunteers = noNeed ? 0 : (volunteers ? parseInt(volunteers) : 0);
 
