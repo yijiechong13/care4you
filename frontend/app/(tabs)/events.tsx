@@ -4,7 +4,8 @@ import { EventCard } from '@/components/event-card';
 import { Event, FilterTab, filterTabs } from '@/types/event';
 import { borderRadius, colors, fontSize, fontWeight, spacing } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
-import { fetchUserRegistrations, fetchEvents } from '@/services/eventService';
+import { fetchEvents, fetchUserRegistrations } from '@/services/eventService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function EventsScreen() {
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
@@ -19,54 +20,26 @@ export default function EventsScreen() {
   const checkUserAndLoadEvents = async () => {
     setLoading(true);
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) {
+        setIsStaff(false);
+        setEvents([]);
+        return;
+      }
 
-      if (authUser) {
-        // Fetch user_type from your users table
-        const { data: userData } = await supabase
-          .from('users')
-          .select('user_type')
-          .eq('id', authUser.id)
-          .single();
+      const { data: userData } = await supabase
+        .from('users')
+        .select('user_type')
+        .eq('id', userId)
+        .single();
 
-        const staffRole = userData?.user_type === 'staff';
-        setIsStaff(staffRole);
+      const staffRole = userData?.user_type?.toLowerCase() === 'staff';
+      setIsStaff(staffRole);
 
-        if (staffRole) {
-          // Staff sees ALL events
-          const allEvents = await fetchEvents();
-          // Transform to match Event type with status
-          const transformedEvents = allEvents.map((event: any) => {
-            const dateObj = new Date(event.date);
-            const now = new Date();
-            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const eventDate = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
-
-            let status: 'today' | 'upcoming' | 'completed';
-            if (eventDate.getTime() === today.getTime()) {
-              status = 'today';
-            } else if (eventDate < today) {
-              status = 'completed';
-            } else {
-              status = 'upcoming';
-            }
-
-            return {
-              ...event,
-              date: dateObj,
-              status,
-            };
-          });
-          setEvents(transformedEvents);
-        } else {
-          // Regular user sees only their registered events
-          const userEvents = await fetchUserRegistrations(authUser.id);
-          setEvents(userEvents);
-        }
-      } else {
-        // TODO: REMOVE THIS - Mock staff view for testing when not logged in
-        setIsStaff(true);
+      if (staffRole) {
+        // Staff sees ALL events
         const allEvents = await fetchEvents();
+        // Transform to match Event type with status
         const transformedEvents = allEvents.map((event: any) => {
           const dateObj = new Date(event.date);
           const now = new Date();
@@ -82,9 +55,17 @@ export default function EventsScreen() {
             status = 'upcoming';
           }
 
-          return { ...event, date: dateObj, status };
+          return {
+            ...event,
+            date: dateObj,
+            status,
+          };
         });
         setEvents(transformedEvents);
+      } else {
+        // Regular user sees only their registered events
+        const userEvents = await fetchUserRegistrations(userId);
+        setEvents(userEvents);
       }
     } catch (error) {
       console.error("Error loading events:", error);

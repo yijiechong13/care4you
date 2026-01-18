@@ -18,6 +18,7 @@ import { MarkedDates } from "react-native-calendars/src/types";
 import { Ionicons } from "@expo/vector-icons";
 import { fetchEvents } from "@/services/eventService";
 import { supabase } from "@/lib/supabase";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width, height } = Dimensions.get("window");
 
@@ -27,6 +28,7 @@ export default function HomeScreen() {
   const themeColour = Colors[colorScheme ?? "light"].themeColor;
   const currTime = new Date();
   const [user, setUser] = useState<any>(null);
+  const [isStaff, setIsStaff] = useState(false);
   const [selectedDay, setSelectedDay] = useState<string>(
     currTime.toDateString(),
   );
@@ -57,16 +59,34 @@ export default function HomeScreen() {
 
   const getUser = async () => {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const userId = await AsyncStorage.getItem("userId");
+      console.log("DEBUG userId from AsyncStorage:", userId);
+      if (!userId) {
+        setUser(null);
+        setIsStaff(false);
+        return;
+      }
 
-      if (user) {
-        setUser(user);
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("id, name, user_type")
+        .eq("id", userId)
+        .single();
+
+      console.log("DEBUG userData:", userData);
+      console.log("DEBUG userError:", userError);
+
+      if (!userError && userData) {
+        setUser(userData);
+        setIsStaff(userData.user_type?.toLowerCase() === "staff");
+      } else {
+        setUser(null);
+        setIsStaff(false);
       }
     } catch (error) {
       console.log("Not logged in");
       setUser(null);
+      setIsStaff(false);
     }
   };
 
@@ -201,16 +221,7 @@ export default function HomeScreen() {
                 <Text style={styles.sectionTitle}>Events</Text>
               </View>
 
-              {user && user.role === "STAFF" ? (
-                <View style={styles.staffButton}>
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>STAFF</Text>
-                  </View>
-                  <TouchableOpacity style={styles.createBtn}>
-                    <Text style={styles.createBtnText}>+ CREATE</Text>
-                  </TouchableOpacity>
-                </View>
-              ) : (
+              {isStaff ? (
                 <View style={styles.staffButton}>
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>STAFF</Text>
@@ -222,7 +233,7 @@ export default function HomeScreen() {
                     <Text style={styles.createBtnText}>+ CREATE</Text>
                   </TouchableOpacity>
                 </View>
-              )}
+              ) : null}
             </View>
 
             {filteredEvents.length === 0 ? (
