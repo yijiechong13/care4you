@@ -1,5 +1,5 @@
-// const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
-const BASE_URL = "http://localhost:8080/api/auth"; // Adjust as needed
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL + "/auth";
+// const BASE_URL = "http://localhost:8080/api/auth"; // Adjust as needed
 
 export const signupUser = async (userData: any) => {
   try {

@@ -1,7 +1,9 @@
 import { Platform } from "react-native";
 
-// CHANGE TO DEPLOYED BACKEND URL
-const API_URL = "http://localhost:8080/api/events";
+// CHANGE TO DEPLOYED BACKEND events
+const API_URL = process.env.EXPO_PUBLIC_API_URL + "/events";
+
+// const API_URL = "http://localhost:8080/api/events";
 
 export const fetchEvents = async () => {
   try {
