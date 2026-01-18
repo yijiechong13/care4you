@@ -8,6 +8,8 @@ import {
   Dimensions,
   Alert,
   ActivityIndicator,
+  Modal,
+  TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -21,7 +23,8 @@ import {
   fontWeight,
   shadow,
 } from "@/constants/theme";
-import { fetchUserProfile } from "@/services/userService";
+import { fetchUserProfile, updateUserProfile } from "@/services/userService";
+import { fetchUserRegistrations } from "@/services/eventService";
 
 const { width } = Dimensions.get("window");
 
@@ -30,16 +33,52 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  // // Static data for UI building - we will replace this with real data later
-  // const userData = {
-  //   name: "Jane Cooper",
-  //   email: "janeper01@gmail.com",
-  //   phone: "+65 XXXX XXXX",
-  //   address: "19 Kent Ridge Cres, 119278",
-  //   emergencyContact: "+65 XXXX XXXX",
-  //   stats: { upcoming: 6, registered: 2, total: 12 },
-  // };
+  const handleEditProfile = () => {
+    if (userData.name === "Guest User") {
+      Alert.alert("Access Denied", "Please log in to edit your profile.");
+      return;
+    }
+    setEditName(userData.name);
+    setEditPhone(userData.phone);
+    setIsEditModalVisible(true);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!editName.trim() || !editPhone.trim()) {
+      Alert.alert("Error", "Name and Phone cannot be empty.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const result = await updateUserProfile({
+        name: editName,
+        phone: editPhone,
+      });
+      if (result.success) {
+        setUserData({ ...userData, name: editName, phone: editPhone });
+        setIsEditModalVisible(false);
+        Alert.alert("Success", "Profile updated successfully!");
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to update profile.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Static data for UI building - we will replace this with real data later
+  const dummy_data = {
+    name: "Guest User",
+    email: "guest@email.com",
+    phone: "+65 XXXX XXXX",
+    stats: { upcoming: 0, registered: 0, total: 0 },
+  };
 
   const handleLogout = () => {
     Alert.alert("Log Out", "Are you sure you want to log out?", [
@@ -55,20 +94,46 @@ export default function ProfileScreen() {
     ]);
   };
 
-  const handleEditProfile = () => {
-    // TODO: Navigate to edit profile screen
-    Alert.alert("Edit Profile", "Edit profile feature coming soon!");
-  };
-
   // Inside ProfileScreen component
   useEffect(() => {
     const loadData = async () => {
       try {
+        const userId = await AsyncStorage.getItem("userId");
+
+        if (userId === "guest_user" || !userId) {
+          // It's a guest! Set data and STOP here.
+          setUserData(dummy_data);
+          setLoading(false);
+          return; // This return is crucial
+        }
+
+        // Only runs if userId exists
         const result = await fetchUserProfile();
+        const userEvents = await fetchUserRegistrations(userId);
+        const upcomingCount = userEvents.filter((event: any) => {
+          const eventDate = new Date(event.date);
+          const now = new Date();
+          return eventDate >= now;
+        }).length;
+        const totalCount = userEvents.length;
+        const thisMonth = new Date();
+        const monthCount = userEvents.filter((event: any) => {
+          const eventDate = new Date(event.date);
+          return eventDate.getMonth() === thisMonth.getMonth();
+        }).length;
+
         if (result.success) {
-          setUserData(result.data);
+          setUserData({
+            ...result.data,
+            stats: {
+              upcoming: upcomingCount,
+              registered: monthCount,
+              total: totalCount,
+            },
+          });
         }
       } catch (error) {
+        console.error(error);
         Alert.alert("Error", "Could not load profile information.");
       } finally {
         setLoading(false);
@@ -162,6 +227,60 @@ export default function ProfileScreen() {
           <Ionicons name="chevron-forward" size={20} color={colors.gray[400]} />
         </TouchableOpacity>
       </View>
+
+      {/* Edit Profile Modal */}
+      <Modal visible={isEditModalVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Edit Profile</Text>
+
+            <Text style={styles.inputLabel}>FULL NAME</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={editName}
+              onChangeText={setEditName}
+            />
+
+            <Text style={styles.inputLabel}>EMAIL (Non-editable)</Text>
+            <TextInput
+              style={[
+                styles.modalInput,
+                { backgroundColor: "#f0f0f0", color: "#999" },
+              ]}
+              value={userData.email}
+              editable={false}
+            />
+
+            <Text style={styles.inputLabel}>PHONE NUMBER</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={editPhone}
+              onChangeText={setEditPhone}
+              keyboardType="phone-pad"
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                onPress={() => setIsEditModalVisible(false)}
+                style={styles.cancelBtn}
+              >
+                <Text>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleSaveProfile}
+                style={styles.saveBtn}
+                disabled={saving}
+              >
+                {saving ? (
+                  <ActivityIndicator color="#FFF" />
+                ) : (
+                  <Text style={{ color: "#FFF" }}>Save</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -380,5 +499,53 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.medium,
     color: "#DC2626",
     marginLeft: spacing.md,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: "#FFF",
+    borderRadius: 20,
+    padding: 25,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  inputLabel: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 5,
+    marginTop: 15,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: "#DDD",
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 16,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 30,
+  },
+  saveBtn: {
+    backgroundColor: colors.primary,
+    padding: 15,
+    borderRadius: 10,
+    flex: 0.45,
+    alignItems: "center",
+  },
+  cancelBtn: {
+    padding: 15,
+    flex: 0.45,
+    alignItems: "center",
   },
 });

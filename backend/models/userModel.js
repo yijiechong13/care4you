@@ -31,6 +31,17 @@ const User = {
     const result = await db.query(queryText, [id]);
     return result.rows[0]; // Returns the user object or undefined
   },
+
+  updateProfile: async (id, name, phone) => {
+    const queryText = `
+    UPDATE users 
+    SET name = $1, phone = $2 
+    WHERE id = $3 
+    RETURNING id, name, phone, email
+  `;
+    const result = await db.query(queryText, [name, phone, id]);
+    return result.rows[0];
+  },
 };
 
 module.exports = User;

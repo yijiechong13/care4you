@@ -4,5 +4,6 @@ const userController = require("../controllers/userController");
 
 // This matches the path: /api/users/profile/:id
 router.get("/profile/:id", userController.getProfile);
+router.put("/update/:id", userController.updateProfile);
 
 module.exports = router;

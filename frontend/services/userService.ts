@@ -23,3 +23,19 @@ export const fetchUserProfile = async () => {
     throw error;
   }
 };
+
+export const updateUserProfile = async (updatedData: {
+  name: string;
+  phone: string;
+}) => {
+  const userId = await AsyncStorage.getItem("userId");
+  const response = await fetch(
+    `${process.env.EXPO_PUBLIC_API_URL}/users/update/${userId}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updatedData),
+    },
+  );
+  return await response.json();
+};
