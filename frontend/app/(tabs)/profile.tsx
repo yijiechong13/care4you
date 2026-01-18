@@ -143,7 +143,7 @@ export default function ProfileScreen() {
     loadData();
   }, []);
 
-  if (loading || !userData) {
+  if (loading) {
     return (
       <View
         style={{
@@ -154,6 +154,43 @@ export default function ProfileScreen() {
         }}
       >
         <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  // Guest user - show login prompt
+  if (!userData) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: colors.background,
+          paddingHorizontal: spacing.xl,
+        }}
+      >
+        <Ionicons name="person-circle-outline" size={80} color={colors.gray[400]} />
+        <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.gray[700], marginTop: spacing.lg }}>
+          Welcome, Guest
+        </Text>
+        <Text style={{ fontSize: fontSize.md, color: colors.gray[500], textAlign: "center", marginTop: spacing.sm }}>
+          Log in to view your profile and registered events
+        </Text>
+        <TouchableOpacity
+          style={{
+            backgroundColor: colors.primary,
+            paddingVertical: spacing.md,
+            paddingHorizontal: spacing.xxl,
+            borderRadius: borderRadius.lg,
+            marginTop: spacing.xl,
+          }}
+          onPress={() => router.push("/login")}
+        >
+          <Text style={{ color: colors.white, fontSize: fontSize.md, fontWeight: fontWeight.semibold }}>
+            Log In
+          </Text>
+        </TouchableOpacity>
       </View>
     );
   }
