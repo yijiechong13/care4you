@@ -2,7 +2,8 @@ const express = require('express');
 const {
   createRegistration,
   getEventRegistrations,
-  getUserRegistrations
+  getUserRegistrations,
+  getRegistrationCounts,
 } = require('../controllers/registrationController');
 
 const router = express.Router();
@@ -15,5 +16,8 @@ router.get('/event/:eventId', getEventRegistrations);
 
 // GET /api/registrations/user/:userId - Get all registrations for a user
 router.get('/user/:userId', getUserRegistrations);
+
+// POST /api/registrations/counts - Get registration counts by user type for events
+router.post('/counts', getRegistrationCounts);
 
 module.exports = router;

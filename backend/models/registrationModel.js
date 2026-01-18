@@ -89,7 +89,46 @@ const RegistrationModel = {
 
     if (error) throw new Error(error.message);
     return data;
-  }
+  },
+
+  // Get registration counts by user type for multiple events
+  getCountsByEventIds: async (eventIds) => {
+    if (!eventIds || eventIds.length === 0) {
+      return {};
+    }
+
+    const { data, error } = await supabase
+      .from('registrations')
+      .select('event_id, users:user_id(user_type)')
+      .in('event_id', eventIds);
+
+    if (error) throw new Error(error.message);
+
+    const counts = {};
+    eventIds.forEach((id) => {
+      counts[id] = { volunteer: 0, participant: 0, total: 0 };
+    });
+
+    data.forEach((row) => {
+      const eventId = row.event_id;
+      if (!counts[eventId]) {
+        counts[eventId] = { volunteer: 0, participant: 0, total: 0 };
+      }
+
+      const userType = (row.users?.user_type || '').toLowerCase();
+      if (userType === 'volunteer') {
+        counts[eventId].volunteer += 1;
+      } else if (userType === 'participant') {
+        counts[eventId].participant += 1;
+      } else {
+        counts[eventId].participant += 1;
+      }
+
+      counts[eventId].total += 1;
+    });
+
+    return counts;
+  },
 };
 
 module.exports = { RegistrationModel };

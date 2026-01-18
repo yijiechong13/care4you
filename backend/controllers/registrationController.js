@@ -71,4 +71,25 @@ const getUserRegistrations = async (req, res) => {
   }
 };
 
-module.exports = { createRegistration, getEventRegistrations, getUserRegistrations };
+const getRegistrationCounts = async (req, res) => {
+  try {
+    const { eventIds } = req.body;
+
+    if (!Array.isArray(eventIds) || eventIds.length === 0) {
+      return res.status(400).json({ error: "eventIds array is required" });
+    }
+
+    const counts = await RegistrationModel.getCountsByEventIds(eventIds);
+    res.status(200).json(counts);
+  } catch (error) {
+    console.error("❌ Controller Error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = {
+  createRegistration,
+  getEventRegistrations,
+  getUserRegistrations,
+  getRegistrationCounts,
+};
