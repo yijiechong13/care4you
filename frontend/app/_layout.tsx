@@ -41,17 +41,10 @@ export default function RootLayout() {
 
     if (!hasUser && inTabsGroup) {
       // No user? Go to landing page (role selection)
-<<<<<<< HEAD
-      router.replace("/login");
-    } else if (hasUser && !inTabsGroup) {
-      // User found but on login? Force them into the app
-      router.replace("/home");
-=======
       router.replace("/onboarding" as any);
     } else if (hasUser && inAuthGroup) {
       // User found but on auth screens? Force them into the app
       router.replace("/(tabs)/home" as any);
->>>>>>> 7b157b8 (Fix registration flow)
     }
     // Don't redirect if user is in event routes (creation/registration)
   }, [hasUser, segments, isReady]);
