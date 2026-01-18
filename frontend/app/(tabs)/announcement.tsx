@@ -1,98 +1,227 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { EventCard } from '@/components/event-card';
+import { Event, FilterTab, filterTabs } from '@/types/event';
+import { borderRadius, colors, fontSize, fontWeight, spacing } from '@/constants/theme';
+import { supabase } from '@/lib/supabase';
+import { fetchEvents, fetchUserRegistrations } from '@/services/eventService';
+import { fetchAnnouncements } from '@/services/announmentService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+export default function EventsScreen() {
+  const router = useRouter();
+  const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
+  const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isStaff, setIsStaff] = useState(false);
 
-export default function HomeScreen() {
+  useEffect(() => {
+    getUser();
+    getAnnouncements();
+  }, [])
+
+  const getUser = async () => {
+    try {
+      const userId = await AsyncStorage.getItem("userId");
+      if (!userId) {
+        setIsStaff(false);
+        return;
+      }
+
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("id, name, user_type")
+        .eq("id", userId)
+        .single();
+
+      if (!userError && userData) {
+        setIsStaff(userData.user_type?.toLowerCase() === "staff");
+      } else {
+        setIsStaff(false);
+      }
+    } catch (error) {
+      console.log("Not logged in");
+      setIsStaff(false);
+    }
+  };
+
+  const getAnnouncements = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchAnnouncements();
+      setAnnouncements(data);
+    } catch (error) {
+      console.log("Failed to fetch announcements");
+    }
+    setLoading(false);
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Announcements</Text>
+          </View>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Loading announcements...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  const handleCreateAnnouncement = () => {
+    router.push("../announcement/createAnnouncement");
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Announcements</Text>
+          {isStaff && (
+            <TouchableOpacity style={styles.eventCountBadge} onPress={handleCreateAnnouncement}>
+              <Text style={styles.eventCountText}>+ Create</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      {/* Announcement List */}
+      <ScrollView
+        style={styles.listContainer}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={true}
+        alwaysBounceVertical={true}
+        scrollEnabled={true}
+      >
+        {announcements.length > 0 ? (
+          announcements.map((item) => (
+            <View key={item.id} style={styles.cardContainer}>
+              <View style={styles.cardContent}>
+                
+                {/* Title & Date Row */}
+                <View style={styles.cardHeaderRow}>
+                  <Text style={styles.cardTitle}>{item.title}</Text>
+                  {item.date && (
+                    <Text style={styles.cardDate}>{item.date}</Text>
+                  )}
+                </View>
+
+                {/* Message Body */}
+                <Text style={styles.cardMessage}>{item.message}</Text>
+              </View>
+
+              <View style={styles.separator} />
+            </View>
+          ))
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No announcements found</Text>
+          </View>
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  header: {
+    backgroundColor: colors.primary,
+    paddingTop: 60,
+    paddingBottom: spacing.xl,
+    paddingHorizontal: spacing.lg,
+  },
+  headerContent: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  headerTitle: {
+    fontSize: fontSize.xxl,
+    fontWeight: fontWeight.bold,
+    color: colors.white,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  eventCountBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+  },
+  eventCountText: {
+    fontSize: fontSize.sm,
+    color: colors.white,
+    fontWeight: fontWeight.medium,
+  },
+  listContainer: {
+    flex: 1,
+  },
+  listContent: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: 100,
+  },
+  cardContainer: {
+    backgroundColor: '#fff',
+  },
+  cardContent: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+  },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: spacing.sm,
+  },
+  cardTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    color: '#002C5E',
+    flex: 1, 
+    marginRight: 10,
+  },
+  cardDate: {
+    fontSize: fontSize.xs,
+    color: '#6B7280',
+    marginTop: 4,
+  },
+  cardMessage: {
+    fontSize: fontSize.md,
+    color: '#374151',
+    lineHeight: 22,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginHorizontal: spacing.lg,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: spacing.xxl * 2,
+  },
+  emptyText: {
+    fontSize: fontSize.lg,
+    color: colors.gray[400],
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: spacing.md,
+    fontSize: fontSize.md,
+    color: colors.gray[500],
   },
 });
