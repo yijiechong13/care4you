@@ -4,7 +4,7 @@ import { EventCard } from '@/components/event-card';
 import { Event, FilterTab, filterTabs } from '@/types/event';
 import { borderRadius, colors, fontSize, fontWeight, spacing } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
-import { fetchEvents, fetchUserRegistrations } from '@/services/eventService';
+import { fetchEvents, fetchUserRegistrations, fetchRegistrationCounts } from '@/services/eventService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function EventsScreen() {
@@ -39,7 +39,12 @@ export default function EventsScreen() {
       if (staffRole) {
         // Staff sees ALL events
         const allEvents = await fetchEvents();
-        // Transform to match Event type with status
+
+        // Fetch registration counts for all events
+        const eventIds = allEvents.map((e: any) => e.id);
+        const counts = await fetchRegistrationCounts(eventIds);
+
+        // Transform to match Event type with status and registration counts
         const transformedEvents = allEvents.map((event: any) => {
           const dateObj = new Date(event.date);
           const now = new Date();
@@ -59,6 +64,10 @@ export default function EventsScreen() {
             ...event,
             date: dateObj,
             status,
+            venue: event.location,
+            participantSlots: event.participantSlots,
+            volunteerSlots: event.volunteerSlots,
+            registrationCounts: counts[event.id] || { volunteer: 0, participant: 0, total: 0 },
           };
         });
         setEvents(transformedEvents);

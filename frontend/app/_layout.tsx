@@ -40,13 +40,13 @@ export default function RootLayout() {
     const inAuthGroup = (segments as string[]).includes("(auth)");
 
     if (!hasUser && inTabsGroup) {
-      // No user? Go to landing page (role selection)
-      router.replace("/onboarding" as any);
+      // No user? Stay at/go to login
+      router.replace("/login");
     } else if (hasUser && inAuthGroup) {
-      // User found but on auth screens? Force them into the app
-      router.replace("/(tabs)/home" as any);
+      // User found but on auth screens (login/signup)? Force them into the app
+      router.replace("/home");
     }
-    // Don't redirect if user is in event routes (creation/registration)
+    // Allow logged-in users to access eventCreation, eventRegistration, etc.
   }, [hasUser, segments, isReady]);
 
   // 3. Show Loading Spinner while checking storage

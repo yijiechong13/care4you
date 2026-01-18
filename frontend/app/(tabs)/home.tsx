@@ -292,10 +292,10 @@ export default function HomeScreen() {
                         />
                         <View>
                           <Text style={styles.infoLabel}>AVAILABILITY</Text>
-                          {item.totalSlots ? (
+                          {item.participantSlots ? (
                             <Text style={styles.infoText}>
-                              {item.totalSlots - item.takenSlots}/
-                              {item.totalSlots} slots
+                              {item.participantSlots - item.takenSlots}/
+                              {item.participantSlots} slots
                             </Text>
                           ) : (
                             <Text style={styles.infoText}>No capacity!</Text>

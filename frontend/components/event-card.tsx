@@ -51,6 +51,32 @@ export function EventCard({ event }: EventCardProps) {
         </View>
       )}
 
+      {/* Registration Counts - Staff View */}
+      {event.registrationCounts && (
+        <View style={styles.registrationContainer}>
+          <Text style={styles.signUpTitle}>SIGN-UPS</Text>
+          <View style={styles.countsRow}>
+            <View style={styles.countItem}>
+              <Text style={styles.countNumber}>
+                {event.registrationCounts.participant}
+                {event.participantSlots != null && <Text style={styles.countCap}> / {event.participantSlots}</Text>}
+              </Text>
+              <Text style={styles.countLabel}>Participants</Text>
+            </View>
+            <View style={styles.countDivider} />
+            <View style={styles.countItem}>
+              <Text style={styles.countNumber}>
+                {event.registrationCounts.volunteer}
+                {event.volunteerSlots != null && event.volunteerSlots > 0 && (
+                  <Text style={styles.countCap}> / {event.volunteerSlots}</Text>
+                )}
+              </Text>
+              <Text style={styles.countLabel}>Volunteers</Text>
+            </View>
+          </View>
+        </View>
+      )}
+
       {/* Event Details */}
       <View style={styles.detailsContainer}>
         <Text style={styles.detailsTitle}>EVENT DETAILS</Text>
@@ -168,6 +194,61 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     fontWeight: fontWeight.medium,
     color: colors.gray[700],
+  },
+  registrationContainer: {
+    backgroundColor: colors.gray[100],
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  signUpHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  signUpTitle: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    color: colors.gray[400],
+  },
+  capacityText: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    color: colors.primary,
+  },
+  countsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  countItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  countNumber: {
+    fontSize: fontSize.xxl,
+    fontWeight: fontWeight.bold,
+    color: colors.primary,
+  },
+  countCap: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.medium,
+    color: colors.gray[400],
+  },
+  countLabel: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.medium,
+    color: colors.gray[500],
+    marginTop: spacing.xs,
+  },
+  countDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: colors.gray[200],
+  },
+  totalCount: {
+    color: colors.success,
   },
 });
 
