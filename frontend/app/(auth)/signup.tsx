@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Pressable,
   StyleSheet,
+  ScrollView,
 } from "react-native";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -19,6 +20,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 export default function SignupScreen() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [retypePassword, setRetypePassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,7 +30,7 @@ export default function SignupScreen() {
   const insets = useSafeAreaInsets();
 
   const handleCreateAccount = async () => {
-    if (!email || !name || !retypePassword || !password) {
+    if (!email || !name || !retypePassword || !phone || !password) {
       Alert.alert("Error", "Please fill in all fields");
       return;
     }
@@ -44,6 +46,7 @@ export default function SignupScreen() {
         name: name,
         email: email,
         password: password,
+        phone: phone,
         user_type: role, // Role from landing page selection
       };
 
@@ -70,7 +73,7 @@ export default function SignupScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
+    <ScrollView style={[styles.container, { paddingTop: insets.top + 20 }]}>
       {/* Back Button */}
       <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
         <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
@@ -106,6 +109,17 @@ export default function SignupScreen() {
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
+        />
+
+        {/* NEW PHONE FIELD ADDED HERE */}
+        <Text style={styles.label}>PHONE NUMBER</Text>
+        <TextInput
+          style={styles.input}
+          keyboardType="phone-pad" // Shows the numeric keypad
+          placeholder="Enter your phone number"
+          placeholderTextColor="#A9A9A9"
+          value={phone}
+          onChangeText={setPhone}
         />
 
         <View style={styles.inputContainer}>
@@ -169,7 +183,7 @@ export default function SignupScreen() {
           Log In
         </Text>
       </Text>
-    </View>
+    </ScrollView>
   );
 }
 

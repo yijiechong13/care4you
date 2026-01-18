@@ -47,7 +47,7 @@ export default function ProfileScreen() {
         onPress: async () => {
           await supabase.auth.signOut();
           await AsyncStorage.removeItem("userId"); //removing userId from device, old registered events gone
-          router.replace("/(auth)");
+          router.replace("/login");
         },
       },
     ]);
@@ -66,7 +66,10 @@ export default function ProfileScreen() {
     >
       {/* Header Section */}
       <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
-        <TouchableOpacity style={styles.editProfileButton} onPress={handleEditProfile}>
+        <TouchableOpacity
+          style={styles.editProfileButton}
+          onPress={handleEditProfile}
+        >
           <Ionicons name="create-outline" size={22} color={colors.white} />
         </TouchableOpacity>
 
@@ -107,16 +110,8 @@ export default function ProfileScreen() {
             label="Full Name"
             value={userData.name}
           />
-          <InfoRow
-            icon="mail-outline"
-            label="Email"
-            value={userData.email}
-          />
-          <InfoRow
-            icon="call-outline"
-            label="Phone"
-            value={userData.phone}
-          />
+          <InfoRow icon="mail-outline" label="Email" value={userData.email} />
+          <InfoRow icon="call-outline" label="Phone" value={userData.phone} />
           <InfoRow
             icon="location-outline"
             label="Address"
@@ -155,7 +150,9 @@ function StatCard({
 }) {
   return (
     <View style={[styles.statCard, highlight && styles.statCardHighlight]}>
-      <Text style={[styles.statNumber, highlight && styles.statNumberHighlight]}>
+      <Text
+        style={[styles.statNumber, highlight && styles.statNumberHighlight]}
+      >
         {number}
       </Text>
       <Text style={[styles.statLabel, highlight && styles.statLabelHighlight]}>
@@ -349,7 +346,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     ...shadow.sm,
   },
-    logoutButtonText: {
+  logoutButtonText: {
     flex: 1,
     fontSize: fontSize.md,
     fontWeight: fontWeight.medium,

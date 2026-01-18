@@ -40,7 +40,7 @@ export default function RootLayout() {
 
     if (!hasUser && inTabsGroup) {
       // No user? Go to landing page (role selection)
-      router.replace("/(auth)");
+      router.replace("/login");
     } else if (hasUser && !inTabsGroup) {
       // User found but on login? Force them into the app
       router.replace("/home");

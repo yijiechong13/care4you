@@ -2,9 +2,9 @@ const User = require("../models/userModel");
 
 // Logic for Registration
 exports.signup = async (req, res) => {
-  const { name, email, password, user_type } = req.body;
+  const { name, email, password, user_type, phone } = req.body;
   try {
-    const newUser = await User.create(name, email, password, user_type);
+    const newUser = await User.create(name, email, password, user_type, phone);
     res.status(201).json({
       success: true,
       message: "Registered successfully",
