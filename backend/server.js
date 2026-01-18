@@ -10,11 +10,13 @@ const authRoute = require("./routes/authRoute");
 const eventRoute = require("./routes/eventRoute");
 const registrationRoute = require("./routes/registrationRoute");
 const userRoutes = require("./routes/userRoute");
+const announcementRoute = require("./routes/announcementRoute");
 
 app.use("/api/auth", authRoute);
 app.use("/api/events", eventRoute);
 app.use("/api/registrations", registrationRoute);
 app.use("/api/users", userRoutes);
+app.use("/api/announcements", announcementRoute);
 
 app.get("/api/v1", async (req, res) => {
   try {
