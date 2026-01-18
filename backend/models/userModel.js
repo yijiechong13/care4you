@@ -20,6 +20,17 @@ const User = {
     const result = await db.query(queryText, [email]);
     return result.rows[0];
   },
+
+  // Logic for finding user by ID
+  findById: async (id) => {
+    const queryText = `
+      SELECT id, name, email, phone, user_type 
+      FROM users 
+      WHERE id = $1
+    `;
+    const result = await db.query(queryText, [id]);
+    return result.rows[0]; // Returns the user object or undefined
+  },
 };
 
 module.exports = User;

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Dimensions,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -21,22 +22,25 @@ import {
   fontWeight,
   shadow,
 } from "@/constants/theme";
+import { fetchUserProfile } from "@/services/userService";
 
 const { width } = Dimensions.get("window");
 
 export default function ProfileScreen() {
+  const [userData, setUserData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  // Static data for UI building - we will replace this with real data later
-  const userData = {
-    name: "Jane Cooper",
-    email: "janeper01@gmail.com",
-    phone: "+65 XXXX XXXX",
-    address: "19 Kent Ridge Cres, 119278",
-    emergencyContact: "+65 XXXX XXXX",
-    stats: { upcoming: 6, registered: 2, total: 12 },
-  };
+  // // Static data for UI building - we will replace this with real data later
+  // const userData = {
+  //   name: "Jane Cooper",
+  //   email: "janeper01@gmail.com",
+  //   phone: "+65 XXXX XXXX",
+  //   address: "19 Kent Ridge Cres, 119278",
+  //   emergencyContact: "+65 XXXX XXXX",
+  //   stats: { upcoming: 6, registered: 2, total: 12 },
+  // };
 
   const handleLogout = () => {
     Alert.alert("Log Out", "Are you sure you want to log out?", [
@@ -58,6 +62,38 @@ export default function ProfileScreen() {
     Alert.alert("Edit Profile", "Edit profile feature coming soon!");
   };
 
+  // Inside ProfileScreen component
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const result = await fetchUserProfile();
+        if (result.success) {
+          setUserData(result.data);
+        }
+      } catch (error) {
+        Alert.alert("Error", "Could not load profile information.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  if (loading || !userData) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: colors.background,
+        }}
+      >
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
   return (
     <ScrollView
       style={styles.container}
@@ -108,20 +144,14 @@ export default function ProfileScreen() {
           <InfoRow
             icon="person-outline"
             label="Full Name"
-            value={userData.name}
+            value={userData?.name}
           />
-          <InfoRow icon="mail-outline" label="Email" value={userData.email} />
-          <InfoRow icon="call-outline" label="Phone" value={userData.phone} />
+          <InfoRow icon="mail-outline" label="Email" value={userData?.email} />
           <InfoRow
-            icon="location-outline"
-            label="Address"
-            value={userData.address}
-          />
-          <InfoRow
-            icon="alert-circle-outline"
-            label="Emergency Contact"
-            value={userData.emergencyContact}
-            isLast
+            icon="call-outline"
+            label="Phone"
+            value={userData?.phone}
+            isLast // This is now the last row
           />
         </View>
       </View>
