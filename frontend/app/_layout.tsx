@@ -37,14 +37,23 @@ export default function RootLayout() {
 
     // Use .includes to catch your folder groups safely
     const inTabsGroup = (segments as string[]).includes("(tabs)");
+    const inAuthGroup = (segments as string[]).includes("(auth)");
 
     if (!hasUser && inTabsGroup) {
       // No user? Go to landing page (role selection)
+<<<<<<< HEAD
       router.replace("/login");
     } else if (hasUser && !inTabsGroup) {
       // User found but on login? Force them into the app
       router.replace("/home");
+=======
+      router.replace("/onboarding" as any);
+    } else if (hasUser && inAuthGroup) {
+      // User found but on auth screens? Force them into the app
+      router.replace("/(tabs)/home" as any);
+>>>>>>> 7b157b8 (Fix registration flow)
     }
+    // Don't redirect if user is in event routes (creation/registration)
   }, [hasUser, segments, isReady]);
 
   // 3. Show Loading Spinner while checking storage
@@ -62,6 +71,9 @@ export default function RootLayout() {
         {/* Add your login and signup screens here */}
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="eventCreation/basicInfo" options={{ headerShown: false }} />
+        <Stack.Screen name="eventCreation/specificInfo" options={{ headerShown: false }} />
+        <Stack.Screen name="eventRegistration/register" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />

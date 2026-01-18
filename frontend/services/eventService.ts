@@ -36,7 +36,8 @@ export const fetchEvents = async () => {
       return {
         id: event.id.toString(),
         title: event.title,
-        date: dateStr,
+        date: dateObj.toISOString(),  // ISO format for calendar parsing
+        dateDisplay: dateStr,         // Formatted string for display
         startTime: startTimeStr,
         endTime: endTimeStr,
         location: event.location,
@@ -161,9 +162,8 @@ export const fetchUserRegistrations = async (userId: string) => {
 
 export const submitRegistration = async (registrationData: {
   eventId: string;
-  userId: string | null;
+  userId: string;
   specialRequirements?: string;
-  isGuest: boolean;
   fullName?: string;
   contactNumber?: string;
   emergencyContact?: string;

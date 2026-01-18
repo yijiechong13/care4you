@@ -60,7 +60,6 @@ export default function HomeScreen() {
   const getUser = async () => {
     try {
       const userId = await AsyncStorage.getItem("userId");
-      console.log("DEBUG userId from AsyncStorage:", userId);
       if (!userId) {
         setUser(null);
         setIsStaff(false);
@@ -72,9 +71,6 @@ export default function HomeScreen() {
         .select("id, name, user_type")
         .eq("id", userId)
         .single();
-
-      console.log("DEBUG userData:", userData);
-      console.log("DEBUG userError:", userError);
 
       if (!userError && userData) {
         setUser(userData);
@@ -267,7 +263,7 @@ export default function HomeScreen() {
                     <View style={styles.blueLine} />
 
                     <View style={styles.cardContent}>
-                      <Text style={styles.cardDateTime}>{item.time}</Text>
+                      <Text style={styles.cardDateTime}>{item.dateDisplay} • {item.startTime}</Text>
                       <Text style={styles.cardTitle}>{item.title}</Text>
 
                       {/* Location */}

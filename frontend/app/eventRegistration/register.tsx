@@ -11,8 +11,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { supabase } from '@/lib/supabase';
 import { submitRegistration, fetchEventQuestions } from '@/services/eventService';
+import { supabase } from '@/lib/supabase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Type definitions
 type Option = {
@@ -36,11 +37,7 @@ export default function EventRegistrationScreen() {
   const eventId = params.eventId as string;
   const eventTitle = params.eventTitle as string;
 
-  // User state
-  const [user, setUser] = useState<any>(null);
-  const [isGuest, setIsGuest] = useState(true);
-
-  // Form state
+  const [userId, setUserId] = useState<string | null>(null);
   const [fullName, setFullName] = useState('');
   const [contactNumber, setContactNumber] = useState('');
   const [emergencyContact, setEmergencyContact] = useState('');
@@ -52,24 +49,31 @@ export default function EventRegistrationScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    checkUserAndLoadProfile();
+    loadUserProfile();
     loadQuestions();
   }, []);
 
-  const checkUserAndLoadProfile = async () => {
+  const loadUserProfile = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const storedUserId = await AsyncStorage.getItem('userId');
+      setUserId(storedUserId);
 
-      if (user) {
-        setUser(user);
-        setIsGuest(false);
-        // TODO: Load user profile data from your profiles table
-      } else {
-        setIsGuest(true);
+      if (storedUserId) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('name, phone')
+          .eq('id', storedUserId)
+          .single();
+
+        if (userData?.name) {
+          setFullName(userData.name);
+        }
+        if (userData?.phone) {
+          setContactNumber(userData.phone);
+        }
       }
     } catch (error) {
-      console.log("Not logged in, continuing as guest");
-      setIsGuest(true);
+      console.log("Error loading user id:", error);
     }
   };
 
@@ -88,20 +92,22 @@ export default function EventRegistrationScreen() {
   };
 
   const handleSubmit = async () => {
-    // For guests, validate all fields
-    if (isGuest) {
-      if (!fullName.trim()) {
-        Alert.alert("Missing Field", "Please enter your full name.");
-        return;
-      }
-      if (!contactNumber.trim()) {
-        Alert.alert("Missing Field", "Please enter your contact number.");
-        return;
-      }
-      if (!emergencyContact.trim()) {
-        Alert.alert("Missing Field", "Please enter an emergency contact number.");
-        return;
-      }
+    if (!userId) {
+      Alert.alert("Login Required", "Please log in before registering.");
+      return;
+    }
+
+    if (!fullName.trim()) {
+      Alert.alert("Missing Field", "Please enter your full name.");
+      return;
+    }
+    if (!contactNumber.trim()) {
+      Alert.alert("Missing Field", "Please enter your contact number.");
+      return;
+    }
+    if (!emergencyContact.trim()) {
+      Alert.alert("Missing Field", "Please enter an emergency contact number.");
+      return;
     }
 
     // Validate all questions are answered
@@ -121,12 +127,11 @@ export default function EventRegistrationScreen() {
     try {
       await submitRegistration({
         eventId,
-        userId: user?.id || null,
+        userId,
         specialRequirements: specialRequirements.trim() || undefined,
-        isGuest,
-        fullName: isGuest ? fullName.trim() : undefined,
-        contactNumber: isGuest ? contactNumber.trim() : undefined,
-        emergencyContact: isGuest ? emergencyContact.trim() : undefined,
+        fullName: fullName.trim(),
+        contactNumber: contactNumber.trim(),
+        emergencyContact: emergencyContact.trim(),
         answers: answersArray,
       });
 
@@ -155,40 +160,36 @@ export default function EventRegistrationScreen() {
       <View style={styles.divider} />
 
       <View style={styles.formContainer}>
-
         {/* Full Name */}
         <Text style={styles.label}>Full Name</Text>
         <TextInput
-          style={[styles.input, !isGuest && styles.disabledInput]}
+          style={styles.input}
           placeholder="Enter your full name"
           placeholderTextColor="#9CA3AF"
           value={fullName}
           onChangeText={setFullName}
-          editable={isGuest}
         />
 
         {/* Contact Number */}
         <Text style={styles.label}>Contact Number</Text>
         <TextInput
-          style={[styles.input, !isGuest && styles.disabledInput]}
+          style={styles.input}
           placeholder="+65 XXXX XXXX"
           placeholderTextColor="#9CA3AF"
           value={contactNumber}
           onChangeText={setContactNumber}
           keyboardType="phone-pad"
-          editable={isGuest}
         />
 
         {/* Emergency Contact */}
         <Text style={styles.label}>Emergency Contact</Text>
         <TextInput
-          style={[styles.input, !isGuest && styles.disabledInput]}
+          style={styles.input}
           placeholder="Emergency contact number"
           placeholderTextColor="#9CA3AF"
           value={emergencyContact}
           onChangeText={setEmergencyContact}
           keyboardType="phone-pad"
-          editable={isGuest}
         />
 
         {/* Dynamic Questions from Backend */}
@@ -299,10 +300,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1F2937',
     backgroundColor: '#fff',
-  },
-  disabledInput: {
-    backgroundColor: '#F3F4F6',
-    color: '#6B7280',
   },
   textArea: {
     minHeight: 100,

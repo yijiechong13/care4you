@@ -6,7 +6,6 @@ const createRegistration = async (req, res) => {
       eventId,
       userId,
       specialRequirements,
-      isGuest,
       fullName,
       contactNumber,
       emergencyContact,
@@ -18,25 +17,23 @@ const createRegistration = async (req, res) => {
       return res.status(400).json({ error: "Event ID is required" });
     }
 
-    // Check if logged-in user already registered
-    if (userId) {
-      const existing = await RegistrationModel.checkExisting(eventId, userId);
-      if (existing) {
-        return res.status(400).json({ error: "You have already registered for this event" });
-      }
+    if (!userId) {
+      return res.status(400).json({ error: "User ID is required" });
+    }
+
+    const existing = await RegistrationModel.checkExisting(eventId, userId);
+    if (existing) {
+      return res.status(400).json({ error: "You have already registered for this event" });
     }
 
     // Prepare registration data
-    // For logged-in users: userId is set, guest fields are null
-    // For guests: userId is null, guest fields store their info
     const registrationData = {
       eventId,
-      userId: isGuest ? null : userId,
+      userId,
       specialRequirements: specialRequirements || null,
-      isGuest: isGuest || false,
-      guestName: isGuest ? fullName : null,
-      guestContact: isGuest ? contactNumber : null,
-      guestEmergencyContact: isGuest ? emergencyContact : null,
+      fullName: fullName || null,
+      contactNumber: contactNumber || null,
+      emergencyContact: emergencyContact || null,
     };
 
     const registration = await RegistrationModel.createWithAnswers(registrationData, answers || []);

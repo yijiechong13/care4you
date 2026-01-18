@@ -13,7 +13,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { supabase } from "@/lib/supabase";
 import {
   colors,
   spacing,
@@ -49,9 +48,8 @@ export default function ProfileScreen() {
         text: "Log Out",
         style: "destructive",
         onPress: async () => {
-          await supabase.auth.signOut();
           await AsyncStorage.removeItem("userId"); //removing userId from device, old registered events gone
-          router.replace("/login");
+          router.replace("/onboarding");
         },
       },
     ]);

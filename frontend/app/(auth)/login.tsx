@@ -38,7 +38,7 @@ export default function LoginScreen() {
         await AsyncStorage.setItem("userId", result.user.id.toString());
 
         // Navigate to the main app
-        router.replace("/home");
+        router.replace("/(tabs)/home");
         console.log("✅ Backend: Supabase returned rows");
       } else {
         Alert.alert("Login Failed", result.error);

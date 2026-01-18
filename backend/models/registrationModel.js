@@ -12,10 +12,9 @@ const RegistrationModel = {
         event_id: registrationData.eventId,
         user_id: registrationData.userId,
         special_requirements: registrationData.specialRequirements,
-        is_guest: registrationData.isGuest,
-        guest_name: registrationData.guestName,
-        guest_contact: registrationData.guestContact,
-        guest_emergency_contact: registrationData.guestEmergencyContact,
+        guest_name: registrationData.fullName,
+        guest_contact: registrationData.contactNumber,
+        guest_emergency_contact: registrationData.emergencyContact,
       }])
       .select()
       .single();
