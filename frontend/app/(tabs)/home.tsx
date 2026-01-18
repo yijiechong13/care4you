@@ -30,7 +30,7 @@ export default function HomeScreen() {
   const [user, setUser] = useState<any>(null);
   const [isStaff, setIsStaff] = useState(false);
   const [selectedDay, setSelectedDay] = useState<string>(
-    currTime.toDateString(),
+    formatDate(currTime),
   );
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
