@@ -33,6 +33,7 @@ export default function HomeScreen() {
     formatDate(currTime),
   );
   const [events, setEvents] = useState<any[]>([]);
+  const [filteredEvents, setFilteredEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const EVENT_CARD_WIDTH = width * 0.85;
   const SPACING = 0.15;
@@ -149,10 +150,11 @@ export default function HomeScreen() {
     return dict;
   }, [selectedDay, events]);
 
-  const filteredEvents = useMemo(() => {
-    return events.filter(
+  useEffect(() => {
+    const filteredEvents = events.filter(
       (event) => formatDate(new Date(event.date)) === selectedDay,
     );
+    setFilteredEvents(filteredEvents)
   }, [events, selectedDay]);
 
   return (
@@ -240,7 +242,7 @@ export default function HomeScreen() {
               </View>
             ) : (
               <FlatList
-                data={events}
+                data={filteredEvents}
                 horizontal={true}
                 showsHorizontalScrollIndicator={true}
                 snapToInterval={SNAP_INTERVAL}
