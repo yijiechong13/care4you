@@ -8,14 +8,15 @@ import {
   Alert,
   ActivityIndicator,
   Pressable,
+  StyleSheet,
 } from "react-native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { StyleSheet } from "react-native";
 import { signupUser } from "../../services/signupService";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-export default function HomeScreen({ navigation }: any) {
+export default function SignupScreen() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,6 +24,8 @@ export default function HomeScreen({ navigation }: any) {
   const [loading, setLoading] = useState(false);
   const [secureTextEntry, setSecureTextEntry] = useState(true);
   const router = useRouter();
+  const { role } = useLocalSearchParams<{ role: string }>();
+  const insets = useSafeAreaInsets();
 
   const handleCreateAccount = async () => {
     if (!email || !name || !retypePassword || !password) {
@@ -41,7 +44,7 @@ export default function HomeScreen({ navigation }: any) {
         name: name,
         email: email,
         password: password,
-        user_type: "member", // Setting them as a registered member
+        user_type: role, // Role from landing page selection
       };
 
       // Call your API
@@ -67,14 +70,19 @@ export default function HomeScreen({ navigation }: any) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
+      {/* Back Button */}
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+      </TouchableOpacity>
+
       {/* Logo & Header */}
       <View style={styles.header}>
         <Image
-          source={require("../../assets/images/care4youlogo.png")} // Replace with your actual logo path
+          source={require("../../assets/images/care4youlogo.png")}
           style={styles.logo}
         />
-        <Text style={styles.welcomeText}>Welcome back!</Text>
+        <Text style={styles.welcomeText}>Create your account</Text>
       </View>
 
       {/* Input Fields */}
@@ -169,22 +177,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#002B5B",
-    padding: 30,
+    paddingHorizontal: 24,
+  },
+  backButton: {
+    padding: 8,
+    alignSelf: "flex-start",
   },
   header: {
     alignItems: "center",
+    marginTop: 20,
     marginBottom: 40,
   },
   logo: {
-    width: 250,
-    height: 250,
+    width: 180,
+    height: 180,
     resizeMode: "contain",
-    marginBottom: -40,
   },
-
   welcomeText: {
-    color: "#FFF",
-    fontSize: 18,
+    color: "rgba(255, 255, 255, 0.8)",
+    fontSize: 16,
+    textAlign: "center",
+    marginTop: -10,
   },
   inputContainer: {
     marginBottom: 20,

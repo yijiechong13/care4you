@@ -46,7 +46,8 @@ export default function ProfileScreen() {
         style: "destructive",
         onPress: async () => {
           await supabase.auth.signOut();
-          router.replace("/(auth)/login");
+          await AsyncStorage.removeItem("userId"); //removing userId from device, old registered events gone
+          router.replace("/(auth)");
         },
       },
     ]);

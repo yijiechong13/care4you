@@ -82,9 +82,9 @@ export default function SpecificInfoScreen() {
         ...q,
         title: q.title.trim(),
         options: q.options.map(opt => opt.trim())
-                            .filter(opt => opt != "")
+                            .filter(opt => opt !== "")
     }))
-    .filter(q => q.title != "" && q.options.length > 0);
+    .filter(q => q.title !== "" && q.options.length > 0);
 
     console.log("--- Event Data ---");
     console.log("Reminders:", reminders);

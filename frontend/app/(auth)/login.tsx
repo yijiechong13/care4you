@@ -8,19 +8,21 @@ import {
   Alert,
   ActivityIndicator,
   Pressable,
+  StyleSheet,
 } from "react-native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { loginUser } from "@/services/loginService";
 
-export default function HomeScreen({ navigation }: any) {
+export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [secureTextEntry, setSecureTextEntry] = useState(true);
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const handleSignIn = async () => {
     if (!email || !password) {
@@ -66,11 +68,16 @@ export default function HomeScreen({ navigation }: any) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
+      {/* Back Button */}
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+      </TouchableOpacity>
+
       {/* Logo & Header */}
       <View style={styles.header}>
         <Image
-          source={require("../../assets/images/care4youlogo.png")} // Replace with your actual logo path
+          source={require("../../assets/images/care4youlogo.png")}
           style={styles.logo}
         />
         <Text style={styles.welcomeText}>Welcome back!</Text>
@@ -148,22 +155,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#002B5B",
-    padding: 30,
+    paddingHorizontal: 24,
+  },
+  backButton: {
+    padding: 8,
+    alignSelf: "flex-start",
   },
   header: {
     alignItems: "center",
+    marginTop: 20,
     marginBottom: 40,
   },
   logo: {
-    width: 250,
-    height: 250,
+    width: 180,
+    height: 180,
     resizeMode: "contain",
-    marginBottom: -40,
   },
-
   welcomeText: {
-    color: "#FFF",
-    fontSize: 18,
+    color: "rgba(255, 255, 255, 0.8)",
+    fontSize: 16,
+    textAlign: "center",
+    marginTop: -10,
   },
   inputContainer: {
     marginBottom: 20,

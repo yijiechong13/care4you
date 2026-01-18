@@ -39,8 +39,8 @@ export default function RootLayout() {
     const inTabsGroup = (segments as string[]).includes("(tabs)");
 
     if (!hasUser && inTabsGroup) {
-      // No user? Stay at/go to login
-      router.replace("/login");
+      // No user? Go to landing page (role selection)
+      router.replace("/(auth)");
     } else if (hasUser && !inTabsGroup) {
       // User found but on login? Force them into the app
       router.replace("/home");
