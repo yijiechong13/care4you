@@ -1,51 +1,98 @@
-# Hello everyone, welcome to our Expo app 👋 we are building Care4Fun as our Hack4Good hackathon project.
-# Team Lead: Yi Jie Chong
+# 🛡️ Care4Fun | Hack4Good 2026 | Team: Hack4Fun
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**Care4Fun** is a community-driven platform built to bridge the gap between volunteers, participants, and impactful social events. Designed for the **Hack4Good** hackathon, this mobile application streamlines event discovery and registration with a seamless "Virtual Guest" system for immediate engagement.
 
-## Get started
+---
 
-1. Install dependencies
+### ⚠️ The Problem
 
-   ```bash
-   npm install
-   ```
+**Problem Statement: "How might we reduce friction in activity sign-ups for both individuals and caregivers, while reducing manual effort for staff in managing and consolidating registration data?"**
 
-2. Start the app
+Traditional registration flows often lose users at the "Sign Up" wall. Meanwhile, staff struggle with fragmented data from various sources.
 
-   ```bash
-   npx expo start
-   ```
+### ✅ Our Solution: The "Frictionless" Workflow
 
-In the output, you'll find options to open the app in a
+We solve this by allowing users to act immediately and authenticate later.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+1. **Virtual Guest System:** Users join events instantly using locally generated unique IDs.
+2. **The Conversion Deal:** An automated backend "handover" that migrates guest data to permanent accounts upon registration, eliminating manual data consolidation for staff.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+---
 
-## Get a fresh project
+## 🚀 Getting Started
 
-When you're ready, run:
+### 1. Prerequisites
+
+Ensure you have [Node.js](https://nodejs.org/) installed on your machine.
+
+### 2. Installation
+
+Clone the repository and install the dependencies for the frontend:
 
 ```bash
-npm run reset-project
+cd frontend
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 3. Environment Configuration
 
-## Learn more
+Create a .env file in the root of your frontend directory and add your hosted backend URL:
 
-To learn more about developing your project with Expo, look at the following resources:
+```code snippet
+EXPO_PUBLIC_API_URL=https://care4you-backend-685548494290.asia-southeast1.run.app/api
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### 4. Run the App
 
-## Join the community
+Start the development server:
 
-Join our community of developers creating universal apps.
+```Bash
+npx expo start
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Download Expo Go on your Android or iOS device.
+- Scan the QR code appearing in your terminal.
+
+---
+
+## ✨ Key Features
+
+- Virtual Guest System: Users can browse and register for events immediately without an account. A unique guest\_ ID is generated locally to track their activity.
+- The Conversion Deal: When a guest eventually signs up or logs in, all their previous event registrations are automatically migrated to their new permanent account.
+- Dynamic Event Registration: Real-time slot tracking for both volunteers and participants, ensuring event organizers have accurate data.
+- Role-Based Access: Specific workflows for Volunteers and Participants to ensure everyone finds the right way to help.
+
+---
+
+## 🛠️ Tech Stack & Structure
+
+### Technologies
+
+| Layer        | Technology                                            |
+| :----------- | :---------------------------------------------------- |
+| **Frontend** | React Native, Expo (Expo Go), Expo Router, TypeScript |
+| **Backend**  | Node.js, Express (Hosted on Google Cloud)             |
+| **Database** | PostgreSQL (Supabase)                                 |
+| **Storage**  | AsyncStorage for local session persistence            |
+
+### Project Directory
+
+```text
+├── frontend/             # Mobile Application (Focus of UI/UX)
+│   ├── app/              # File-based routing (Expo Router)
+│   ├── services/         # API & Auth Logic (Conversion Deal)
+│   └── components/       # Reusable UI Elements
+└── backend/              # SQL-based API Logic
+    ├── models/           # Data migration & logic
+    └── controllers/      # Auth & Registration management
+```
+
+---
+
+## 👥 The Team
+
+- **Team Name:** Hack4Fun
+- **Team Lead:** Yi Jie Chong
+- **Developer:** Tan Jay, Tey Yee Siang
+
+---
