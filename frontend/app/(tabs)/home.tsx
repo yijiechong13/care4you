@@ -17,12 +17,19 @@ import { Colors } from "@/constants/theme";
 import React, { useEffect, useMemo, useState } from "react";
 import { Calendar } from "react-native-calendars";
 import { MarkedDates } from "react-native-calendars/src/types";
-import { Ionicons } from "@expo/vector-icons";
+import { Fontisto, Ionicons } from "@expo/vector-icons";
 import { fetchEvents } from "@/services/eventService";
 import { supabase } from "@/lib/supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width, height } = Dimensions.get("window");
+const EVENT_TYPE_ICONS: Record<string, any> = {
+  'Activities at MTC Office': require('@/assets/images/office.png'),
+  'Outings': require('@/assets/images/outing.png'),
+  'Nature Walks': require('@/assets/images/walk.png'),
+  'Gym and Dance': require('@/assets/images/gym.png'),
+  'Reading': require('@/assets/images/read.png'),
+};
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -294,10 +301,24 @@ export default function HomeScreen() {
                     <View style={styles.blueLine} />
 
                     <View style={styles.cardContent}>
-                      <Text style={styles.cardDateTime}>
-                        {item.dateDisplay} • {item.startTime}
-                      </Text>
-                      <Text style={styles.cardTitle}>{item.title}</Text>
+                      <View style={styles.headerRow}>
+                        <View style={styles.headerTextStack}>
+                          <Text style={styles.cardDateTime}>
+                            {item.dateDisplay} • {item.startTime}
+                          </Text>
+                          <View style={{ flexDirection: "row", alignItems: "center" }}>
+                            <Text style={styles.cardTitle}>{item.title}</Text>
+                            {item.wheelchairAccessible && (
+                              <Fontisto name="wheelchair" size={15} />
+                            )}
+                          </View>
+                        </View>
+                        <Image 
+                          source={EVENT_TYPE_ICONS[item.tag]} 
+                          style={styles.typeIcon} 
+                          resizeMode="contain" 
+                        />
+                      </View>
 
                       {/* Event Thumbnail */}
                       {(item.imageUrl ||
@@ -531,6 +552,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 4,
+    paddingBottom: 20
   },
   blueLine: {
     width: 6,
@@ -558,7 +580,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F3F4F6",
   },
   thumbnailContainer: {
-    marginVertical: 8,
+    marginBottom: 8,
     borderRadius: 8,
     overflow: "hidden",
     position: "relative",
@@ -586,6 +608,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 12,
+  },
+  headerTextStack: {
+    flex: 1,
+    marginRight: 12,
+  },
+  wheelchairIcon: {
+    alignSelf: "center"
+  },
+  typeIcon: {
+    width: 60,
+    height: 60,
+  },
   cardDateTime: {
     color: "#6B7280",
     fontWeight: "500",
@@ -597,6 +636,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     color: "#002C5E",
+    marginRight: 10
   },
   infoBox: {
     flexDirection: "row",
@@ -625,7 +665,7 @@ const styles = StyleSheet.create({
   cardFooter: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    marginTop: 4,
+    marginTop: 4
   },
   registerBtn: {
     backgroundColor: "#002C5E",
