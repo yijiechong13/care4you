@@ -326,34 +326,38 @@ export default function HomeScreen() {
                       </View>
 
                       {/* Register Buttons */}
-                      <View style={styles.cardFooter}>
-                        {currTime > new Date(item.dateDisplay) ? (
-                          <View
-                            style={styles.registerClosedBtn}
-                          >
-                            <Text style={styles.registerBtnText}>
-                              REGISTRATION CLOSED
-                            </Text>
-                          </View>
-                        ) : item.eventStatus == "cancelled" ? (
-                          <View
-                            style={styles.registerCancelBtn}
-                          >
-                            <Text style={styles.registerBtnText}>
-                              CANCELLED
-                            </Text>
-                          </View>
-                        ) : (
-                          <TouchableOpacity
-                            style={styles.registerBtn}
-                            onPress={() => handleRegister(item)}
-                          >
-                            <Text style={styles.registerBtnText}>
-                              REGISTER NOW
-                            </Text>
-                          </TouchableOpacity>
-                        )}
-                      </View>
+                      {isStaff && (
+                        <View style={styles.cardFooter}>
+                          {currTime > new Date(item.dateDisplay) || 
+                          userRole == "volunteer" && item.volunteerSlots <= item.volunteerTakenSlots || 
+                          userRole == "participant" && item.participantSlots && item.participantSlots <= item.takenSlots ? (
+                            <View
+                              style={styles.registerClosedBtn}
+                            >
+                              <Text style={styles.registerBtnText}>
+                                REGISTRATION CLOSED
+                              </Text>
+                            </View>
+                          ) : item.eventStatus == "cancelled" ? (
+                            <View
+                              style={styles.registerCancelBtn}
+                            >
+                              <Text style={styles.registerBtnText}>
+                                CANCELLED
+                              </Text>
+                            </View>
+                          ) : (
+                            <TouchableOpacity
+                              style={styles.registerBtn}
+                              onPress={() => handleRegister(item)}
+                            >
+                              <Text style={styles.registerBtnText}>
+                                REGISTER NOW
+                              </Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      )}
                     </View>
                   </View>
                 )}
