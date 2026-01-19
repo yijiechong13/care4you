@@ -89,7 +89,78 @@ const RegistrationModel = {
 
     if (error) throw new Error(error.message);
     return data;
-  }
+  },
+
+  // Get detailed registrations for export (CSV)
+  getDetailedByEventId: async (eventId) => {
+    const { data, error } = await supabase
+      .from('registrations')
+      .select(`
+        id,
+        created_at,
+        special_requirements,
+        guest_name,
+        guest_contact,
+        guest_emergency_contact,
+        users:user_id(id, name, email, phone, user_type)
+      `)
+      .eq('event_id', eventId)
+      .order('created_at', { ascending: true });
+
+    if (error) throw new Error(error.message);
+
+    // Transform data for export
+    return data.map((reg, index) => ({
+      sn: index + 1,
+      name: reg.guest_name || reg.users?.name || 'N/A',
+      email: reg.users?.email || 'N/A',
+      contact: reg.guest_contact || reg.users?.phone || 'N/A',
+      emergencyContact: reg.guest_emergency_contact || 'N/A',
+      userType: reg.users?.user_type || 'Participant',
+      specialRequirements: reg.special_requirements || '',
+      registeredAt: new Date(reg.created_at).toLocaleDateString(),
+      attendance: '', // Empty for staff to fill in
+    }));
+  },
+
+  // Get registration counts by user type for multiple events
+  getCountsByEventIds: async (eventIds) => {
+    if (!eventIds || eventIds.length === 0) {
+      return {};
+    }
+
+    const { data, error } = await supabase
+      .from('registrations')
+      .select('event_id, users:user_id(user_type)')
+      .in('event_id', eventIds);
+
+    if (error) throw new Error(error.message);
+
+    const counts = {};
+    eventIds.forEach((id) => {
+      counts[id] = { volunteer: 0, participant: 0, total: 0 };
+    });
+
+    data.forEach((row) => {
+      const eventId = row.event_id;
+      if (!counts[eventId]) {
+        counts[eventId] = { volunteer: 0, participant: 0, total: 0 };
+      }
+
+      const userType = (row.users?.user_type || '').toLowerCase();
+      if (userType === 'volunteer') {
+        counts[eventId].volunteer += 1;
+      } else if (userType === 'participant') {
+        counts[eventId].participant += 1;
+      } else {
+        counts[eventId].participant += 1;
+      }
+
+      counts[eventId].total += 1;
+    });
+
+    return counts;
+  },
 };
 
 module.exports = { RegistrationModel };

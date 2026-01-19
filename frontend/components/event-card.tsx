@@ -1,13 +1,17 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Event } from '@/types/event';
 import { borderRadius, colors, fontSize, fontWeight, shadow, spacing } from '@/constants/theme';
 
 interface EventCardProps {
   event: Event;
+  isStaff?: boolean;
+  onExport?: (eventId: string, eventTitle: string) => void;
+  isExporting?: boolean;
 }
 
-export function EventCard({ event }: EventCardProps) {
+export function EventCard({ event, isStaff, onExport, isExporting }: EventCardProps) {
   const formatTime = (start: string, end: string) => `${start} - ${end}`;
 
   const formatDate = (date: Date) => {
@@ -48,6 +52,50 @@ export function EventCard({ event }: EventCardProps) {
         <View style={styles.noticeContainer}>
           <Text style={styles.noticeTitle}>IMPORTANT NOTICE</Text>
           <Text style={styles.noticeText}>{event.importantNotice}</Text>
+        </View>
+      )}
+
+      {/* Registration Counts - Staff View */}
+      {event.registrationCounts && (
+        <View style={styles.registrationContainer}>
+          <View style={styles.signUpHeader}>
+            <Text style={styles.signUpTitle}>SIGN-UPS</Text>
+            {isStaff && onExport && (
+              <TouchableOpacity
+                style={styles.exportButton}
+                onPress={() => onExport(event.id, event.title)}
+                disabled={isExporting}
+              >
+                {isExporting ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <>
+                    <Ionicons name="download-outline" size={16} color={colors.primary} />
+                    <Text style={styles.exportButtonText}>Export</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
+          <View style={styles.countsRow}>
+            <View style={styles.countItem}>
+              <Text style={styles.countNumber}>
+                {event.registrationCounts.participant}
+                {event.participantSlots != null && <Text style={styles.countCap}> / {event.participantSlots}</Text>}
+              </Text>
+              <Text style={styles.countLabel}>Participants</Text>
+            </View>
+            <View style={styles.countDivider} />
+            <View style={styles.countItem}>
+              <Text style={styles.countNumber}>
+                {event.registrationCounts.volunteer}
+                {event.volunteerSlots != null && event.volunteerSlots > 0 && (
+                  <Text style={styles.countCap}> / {event.volunteerSlots}</Text>
+                )}
+              </Text>
+              <Text style={styles.countLabel}>Volunteers</Text>
+            </View>
+          </View>
         </View>
       )}
 
@@ -168,6 +216,77 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     fontWeight: fontWeight.medium,
     color: colors.gray[700],
+  },
+  registrationContainer: {
+    backgroundColor: colors.gray[100],
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  signUpHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  signUpTitle: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    color: colors.gray[400],
+  },
+  exportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.gray[100],
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  exportButtonText: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.medium,
+    color: colors.primary,
+    marginLeft: 4,
+  },
+  capacityText: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    color: colors.primary,
+  },
+  countsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  countItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  countNumber: {
+    fontSize: fontSize.xxl,
+    fontWeight: fontWeight.bold,
+    color: colors.primary,
+  },
+  countCap: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.medium,
+    color: colors.gray[400],
+  },
+  countLabel: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.medium,
+    color: colors.gray[500],
+    marginTop: spacing.xs,
+  },
+  countDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: colors.gray[200],
+  },
+  totalCount: {
+    color: colors.success,
   },
 });
 

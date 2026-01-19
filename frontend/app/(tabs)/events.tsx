@@ -1,21 +1,86 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Alert } from 'react-native';
 import { EventCard } from '@/components/event-card';
 import { Event, FilterTab, filterTabs } from '@/types/event';
 import { borderRadius, colors, fontSize, fontWeight, spacing } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
-import { fetchEvents, fetchUserRegistrations } from '@/services/eventService';
+import { fetchEvents, fetchUserRegistrations, fetchRegistrationCounts, fetchRegistrationsForExport } from '@/services/eventService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { File, Paths } from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 
 export default function EventsScreen() {
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [isStaff, setIsStaff] = useState(false);
+  const [exportingEventId, setExportingEventId] = useState<string | null>(null);
 
   useEffect(() => {
     checkUserAndLoadEvents();
   }, []);
+
+  // Export registrations to CSV
+  const handleExportCSV = async (eventId: string, eventTitle: string) => {
+    try {
+      setExportingEventId(eventId);
+
+      // Fetch registration data
+      const registrations = await fetchRegistrationsForExport(eventId);
+
+      if (registrations.length === 0) {
+        Alert.alert('No Registrations', 'There are no registrations to export for this event.');
+        setExportingEventId(null);
+        return;
+      }
+
+      // Generate CSV content
+      const headers = ['S/N', 'Name', 'Email', 'Contact', 'Emergency Contact', 'Type', 'Special Requirements', 'Registered On', 'Attendance'];
+      const csvRows = [headers.join(',')];
+
+      registrations.forEach((reg: any) => {
+        const row = [
+          reg.sn,
+          `"${(reg.name || '').replace(/"/g, '""')}"`,
+          `"${(reg.email || '').replace(/"/g, '""')}"`,
+          `"${(reg.contact || '').replace(/"/g, '""')}"`,
+          `"${(reg.emergencyContact || '').replace(/"/g, '""')}"`,
+          `"${(reg.userType || '').replace(/"/g, '""')}"`,
+          `"${(reg.specialRequirements || '').replace(/"/g, '""')}"`,
+          `"${(reg.registeredAt || '').replace(/"/g, '""')}"`,
+          '', // Empty attendance column for staff to fill
+        ];
+        csvRows.push(row.join(','));
+      });
+
+      const csvContent = csvRows.join('\n');
+
+      // Create filename with event title and date
+      const sanitizedTitle = eventTitle.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
+      const dateStr = new Date().toISOString().split('T')[0];
+      const filename = `${sanitizedTitle}_Attendance_${dateStr}.csv`;
+
+      // Write file using new expo-file-system API
+      const file = new File(Paths.cache, filename);
+      file.write(csvContent);
+
+      // Share the file
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(file.uri, {
+          mimeType: 'text/csv',
+          dialogTitle: `Export ${eventTitle} Registrations`,
+          UTI: 'public.comma-separated-values-text',
+        });
+      } else {
+        Alert.alert('Success', `CSV saved to: ${file.uri}`);
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      Alert.alert('Export Failed', 'Unable to export registrations. Please try again.');
+    } finally {
+      setExportingEventId(null);
+    }
+  };
 
   const checkUserAndLoadEvents = async () => {
     setLoading(true);
@@ -39,7 +104,12 @@ export default function EventsScreen() {
       if (staffRole) {
         // Staff sees ALL events
         const allEvents = await fetchEvents();
-        // Transform to match Event type with status
+
+        // Fetch registration counts for all events
+        const eventIds = allEvents.map((e: any) => e.id);
+        const counts = await fetchRegistrationCounts(eventIds);
+
+        // Transform to match Event type with status and registration counts
         const transformedEvents = allEvents.map((event: any) => {
           const dateObj = new Date(event.date);
           const now = new Date();
@@ -59,6 +129,10 @@ export default function EventsScreen() {
             ...event,
             date: dateObj,
             status,
+            venue: event.location,
+            participantSlots: event.participantSlots,
+            volunteerSlots: event.volunteerSlots,
+            registrationCounts: counts[event.id] || { volunteer: 0, participant: 0, total: 0 },
           };
         });
         setEvents(transformedEvents);
@@ -145,7 +219,13 @@ export default function EventsScreen() {
       >
         {filteredEvents.length > 0 ? (
           filteredEvents.map((event) => (
-            <EventCard key={event.id} event={event} />
+            <EventCard
+              key={event.id}
+              event={event}
+              isStaff={isStaff}
+              onExport={handleExportCSV}
+              isExporting={exportingEventId === event.id}
+            />
           ))
         ) : (
           <View style={styles.emptyContainer}>

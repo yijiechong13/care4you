@@ -90,8 +90,8 @@ export default function CreateEventScreen() {
         location, 
         startTime: toLocalISOString(startDate), 
         endTime: toLocalISOString(endDate),
-        totalSlots: finalParticipants,
-        volunteers: finalVolunteers,
+        participantSlots: finalParticipants,
+        volunteerSlots: finalVolunteers,
         tag
         }) 
       }

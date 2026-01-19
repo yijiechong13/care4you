@@ -71,4 +71,37 @@ const getUserRegistrations = async (req, res) => {
   }
 };
 
-module.exports = { createRegistration, getEventRegistrations, getUserRegistrations };
+const getEventRegistrationsForExport = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const registrations = await RegistrationModel.getDetailedByEventId(eventId);
+    res.status(200).json(registrations);
+  } catch (error) {
+    console.error("❌ Controller Error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getRegistrationCounts = async (req, res) => {
+  try {
+    const { eventIds } = req.body;
+
+    if (!Array.isArray(eventIds) || eventIds.length === 0) {
+      return res.status(400).json({ error: "eventIds array is required" });
+    }
+
+    const counts = await RegistrationModel.getCountsByEventIds(eventIds);
+    res.status(200).json(counts);
+  } catch (error) {
+    console.error("❌ Controller Error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = {
+  createRegistration,
+  getEventRegistrations,
+  getUserRegistrations,
+  getRegistrationCounts,
+  getEventRegistrationsForExport,
+};
