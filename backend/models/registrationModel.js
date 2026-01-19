@@ -158,7 +158,7 @@ const RegistrationModel = {
         guest_name,
         guest_contact,
         guest_emergency_contact,
-        users:user_id(id, name, email, phone, user_type),
+        users:user_id!left(id, name, email, phone, user_type),
         registration_answers(
           question_id,
           selected_option_id,
