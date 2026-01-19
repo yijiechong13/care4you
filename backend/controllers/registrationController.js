@@ -6,8 +6,6 @@ const createRegistration = async (req, res) => {
       eventId,
       userId,
       specialRequirements,
-      fullName,
-      contactNumber,
       emergencyContact,
       answers,  // Array of { questionId, selectedOptionId }
     } = req.body;
@@ -31,8 +29,6 @@ const createRegistration = async (req, res) => {
       eventId,
       userId,
       specialRequirements: specialRequirements || null,
-      fullName: fullName || null,
-      contactNumber: contactNumber || null,
       emergencyContact: emergencyContact || null,
     };
 

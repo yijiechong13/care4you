@@ -12,9 +12,10 @@ const RegistrationModel = {
         event_id: registrationData.eventId,
         user_id: registrationData.userId,
         special_requirements: registrationData.specialRequirements,
-        guest_name: registrationData.fullName,
-        guest_contact: registrationData.contactNumber,
-        guest_emergency_contact: registrationData.emergencyContact,
+        emergency_contact: registrationData.emergencyContact,
+        guest_name: null,
+        guest_contact: null,
+        guest_emergency_contact: null,
       }])
       .select()
       .single();
@@ -143,6 +144,7 @@ const RegistrationModel = {
         id,
         created_at,
         special_requirements,
+        emergency_contact,
         guest_name,
         guest_contact,
         guest_emergency_contact,
@@ -177,10 +179,10 @@ const RegistrationModel = {
 
       return {
         sn: index + 1,
-        name: reg.guest_name || reg.users?.name || 'N/A',
-        email: reg.users?.email || 'N/A',
-        contact: reg.guest_contact || reg.users?.phone || 'N/A',
-        emergencyContact: reg.guest_emergency_contact || 'N/A',
+      name: reg.guest_name || reg.users?.name || 'N/A',
+      email: reg.users?.email || 'N/A',
+      contact: reg.guest_contact || reg.users?.phone || 'N/A',
+      emergencyContact: reg.emergency_contact || reg.guest_emergency_contact || 'N/A',
         userType: reg.users?.user_type || 'Participant',
         specialRequirements: reg.special_requirements || '',
         responses,

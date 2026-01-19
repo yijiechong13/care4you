@@ -9,7 +9,7 @@ import {
 } from "react-native";
 
 import { ThemedView } from "@/components/themed-view";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Colors } from "@/constants/theme";
 import React, { useEffect, useMemo, useState } from "react";
@@ -56,8 +56,13 @@ export default function HomeScreen() {
 
   useEffect(() => {
     getUser();
-    loadEvents();
   }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadEvents();
+    }, []),
+  );
 
   const getUser = async () => {
     try {

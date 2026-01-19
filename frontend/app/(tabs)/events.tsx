@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Alert } from 'react-native';
 import { EventCard } from '@/components/event-card';
 import { Event, FilterTab, filterTabs } from '@/types/event';
@@ -8,6 +8,7 @@ import { fetchEvents, fetchUserRegistrations, fetchRegistrationCounts, fetchRegi
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import { useFocusEffect } from 'expo-router';
 
 export default function EventsScreen() {
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
@@ -19,6 +20,12 @@ export default function EventsScreen() {
   useEffect(() => {
     checkUserAndLoadEvents();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      checkUserAndLoadEvents();
+    }, []),
+  );
 
   // Export registrations to CSV
   const handleExportCSV = async (eventId: string, eventTitle: string) => {
@@ -35,21 +42,22 @@ export default function EventsScreen() {
       }
 
       // Generate CSV content
-      const headers = ['S/N', 'Name', 'Email', 'Contact', 'Emergency Contact', 'Type', 'Special Requirements', 'Responses', 'Registered On', 'Attendance'];
+      const headers = ['S/N', 'Name', 'Role', 'Email', 'Contact', 'Emergency Contact', 'Special Requirements', 'Responses', 'Registered On', 'Attendance'];
       const csvRows = [headers.join(',')];
 
       registrations.forEach((reg: any) => {
+        const isVolunteer = (reg.userType || '').toLowerCase() === 'volunteer';
         const row = [
           reg.sn,
           `"${(reg.name || '').replace(/"/g, '""')}"`,
+          `"${(reg.userType || '').replace(/"/g, '""')}"`,
           `"${(reg.email || '').replace(/"/g, '""')}"`,
           `"${(reg.contact || '').replace(/"/g, '""')}"`,
           `"${(reg.emergencyContact || '').replace(/"/g, '""')}"`,
-          `"${(reg.userType || '').replace(/"/g, '""')}"`,
           `"${(reg.specialRequirements || '').replace(/"/g, '""')}"`,
           `"${(reg.responses || '').replace(/"/g, '""')}"`,
           `"${(reg.registeredAt || '').replace(/"/g, '""')}"`,
-          '', // Empty attendance column for staff to fill
+          '', // Attendance
         ];
         csvRows.push(row.join(','));
       });

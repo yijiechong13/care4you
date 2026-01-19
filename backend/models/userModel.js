@@ -8,7 +8,7 @@ const User = {
       VALUES ($1, $2, $3, $4, $5) 
       RETURNING id, name, email, user_type, phone
     `;
-    const values = [name, email, password, user_type || "member", phone];
+    const values = [name, email, password, user_type || "participant", phone];
     const result = await db.query(queryText, values);
     return result.rows[0];
   },
