@@ -327,14 +327,24 @@ export default function HomeScreen() {
 
                       {/* Register Buttons */}
                       <View style={styles.cardFooter}>
-                        <TouchableOpacity
-                          style={styles.registerBtn}
-                          onPress={() => handleRegister(item)}
-                        >
-                          <Text style={styles.registerBtnText}>
-                            REGISTER NOW
-                          </Text>
-                        </TouchableOpacity>
+                        {currTime > new Date(item.dateDisplay) ? (
+                          <View
+                            style={styles.registerClosedBtn}
+                          >
+                            <Text style={styles.registerClosedBtnText}>
+                              REGISTRATION CLOSED
+                            </Text>
+                          </View>
+                        ) : (
+                          <TouchableOpacity
+                            style={styles.registerBtn}
+                            onPress={() => handleRegister(item)}
+                          >
+                            <Text style={styles.registerBtnText}>
+                              REGISTER NOW
+                            </Text>
+                          </TouchableOpacity>
+                        )}
                       </View>
                     </View>
                   </View>
@@ -523,6 +533,18 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   registerBtnText: {
+    color: "white",
+    fontWeight: "600",
+    fontSize: 12,
+    letterSpacing: 0.3,
+  },
+  registerClosedBtn: {
+    backgroundColor: "#494c4f",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  registerClosedBtnText: {
     color: "white",
     fontWeight: "600",
     fontSize: 12,

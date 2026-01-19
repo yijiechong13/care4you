@@ -73,9 +73,15 @@ export default function CreateEventScreen() {
       return;
     }
 
-    // Validate end date/time is after start date/time
+    // Validate start and end datetime
     if (endDate <= startDate) {
       Alert.alert("Invalid Date/Time", "End date and time must be after start date and time.");
+      return;
+    }
+
+    const currDate = new Date();
+    if (currDate > startDate) {
+      Alert.alert("Invalid Date/Time", "You could not create event happened in the past.");
       return;
     }
 
