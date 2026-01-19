@@ -435,7 +435,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#002C5E",
     paddingHorizontal: 16,
     paddingTop: 60,
-    paddingBottom: 20,
+    paddingBottom: 60,
+    height: "20%",
+    justifyContent: "flex-end"
   },
   helloText: {
     fontSize: 24,
@@ -446,12 +448,15 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
     backgroundColor: "#fff",
+    marginTop: -50,
+    borderRadius: 30
   },
   calendarWrapper: {
     backgroundColor: "#fff",
     paddingHorizontal: 10,
     paddingBottom: 8,
     paddingTop: 9,
+    borderRadius: 30
   },
   line: {
     borderWidth: 0.5,
@@ -593,6 +598,7 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 8,
     marginBottom: 6,
+    marginTop: 7
   },
   infoIcon: {
     marginRight: 12,
