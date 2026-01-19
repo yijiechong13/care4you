@@ -19,39 +19,35 @@ export const unstable_settings = {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [isReady, setIsReady] = useState(false);
-  const [hasUser, setHasUser] = useState(false);
-  const [isGuest, setIsGuest] = useState(false);
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
-    const checkUser = async () => {
+    const performGatekeeperCheck = async () => {
+      // 1. Always get the LATEST ID directly from storage to avoid state lag
       const userId = await AsyncStorage.getItem("userId");
-      if (userId && userId.startsWith("guest_")) {
-        setIsGuest(true);
+      const hasUser = !!userId;
+      const isGuest = userId?.startsWith("guest_");
+
+      const inTabsGroup = (segments as string[]).includes("(tabs)");
+      const inAuthGroup = (segments as string[]).includes("(auth)");
+
+      // 2. Logic: If no ID and trying to access app -> Go to Login
+      if (!hasUser && inTabsGroup) {
+        router.replace("/login");
       }
-      setHasUser(!!userId); // true if ID exists
+      // 3. Logic: If real member (not guest) and trying to access auth -> Go to Home
+      // We allow Guests to stay in Auth so they can complete the "Conversion Deal"
+      else if (hasUser && !isGuest && inAuthGroup) {
+        router.replace("/(tabs)/home");
+      }
+
+      // 4. Finally, hide the loading spinner
       setIsReady(true);
     };
-    checkUser();
-  }, [segments]); // 🚀 KEY: Re-check storage whenever the path changes
 
-  useEffect(() => {
-    if (!isReady) return;
-
-    // Use .includes to catch your folder groups safely
-    const inTabsGroup = (segments as string[]).includes("(tabs)");
-    const inAuthGroup = (segments as string[]).includes("(auth)");
-
-    if (!hasUser && inTabsGroup) {
-      // No user? Go to login
-      router.replace("/login" as any);
-    } else if (!isGuest && hasUser && inAuthGroup) {
-      // User found but on auth screens (login/signup)? Force them into the app
-      router.replace("/(tabs)/home");
-    }
-    // Allow logged-in users to access eventCreation, eventRegistration, etc.
-  }, [hasUser, isGuest, segments, isReady]);
+    performGatekeeperCheck();
+  }, [segments]);
 
   // 3. Show Loading Spinner while checking storage
   if (!isReady) {

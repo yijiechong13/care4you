@@ -1,11 +1,25 @@
-import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Event } from '@/types/event';
-import { borderRadius, colors, fontSize, fontWeight, shadow, spacing } from '@/constants/theme';
-import { cancelEvent } from '@/services/eventService';
-import { useRouter } from 'expo-router';
-import { postAnnouncement } from '@/services/announmentService';
+import React from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Event } from "@/types/event";
+import {
+  borderRadius,
+  colors,
+  fontSize,
+  fontWeight,
+  shadow,
+  spacing,
+} from "@/constants/theme";
+import { cancelEvent } from "@/services/eventService";
+import { useRouter } from "expo-router";
+import { postAnnouncement } from "@/services/announmentService";
 
 interface EventCardProps {
   event: Event;
@@ -14,54 +28,70 @@ interface EventCardProps {
   isExporting?: boolean;
 }
 
-export function EventCard({ event, isStaff, onExport, isExporting }: EventCardProps) {
+export function EventCard({
+  event,
+  isStaff,
+  onExport,
+  isExporting,
+}: EventCardProps) {
   const router = useRouter();
   const formatTime = (start: string, end: string) => `${start} - ${end}`;
 
   const formatDate = (date: Date) => {
     const today = new Date();
     if (date.toDateString() === today.toDateString()) {
-      return 'Today';
+      return "Today";
     }
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
+    return date.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
     });
   };
 
   const handleCancel = async () => {
     try {
-      Alert.alert("Cancel Event", "Are you sure you want to cancel this event?", [
-      { text: "Exit", style: "cancel" },
-      {
-        text: "Cancel",
-        style: "destructive",
-        onPress: async () => {
-          await cancelEvent(event.id);
+      Alert.alert(
+        "Cancel Event",
+        "Are you sure you want to cancel this event?",
+        [
+          { text: "Exit", style: "cancel" },
+          {
+            text: "Cancel",
+            style: "destructive",
+            onPress: async () => {
+              await cancelEvent(event.id);
 
-          const announcementMsg = "We regret to inform you that " + event.title + ", originally scheduled for " + event.date.toDateString() + ", has been cancelled." + 
-          "\n\nWe apologize for any inconvenience this may cause. If you have already registered, your slot has been released. We hope to see you at our future events." + 
-          "\n\nThank you for your understanding.";
-          await postAnnouncement(
-            "❌ Event Cancelled: " + event.title,
-            announcementMsg
-          );
-          router.replace("/(tabs)/home");
-        },
-      },
-    ]);
+              const announcementMsg =
+                "We regret to inform you that " +
+                event.title +
+                ", originally scheduled for " +
+                event.date.toDateString() +
+                ", has been cancelled." +
+                "\n\nWe apologize for any inconvenience this may cause. If you have already registered, your slot has been released. We hope to see you at our future events." +
+                "\n\nThank you for your understanding.";
+              await postAnnouncement(
+                "❌ Event Cancelled: " + event.title,
+                announcementMsg,
+              );
+              router.replace("/(tabs)/home");
+            },
+          },
+        ],
+      );
     } catch (error) {
       Alert.alert("Error", "Failed to cancel event");
     }
-  }
+  };
 
   return (
     <View style={styles.card}>
       {/* Status Badge */}
       <View style={styles.statusContainer}>
         <View style={styles.statusDot} />
-        <Text style={[styles.statusText, { color: statusColors[event.status] }]}>
+        <Text
+          style={[styles.statusText, { color: statusColors[event.status] }]}
+        >
           {statusLabels[event.status]}
         </Text>
       </View>
@@ -71,7 +101,8 @@ export function EventCard({ event, isStaff, onExport, isExporting }: EventCardPr
         <View style={styles.titleContainer}>
           <Text style={styles.title}>{event.title}</Text>
           <Text style={styles.dateTime}>
-            {formatDate(event.date)} • {formatTime(event.startTime, event.endTime)}
+            {formatDate(event.date)} •{" "}
+            {formatTime(event.startTime, event.endTime)}
           </Text>
         </View>
         {event.eventStatus == "cancelled" && (
@@ -79,7 +110,7 @@ export function EventCard({ event, isStaff, onExport, isExporting }: EventCardPr
             <Text style={styles.cancelButtonText}>Cancelled</Text>
           </View>
         )}
-        
+
         {isStaff && event.eventStatus != "cancelled" && (
           <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
             <Text style={styles.cancelButtonText}>X Cancel</Text>
@@ -88,10 +119,10 @@ export function EventCard({ event, isStaff, onExport, isExporting }: EventCardPr
       </View>
 
       {/* Important Notice */}
-      {event.importantNotice && (
+      {event.reminders && (
         <View style={styles.noticeContainer}>
           <Text style={styles.noticeTitle}>IMPORTANT NOTICE</Text>
-          <Text style={styles.noticeText}>{event.importantNotice}</Text>
+          <Text style={styles.noticeText}>{event.reminders}</Text>
         </View>
       )}
 
@@ -110,7 +141,11 @@ export function EventCard({ event, isStaff, onExport, isExporting }: EventCardPr
                   <ActivityIndicator size="small" color={colors.primary} />
                 ) : (
                   <>
-                    <Ionicons name="download-outline" size={16} color={colors.primary} />
+                    <Ionicons
+                      name="download-outline"
+                      size={16}
+                      color={colors.primary}
+                    />
                     <Text style={styles.exportButtonText}>Export</Text>
                   </>
                 )}
@@ -121,7 +156,12 @@ export function EventCard({ event, isStaff, onExport, isExporting }: EventCardPr
             <View style={styles.countItem}>
               <Text style={styles.countNumber}>
                 {event.takenSlots ?? 0}
-                {event.participantSlots != null && <Text style={styles.countCap}> / {event.participantSlots}</Text>}
+                {event.participantSlots != null && (
+                  <Text style={styles.countCap}>
+                    {" "}
+                    / {event.participantSlots}
+                  </Text>
+                )}
               </Text>
               <Text style={styles.countLabel}>Participants</Text>
             </View>
@@ -176,8 +216,8 @@ const styles = StyleSheet.create({
     ...shadow.md,
   },
   statusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: spacing.sm,
   },
   statusDot: {
@@ -193,9 +233,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: spacing.md,
   },
   titleContainer: {
@@ -215,12 +255,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: "red",
     paddingHorizontal: 15,
-    paddingVertical: 5
+    paddingVertical: 5,
   },
   cancelButtonText: {
     fontSize: 12,
     color: "white",
-    fontWeight: "600"
+    fontWeight: "600",
   },
   noticeContainer: {
     backgroundColor: colors.warningLight,
@@ -248,8 +288,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: spacing.md,
   },
   detailIcon: {
@@ -300,9 +340,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   signUpHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: spacing.sm,
   },
   signUpTitle: {
@@ -311,8 +351,8 @@ const styles = StyleSheet.create({
     color: colors.gray[400],
   },
   exportButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.gray[100],
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
@@ -332,12 +372,12 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   countsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
   },
   countItem: {
-    alignItems: 'center',
+    alignItems: "center",
     flex: 1,
   },
   countNumber: {
@@ -374,6 +414,6 @@ const statusColors = {
 
 const statusLabels = {
   today: "TODAY'S EVENT",
-  upcoming: 'UPCOMING',
-  completed: 'COMPLETED',
+  upcoming: "UPCOMING",
+  completed: "COMPLETED",
 } as const;

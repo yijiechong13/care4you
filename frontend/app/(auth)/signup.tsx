@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import {
+  KeyboardAvoidingView,
+  Platform,
   View,
   Text,
   TextInput,
@@ -10,6 +12,8 @@ import {
   Pressable,
   StyleSheet,
   ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -25,11 +29,13 @@ export default function SignupScreen() {
   const [retypePassword, setRetypePassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [secureTextEntry, setSecureTextEntry] = useState(true);
+
   const router = useRouter();
   const { role } = useLocalSearchParams<{ role: string }>();
   const insets = useSafeAreaInsets();
 
   const handleCreateAccount = async () => {
+    // 1. Validation
     if (!email || !name || !retypePassword || !phone || !password) {
       Alert.alert("Error", "Please fill in all fields");
       return;
@@ -42,23 +48,25 @@ export default function SignupScreen() {
 
     setLoading(true);
     try {
+      // 2. Retrieve the Guest ID for the "Conversion Deal"
+      const currentGuestId = await AsyncStorage.getItem("userId");
+      const isGuest = currentGuestId && currentGuestId.startsWith("guest_");
+
       const userData = {
-        name: name,
-        email: email,
-        password: password,
-        phone: phone,
-        user_type: role, // Role from landing page selection
+        name,
+        email,
+        password,
+        phone,
+        user_type: role || "participant",
+        guestId: isGuest ? currentGuestId : null, // Send to backend for migration
       };
 
-      // Call your API
+      // 3. Call API
       const result = await signupUser(userData);
 
-      // CHECK THIS LINE:
       if (result && result.user && result.user.id) {
-        // This is what puts it in Chrome's "Application" tab
+        // 4. Overwrite Guest ID with permanent User ID
         await AsyncStorage.setItem("userId", result.user.id.toString());
-
-        // Then move to the app
         router.replace("/(tabs)/home");
       }
     } catch (error: any) {
@@ -68,129 +76,139 @@ export default function SignupScreen() {
     }
   };
 
-  const showPassword = async () => {
-    setSecureTextEntry(!secureTextEntry);
-  };
-
   return (
-    <ScrollView style={[styles.container, { paddingTop: insets.top + 20 }]}>
-      {/* Back Button */}
-      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-        <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-      </TouchableOpacity>
-
-      {/* Logo & Header */}
-      <View style={styles.header}>
-        <Image
-          source={require("../../assets/images/care4youlogo.png")}
-          style={styles.logo}
-        />
-        <Text style={styles.welcomeText}>Create your account</Text>
-      </View>
-
-      {/* Input Fields */}
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>FULL NAME</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter your name"
-          placeholderTextColor="#A9A9A9"
-          value={name}
-          onChangeText={setName}
-          autoCapitalize="none"
-        />
-
-        <Text style={styles.label}>EMAIL</Text>
-        <TextInput
-          style={styles.input}
-          keyboardType="email-address"
-          placeholder="Enter your email"
-          placeholderTextColor="#A9A9A9"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-        />
-
-        {/* NEW PHONE FIELD ADDED HERE */}
-        <Text style={styles.label}>PHONE NUMBER</Text>
-        <TextInput
-          style={styles.input}
-          keyboardType="phone-pad" // Shows the numeric keypad
-          placeholder="Enter your phone number"
-          placeholderTextColor="#A9A9A9"
-          value={phone}
-          onChangeText={setPhone}
-        />
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>PASSWORD</Text>
-          {/* Corrected: Capital 'V' on View and removed individual input margin */}
-          <View style={styles.passwordContainer}>
-            <TextInput
-              style={styles.passwordInput} // Renamed for clarity
-              placeholder="Create a secure password"
-              placeholderTextColor="#A9A9A9"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={secureTextEntry}
-            />
-            <Pressable onPress={showPassword} style={styles.toggleButton}>
-              <MaterialCommunityIcons
-                name={secureTextEntry ? "eye-off" : "eye"}
-                size={24}
-                color="gray"
-              />
-            </Pressable>
-          </View>
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>CONFIRM PASSWORD</Text>
-          {/* Corrected: Capital 'V' on View and removed individual input margin */}
-          <View style={styles.passwordContainer}>
-            <TextInput
-              style={styles.passwordInput} // Renamed for clarity
-              placeholder="Re-enter your password"
-              placeholderTextColor="#A9A9A9"
-              value={retypePassword}
-              onChangeText={setRetypePassword}
-              secureTextEntry
-            />
-          </View>
-        </View>
-      </View>
-
-      {/* Action Buttons */}
-      <TouchableOpacity
-        style={styles.signInButton}
-        onPress={handleCreateAccount}
-        disabled={loading}
+    <View style={{ flex: 1, backgroundColor: "#002B5B" }}>
+      <KeyboardAvoidingView
+        style={styles.mainWrapper}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
-        {loading ? (
-          <ActivityIndicator color="#FFF" />
-        ) : (
-          <Text style={styles.buttonText}>Create Account</Text>
-        )}
-      </TouchableOpacity>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingTop: insets.top + 20, paddingBottom: 60 },
+            ]}
+          >
+            {/* Header Section */}
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
 
-      {/* UPDATED FOOTER SECTION */}
-      <Text style={styles.footerText}>
-        Already have an account? <Text style={styles.signUpText}></Text>
-        <Text
-          style={styles.signUpText}
-          onPress={() => router.push("/login")} // ✅ Absolute path to login
-        >
-          Log In
-        </Text>
-      </Text>
-    </ScrollView>
+            <View style={styles.header}>
+              <Image
+                source={require("../../assets/images/care4youlogo.png")}
+                style={styles.logo}
+              />
+              <Text style={styles.welcomeText}>Create your account</Text>
+            </View>
+
+            {/* Form Fields */}
+            <View style={styles.formContainer}>
+              <Text style={styles.label}>FULL NAME</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your name"
+                placeholderTextColor="#A9A9A9"
+                value={name}
+                onChangeText={setName}
+              />
+
+              <Text style={styles.label}>EMAIL</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="email-address"
+                placeholder="Enter your email"
+                placeholderTextColor="#A9A9A9"
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+              />
+
+              <Text style={styles.label}>PHONE NUMBER</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="phone-pad"
+                placeholder="Enter your phone number"
+                placeholderTextColor="#A9A9A9"
+                value={phone}
+                onChangeText={setPhone}
+              />
+
+              <Text style={styles.label}>PASSWORD</Text>
+              <View style={styles.passwordWrapper}>
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="Create a secure password"
+                  placeholderTextColor="#A9A9A9"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={secureTextEntry}
+                />
+                <Pressable
+                  onPress={() => setSecureTextEntry(!secureTextEntry)}
+                  style={styles.toggleIcon}
+                >
+                  <MaterialCommunityIcons
+                    name={secureTextEntry ? "eye-off" : "eye"}
+                    size={22}
+                    color="gray"
+                  />
+                </Pressable>
+              </View>
+
+              <Text style={styles.label}>CONFIRM PASSWORD</Text>
+              <View style={styles.passwordWrapper}>
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="Re-enter your password"
+                  placeholderTextColor="#A9A9A9"
+                  value={retypePassword}
+                  onChangeText={setRetypePassword}
+                  secureTextEntry={true}
+                />
+              </View>
+            </View>
+
+            {/* Submit Action */}
+            <TouchableOpacity
+              style={styles.submitButton}
+              onPress={handleCreateAccount}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <Text style={styles.buttonText}>Create Account</Text>
+              )}
+            </TouchableOpacity>
+
+            <Text style={styles.footerText}>
+              Already have an account?{" "}
+              <Text
+                style={styles.linkText}
+                onPress={() => router.push("/login")}
+              >
+                Log In
+              </Text>
+            </Text>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  mainWrapper: {
     flex: 1,
     backgroundColor: "#002B5B",
+  },
+  scrollContent: {
     paddingHorizontal: 24,
   },
   backButton: {
@@ -199,84 +217,79 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    marginTop: 20,
-    marginBottom: 40,
+    marginBottom: 30,
   },
   logo: {
-    width: 180,
-    height: 180,
+    width: 150,
+    height: 150,
     resizeMode: "contain",
   },
   welcomeText: {
-    color: "rgba(255, 255, 255, 0.8)",
-    fontSize: 16,
-    textAlign: "center",
+    color: "rgba(255, 255, 255, 0.9)",
+    fontSize: 18,
+    fontWeight: "600",
     marginTop: -10,
   },
-  inputContainer: {
-    marginBottom: 20,
+  formContainer: {
+    width: "100%",
   },
-
   label: {
     color: "#FFF",
-    fontWeight: "bold",
+    fontWeight: "700",
     marginBottom: 8,
-    fontSize: 14,
+    fontSize: 12,
+    letterSpacing: 1,
   },
   input: {
     backgroundColor: "#FFF",
     borderRadius: 10,
     padding: 15,
-    marginBottom: 20,
+    marginBottom: 18,
     fontSize: 16,
     color: "#000",
   },
-  passwordContainer: {
+  passwordWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFF", // Move white background here
+    backgroundColor: "#FFF",
     borderRadius: 10,
-    paddingHorizontal: 10, // Space for the icon
+    marginBottom: 18,
   },
   passwordInput: {
-    flex: 1, // Takes up all space except the icon
-    paddingVertical: 15,
-    paddingHorizontal: 5,
+    flex: 1,
+    padding: 15,
     fontSize: 16,
     color: "#000",
   },
-  toggleButton: {
-    padding: 10,
+  toggleIcon: {
+    paddingRight: 15,
   },
-
-  signInButton: {
-    backgroundColor: "#6D7E8E", // Gray-ish blue from your image
+  submitButton: {
+    backgroundColor: "#6D7E8E",
     borderRadius: 10,
     padding: 18,
     alignItems: "center",
+    marginTop: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
     elevation: 5,
   },
   buttonText: {
     color: "#FFF",
     fontWeight: "bold",
-    fontSize: 18,
+    fontSize: 16,
   },
   footerText: {
     color: "#FFF",
     textAlign: "center",
-    marginTop: 20,
+    marginTop: 25,
+    fontSize: 14,
   },
-  signUpText: {
+  linkText: {
     color: "#ADD8E6",
     fontWeight: "bold",
-    textDecorationLine: "underline",
-  },
-  guestLink: {
-    marginTop: 30,
-    alignItems: "center",
-  },
-  guestText: {
-    color: "#4FA8FF",
     textDecorationLine: "underline",
   },
 });

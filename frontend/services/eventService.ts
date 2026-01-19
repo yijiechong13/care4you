@@ -162,6 +162,7 @@ export const fetchUserRegistrations = async (userId: string) => {
 
       return {
         id: event.id.toString(),
+        reminders: event.reminders,
         title: event.title,
         date: dateObj,
         startTime: dateObj.toLocaleTimeString("en-US", {
