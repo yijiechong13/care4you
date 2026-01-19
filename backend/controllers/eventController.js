@@ -38,4 +38,20 @@ const getEventQuestions = async (req, res) => {
   }
 };
 
-module.exports = { getEvents, createEvent, getEventQuestions };
+const cancelEvent = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    // We update the status to 'cancelled'
+    const updatedEvent = await EventModel.updateStatus(eventId, 'cancelled');
+    
+    res.status(200).json({ 
+      message: "Event cancelled successfully", 
+      event: updatedEvent 
+    });
+  } catch (error) {
+    console.error("❌ Cancel Error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = { getEvents, createEvent, getEventQuestions, cancelEvent };

@@ -17,6 +17,7 @@ export interface Event {
   volunteerSlots?: number;
   takenSlots?: number;
   volunteerTakenSlots?: number;
+  eventStatus: string
 }
 
 export interface EventCardProps {

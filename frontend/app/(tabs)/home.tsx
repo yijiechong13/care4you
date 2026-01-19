@@ -331,8 +331,16 @@ export default function HomeScreen() {
                           <View
                             style={styles.registerClosedBtn}
                           >
-                            <Text style={styles.registerClosedBtnText}>
+                            <Text style={styles.registerBtnText}>
                               REGISTRATION CLOSED
+                            </Text>
+                          </View>
+                        ) : item.eventStatus == "cancelled" ? (
+                          <View
+                            style={styles.registerCancelBtn}
+                          >
+                            <Text style={styles.registerBtnText}>
+                              CANCELLED
                             </Text>
                           </View>
                         ) : (
@@ -544,11 +552,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 8,
   },
-  registerClosedBtnText: {
-    color: "white",
-    fontWeight: "600",
-    fontSize: 12,
-    letterSpacing: 0.3,
+  registerCancelBtn: {
+    backgroundColor: "#ff3030",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
   },
   noEventSection: {
     flex: 1,

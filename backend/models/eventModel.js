@@ -115,6 +115,18 @@ const EventModel = {
     }
 
     return eventId; // Return the ID to the controller
+  },
+
+  updateStatus: async (id, newStatus) => {
+    const { data, error } = await supabase
+      .from('events')
+      .update({ eventStatus: newStatus })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data;
   }
 };
 

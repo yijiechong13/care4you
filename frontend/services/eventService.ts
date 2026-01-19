@@ -46,6 +46,7 @@ export const fetchEvents = async () => {
         takenSlots: event.taken_slots,
         volunteerTakenSlots: event.volunteer_taken_slots,
         imageUrl: event.image_url,
+        eventStatus: event.eventStatus
       };
     });
   } catch (error) {
@@ -112,6 +113,7 @@ export const fetchUserRegistrations = async (userId: string) => {
     }
 
     const rawData = await response.json();
+    console.log(rawData);
 
     // Transform the data to match frontend Event format
     return rawData.map((registration: any) => {
@@ -163,6 +165,7 @@ export const fetchUserRegistrations = async (userId: string) => {
         venue: event.location,
         selectedResponses: selectedResponses.length > 0 ? selectedResponses : undefined,
         registrationId: registration.id,
+        eventStatus: event.eventStatus
       };
     });
   } catch (error) {
@@ -245,5 +248,22 @@ export const fetchRegistrationCounts = async (eventIds: string[]) => {
   } catch (error) {
     console.error("Fetch Registration Counts Failed:", error);
     return {};
+  }
+};
+
+export const cancelEvent = async (eventId: string) => {
+  try {
+    const response = await fetch(`${API_URL}/${eventId}/cancel`, {
+      method: "PATCH",
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to cancel event");
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Cancel Event Failed:", error);
+    throw error;
   }
 };

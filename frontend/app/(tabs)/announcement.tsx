@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { EventCard } from '@/components/event-card';
 import { Event, FilterTab, filterTabs } from '@/types/event';
@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { fetchEvents, fetchUserRegistrations } from '@/services/eventService';
 import { fetchAnnouncements } from '@/services/announmentService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 
 export default function EventsScreen() {
   const router = useRouter();
@@ -16,10 +16,12 @@ export default function EventsScreen() {
   const [loading, setLoading] = useState(true);
   const [isStaff, setIsStaff] = useState(false);
 
-  useEffect(() => {
-    getUser();
-    getAnnouncements();
-  }, [])
+  useFocusEffect(
+    useCallback(() => {
+      getUser();
+      getAnnouncements()
+    }, [])
+  );
 
   const getUser = async () => {
     try {

@@ -139,6 +139,7 @@ export default function EventsScreen() {
             volunteerSlots: event.volunteerSlots,
             takenSlots: event.takenSlots,
             volunteerTakenSlots: event.volunteerTakenSlots,
+            eventStatus: event.eventStatus
           };
         });
         setEvents(transformedEvents);

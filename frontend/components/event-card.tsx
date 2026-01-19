@@ -1,8 +1,11 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Event } from '@/types/event';
 import { borderRadius, colors, fontSize, fontWeight, shadow, spacing } from '@/constants/theme';
+import { cancelEvent } from '@/services/eventService';
+import { useRouter } from 'expo-router';
+import { postAnnouncement } from '@/services/announmentService';
 
 interface EventCardProps {
   event: Event;
@@ -12,6 +15,7 @@ interface EventCardProps {
 }
 
 export function EventCard({ event, isStaff, onExport, isExporting }: EventCardProps) {
+  const router = useRouter();
   const formatTime = (start: string, end: string) => `${start} - ${end}`;
 
   const formatDate = (date: Date) => {
@@ -25,6 +29,32 @@ export function EventCard({ event, isStaff, onExport, isExporting }: EventCardPr
       day: 'numeric',
     });
   };
+
+  const handleCancel = async () => {
+    try {
+      Alert.alert("Cancel Event", "Are you sure you want to cancel this event?", [
+      { text: "Exit", style: "cancel" },
+      {
+        text: "Cancel",
+        style: "destructive",
+        onPress: async () => {
+          await cancelEvent(event.id);
+
+          const announcementMsg = "We regret to inform you that " + event.title + ", originally scheduled for " + event.date.toDateString() + ", has been cancelled." + 
+          "\n\nWe apologize for any inconvenience this may cause. If you have already registered, your slot has been released. We hope to see you at our future events." + 
+          "\n\nThank you for your understanding.";
+          await postAnnouncement(
+            "❌ Event Cancelled: " + event.title,
+            announcementMsg
+          );
+          router.replace("/(tabs)/home");
+        },
+      },
+    ]);
+    } catch (error) {
+      Alert.alert("Error", "Failed to cancel event");
+    }
+  }
 
   return (
     <View style={styles.card}>
@@ -44,7 +74,17 @@ export function EventCard({ event, isStaff, onExport, isExporting }: EventCardPr
             {formatDate(event.date)} • {formatTime(event.startTime, event.endTime)}
           </Text>
         </View>
-        {event.icon && <Text style={styles.icon}>{event.icon}</Text>}
+        {event.eventStatus == "cancelled" && (
+          <View style={styles.cancelButton}>
+            <Text style={styles.cancelButtonText}>Cancelled</Text>
+          </View>
+        )}
+        
+        {isStaff && event.eventStatus != "cancelled" && (
+          <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+            <Text style={styles.cancelButtonText}>X Cancel</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Important Notice */}
@@ -171,8 +211,16 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: colors.gray[500],
   },
-  icon: {
-    fontSize: 40,
+  cancelButton: {
+    borderRadius: 20,
+    backgroundColor: "red",
+    paddingHorizontal: 15,
+    paddingVertical: 5
+  },
+  cancelButtonText: {
+    fontSize: 12,
+    color: "white",
+    fontWeight: "600"
   },
   noticeContainer: {
     backgroundColor: colors.warningLight,
