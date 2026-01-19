@@ -69,10 +69,10 @@ export default function LoginScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
-      {/* Back Button */}
+      {/* Back Button
       <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
         <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       {/* Logo & Header */}
       <View style={styles.header}>
@@ -137,7 +137,7 @@ export default function LoginScreen() {
         Don't have an account?{" "}
         <Text
           style={styles.signUpText}
-          onPress={() => router.push("/signup")} // ✅ Absolute path to signup
+          onPress={() => router.push("/onboarding")} // ✅ Absolute path to onboarding
         >
           Sign up
         </Text>

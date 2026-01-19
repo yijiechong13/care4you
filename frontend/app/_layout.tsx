@@ -41,7 +41,7 @@ export default function RootLayout() {
 
     if (!hasUser && inTabsGroup) {
       // No user? Go to landing page (role selection)
-      router.replace("/onboarding" as any);
+      router.replace("/login" as any);
     } else if (hasUser && inAuthGroup) {
       // User found but on auth screens? Force them into the app
       router.replace("/(tabs)/home" as any);
@@ -64,9 +64,18 @@ export default function RootLayout() {
         {/* Add your login and signup screens here */}
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="eventCreation/basicInfo" options={{ headerShown: false }} />
-        <Stack.Screen name="eventCreation/specificInfo" options={{ headerShown: false }} />
-        <Stack.Screen name="eventRegistration/register" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="eventCreation/basicInfo"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="eventCreation/specificInfo"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="eventRegistration/register"
+          options={{ headerShown: false }}
+        />
         <Stack.Screen name="modal" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
