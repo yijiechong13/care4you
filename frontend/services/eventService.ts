@@ -60,6 +60,8 @@ export const fetchEvents = async () => {
         imageUrl: primaryImage?.image_url || event.image_url, // Fallback to old field
         images: images.length > 0 ? images : undefined,
         eventStatus: event.eventStatus,
+        wheelchairAccessible: event.wheelchair_accessible,
+        tag: event.tag
       };
     });
   } catch (error) {

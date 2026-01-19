@@ -35,6 +35,7 @@ export default function CreateEventScreen() {
   const [volunteers, setVolunteers] = useState('');
   const [noCap, setNoCap] = useState(false);
   const [noNeed, setNoNeed] = useState(false);
+  const [isWheelchairAccessible, setIsWheelchairAccessible] = useState(false);
   const [tag, setTag] = useState(TAG_OPTIONS[0]);
   const [showTagDropdown, setShowTagDropdown] = useState(false);
 
@@ -98,6 +99,7 @@ export default function CreateEventScreen() {
         endTime: toLocalISOString(endDate),
         participantSlots: finalParticipants,
         volunteerSlots: finalVolunteers,
+        wheelchairAccessible: isWheelchairAccessible,
         tag
         }) 
       }
@@ -112,8 +114,10 @@ export default function CreateEventScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color='#002C5E' />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Create New Event</Text>
-        <Text style={styles.headerSubtitle}>Fill in event details</Text>
+        <View style={styles.headerText}>
+          <Text style={styles.headerTitle}>Create New Event</Text>
+          <Text style={styles.headerSubtitle}>Fill in event details</Text>
+        </View>        
       </View>
       
       <View style={styles.divider} />
@@ -242,7 +246,35 @@ export default function CreateEventScreen() {
           </View>
         </View>
 
-        {/* 7. TAG */}
+        {/* 7. WHEELCHAIR ACCESSIBLE (NEW) */}
+        <Text style={styles.label}>Wheelchair Accessible</Text>
+        <View style={styles.radioGroup}>
+          <TouchableOpacity 
+            style={[styles.radioButton, isWheelchairAccessible && styles.radioButtonSelected]} 
+            onPress={() => setIsWheelchairAccessible(true)}
+          >
+            <Ionicons 
+              name={isWheelchairAccessible ? "radio-button-on" : "radio-button-off"} 
+              size={20} 
+              color={isWheelchairAccessible ? "#002C5E" : "#666"} 
+            />
+            <Text style={[styles.radioText, isWheelchairAccessible && styles.radioTextSelected]}>Yes</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.radioButton, !isWheelchairAccessible && styles.radioButtonSelected]} 
+            onPress={() => setIsWheelchairAccessible(false)}
+          >
+            <Ionicons 
+              name={!isWheelchairAccessible ? "radio-button-on" : "radio-button-off"} 
+              size={20} 
+              color={!isWheelchairAccessible ? "#002C5E" : "#666"} 
+            />
+            <Text style={[styles.radioText, !isWheelchairAccessible && styles.radioTextSelected]}>No</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* 8. TAG */}
         <Text style={styles.label}>Category Tag</Text>
         <TouchableOpacity 
           style={styles.dropdownButton} 
@@ -288,8 +320,12 @@ const styles = StyleSheet.create({
     paddingTop: 60,
   },
   header: {
+    flexDirection: "row",
     paddingHorizontal: 20,
     marginBottom: 10,
+  },
+  headerText: {
+    marginHorizontal: 10,
   },
   backButton: {
     marginBottom: 10,
@@ -364,6 +400,34 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginBottom: 4,
     color: '#666',
+    fontWeight: '600',
+  },
+  radioGroup: {
+    flexDirection: 'row',
+    gap: 15,
+  },
+  radioButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 8,
+    gap: 8,
+    backgroundColor: '#fff',
+    flex: 1, // Makes them split width equally
+  },
+  radioButtonSelected: {
+    borderColor: '#002C5E',
+    backgroundColor: '#F0F9FF', // Very light blue background when selected
+  },
+  radioText: {
+    fontSize: 16,
+    color: '#374151',
+  },
+  radioTextSelected: {
+    color: '#002C5E',
     fontWeight: '600',
   },
   dropdownButton: {
