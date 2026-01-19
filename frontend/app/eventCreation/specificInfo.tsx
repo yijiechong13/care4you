@@ -15,28 +15,65 @@ import * as ImagePicker from 'expo-image-picker';
 import { publishEvent } from '@/services/eventService';
 import { postAnnouncement } from '@/services/announmentService';
 
+interface EventImageUpload {
+  uri: string;
+  isPrimary: boolean;
+}
+
 export default function SpecificInfoScreen() {
   const router = useRouter();
   const [reminders, setReminders] = useState('');
-  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [images, setImages] = useState<EventImageUpload[]>([]);
   const [questions, setQuestions] = useState([
     { id: 1, title: '', options: [''] } // Start with 1 empty question
   ]);
   const params = useLocalSearchParams();
   const basicInfo = params.basicInfo ? JSON.parse(params.basicInfo as string) : {};
 
-  // 1. Image Picker
+  // 1. Image Picker - supports multiple images
   const pickImage = async () => {
+    if (images.length >= 5) {
+      Alert.alert("Limit Reached", "You can upload up to 5 images per event.");
+      return;
+    }
+
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
+      allowsMultipleSelection: true,
+      selectionLimit: 5 - images.length,
       aspect: [16, 9],
-      quality: 1,
+      quality: 0.8,
     });
 
     if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
+      const newImages: EventImageUpload[] = result.assets.map((asset, index) => ({
+        uri: asset.uri,
+        isPrimary: images.length === 0 && index === 0, // First image is primary if no existing
+      }));
+      setImages([...images, ...newImages]);
     }
+  };
+
+  // Remove an image
+  const removeImage = (index: number) => {
+    const newImages = [...images];
+    const wasPrimary = newImages[index].isPrimary;
+    newImages.splice(index, 1);
+
+    // If removed image was primary, set first remaining as primary
+    if (wasPrimary && newImages.length > 0) {
+      newImages[0].isPrimary = true;
+    }
+    setImages(newImages);
+  };
+
+  // Set primary image
+  const setPrimaryImage = (index: number) => {
+    const newImages = images.map((img, i) => ({
+      ...img,
+      isPrimary: i === index,
+    }));
+    setImages(newImages);
   };
 
   // 2. Question Logic
@@ -87,18 +124,27 @@ export default function SpecificInfoScreen() {
     }))
     .filter(q => q.title !== "" && q.options.length > 0);
 
+    // Get primary image URL for backward compatibility
+    const primaryImage = images.find(img => img.isPrimary) || images[0];
+
     console.log("--- Event Data ---");
     console.log("Reminders:", reminders);
-    console.log("Image:", imageUri);
+    console.log("Images:", images.length);
     console.log("MCQ Questions:", JSON.stringify(cleanedQuestions, null, 2));
 
     try {
         await publishEvent(
-            { 
-                ...basicInfo, 
-                reminders, 
-                imageUrl: imageUri 
-            }, 
+            {
+                ...basicInfo,
+                reminders,
+                imageUrl: primaryImage?.uri || null,
+                // Pass all images for future multi-image support
+                images: images.map((img, index) => ({
+                  uri: img.uri,
+                  isPrimary: img.isPrimary,
+                  displayOrder: index,
+                }))
+            },
             cleanedQuestions
         );
 
@@ -148,18 +194,37 @@ export default function SpecificInfoScreen() {
           onChangeText={setReminders}
         />
 
-        {/* Photo Upload */}
-        <Text style={styles.label}>Event Photo</Text>
-        <TouchableOpacity style={styles.uploadBox} onPress={pickImage}>
-          {imageUri ? (
-            <Image source={{ uri: imageUri }} style={styles.uploadedImage} />
-          ) : (
-            <View style={styles.uploadPlaceholder}>
-              <Ionicons name="cloud-upload-outline" size={32} color="#666" />
-              <Text style={styles.uploadText}>Tap to upload banner image</Text>
-            </View>
-          )}
-        </TouchableOpacity>
+        {/* Photo Upload - Multiple Images */}
+        <Text style={styles.label}>Event Photos (up to 5)</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imagesScrollView}>
+          <View style={styles.imagesRow}>
+            {images.map((img, index) => (
+              <View key={index} style={styles.imageWrapper}>
+                <Image source={{ uri: img.uri }} style={styles.uploadedImageThumb} />
+                <TouchableOpacity
+                  style={styles.removeImageBtn}
+                  onPress={() => removeImage(index)}
+                >
+                  <Ionicons name="close-circle" size={24} color="#EF4444" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.primaryBadge, img.isPrimary && styles.primaryBadgeActive]}
+                  onPress={() => setPrimaryImage(index)}
+                >
+                  <Text style={[styles.primaryBadgeText, img.isPrimary && styles.primaryBadgeTextActive]}>
+                    {img.isPrimary ? '★ Primary' : 'Set Primary'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+            {images.length < 5 && (
+              <TouchableOpacity style={styles.addImageBtn} onPress={pickImage}>
+                <Ionicons name="add" size={32} color="#666" />
+                <Text style={styles.addImageText}>Add Photo</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </ScrollView>
 
 
         {/* SECTION 2: MCQ BUILDER */}
@@ -314,7 +379,68 @@ const styles = StyleSheet.create({
     height: '100%',
     resizeMode: 'cover'
   },
-  
+  imagesScrollView: {
+    marginBottom: 30,
+  },
+  imagesRow: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingVertical: 8,
+  },
+  imageWrapper: {
+    position: 'relative',
+    width: 120,
+    height: 140,
+  },
+  uploadedImageThumb: {
+    width: 120,
+    height: 90,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+  },
+  removeImageBtn: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+  },
+  primaryBadge: {
+    marginTop: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+  },
+  primaryBadgeActive: {
+    backgroundColor: '#002C5E',
+  },
+  primaryBadgeText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  primaryBadgeTextActive: {
+    color: '#fff',
+  },
+  addImageBtn: {
+    width: 120,
+    height: 90,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderStyle: 'dashed',
+    borderRadius: 8,
+    backgroundColor: '#F9FAFB',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addImageText: {
+    color: '#6B7280',
+    fontSize: 12,
+    marginTop: 4,
+  },
+
   // MCQ STYLES
   mcqHeaderContainer: {
     flexDirection: 'row',
