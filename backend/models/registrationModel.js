@@ -102,7 +102,7 @@ const RegistrationModel = {
         guest_name,
         guest_contact,
         guest_emergency_contact,
-        users:user_id(id, name, email, contact_number, user_type)
+        users:user_id(id, name, email, phone, user_type)
       `)
       .eq('event_id', eventId)
       .order('created_at', { ascending: true });
@@ -114,7 +114,7 @@ const RegistrationModel = {
       sn: index + 1,
       name: reg.guest_name || reg.users?.name || 'N/A',
       email: reg.users?.email || 'N/A',
-      contact: reg.guest_contact || reg.users?.contact_number || 'N/A',
+      contact: reg.guest_contact || reg.users?.phone || 'N/A',
       emergencyContact: reg.guest_emergency_contact || 'N/A',
       userType: reg.users?.user_type || 'Participant',
       specialRequirements: reg.special_requirements || '',
