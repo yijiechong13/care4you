@@ -10,7 +10,7 @@ import {
   Pressable,
   StyleSheet,
 } from "react-native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -69,7 +69,7 @@ export default function LoginScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
-      {/* Logo & Header */}
+            {/* Logo & Header */}
       <View style={styles.header}>
         <Image
           source={require("../../assets/images/care4youlogo.png")}
@@ -132,7 +132,7 @@ export default function LoginScreen() {
         Don't have an account?{" "}
         <Text
           style={styles.signUpText}
-          onPress={() => router.push("/onboarding")} // ✅ Absolute path to signup
+          onPress={() => router.push("/onboarding")} // ✅ Absolute path to onboarding
         >
           Sign up
         </Text>

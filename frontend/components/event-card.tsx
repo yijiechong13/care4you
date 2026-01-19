@@ -55,12 +55,12 @@ export function EventCard({ event, isStaff, onExport, isExporting }: EventCardPr
         </View>
       )}
 
-      {/* Registration Counts - Staff View */}
-      {event.registrationCounts && (
+      {/* Registration Counts - Staff View (uses same data as home page) */}
+      {isStaff && (
         <View style={styles.registrationContainer}>
           <View style={styles.signUpHeader}>
             <Text style={styles.signUpTitle}>SIGN-UPS</Text>
-            {isStaff && onExport && (
+            {onExport && (
               <TouchableOpacity
                 style={styles.exportButton}
                 onPress={() => onExport(event.id, event.title)}
@@ -80,7 +80,7 @@ export function EventCard({ event, isStaff, onExport, isExporting }: EventCardPr
           <View style={styles.countsRow}>
             <View style={styles.countItem}>
               <Text style={styles.countNumber}>
-                {event.registrationCounts.participant}
+                {event.takenSlots ?? 0}
                 {event.participantSlots != null && <Text style={styles.countCap}> / {event.participantSlots}</Text>}
               </Text>
               <Text style={styles.countLabel}>Participants</Text>
@@ -88,7 +88,7 @@ export function EventCard({ event, isStaff, onExport, isExporting }: EventCardPr
             <View style={styles.countDivider} />
             <View style={styles.countItem}>
               <Text style={styles.countNumber}>
-                {event.registrationCounts.volunteer}
+                {event.volunteerTakenSlots ?? 0}
                 {event.volunteerSlots != null && event.volunteerSlots > 0 && (
                   <Text style={styles.countCap}> / {event.volunteerSlots}</Text>
                 )}

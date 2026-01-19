@@ -2,13 +2,6 @@ export type EventStatus = 'today' | 'upcoming' | 'completed';
 
 export type FilterTab = 'all' | 'today' | 'upcoming' | 'completed';
 
-
-export interface RegistrationCounts {
-  volunteer: number;
-  participant: number;
-  total: number;
-}
-
 export interface Event {
   id: string;
   title: string;
@@ -20,9 +13,9 @@ export interface Event {
   importantNotice?: string;
   venue: string;
   selectedResponses?: { question: string; answer: string }[];
-  registrationCounts?: RegistrationCounts;
   participantSlots?: number;
   volunteerSlots?: number;
+  takenSlots?: number;
   volunteerTakenSlots?: number;
 }
 

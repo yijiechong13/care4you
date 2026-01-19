@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Alert } from 'react-native';
 import { EventCard } from '@/components/event-card';
 import { Event, FilterTab, filterTabs } from '@/types/event';
 import { borderRadius, colors, fontSize, fontWeight, spacing } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
-import { fetchEvents, fetchUserRegistrations, fetchRegistrationCounts, fetchRegistrationsForExport } from '@/services/eventService';
+import { fetchEvents, fetchUserRegistrations, fetchRegistrationsForExport } from '@/services/eventService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
@@ -21,10 +21,11 @@ export default function EventsScreen() {
     checkUserAndLoadEvents();
   }, []);
 
+  // Refresh data when screen comes into focus (for real-time updates)
   useFocusEffect(
     useCallback(() => {
       checkUserAndLoadEvents();
-    }, []),
+    }, [])
   );
 
   // Export registrations to CSV
@@ -46,7 +47,6 @@ export default function EventsScreen() {
       const csvRows = [headers.join(',')];
 
       registrations.forEach((reg: any) => {
-        const isVolunteer = (reg.userType || '').toLowerCase() === 'volunteer';
         const row = [
           reg.sn,
           `"${(reg.name || '').replace(/"/g, '""')}"`,
@@ -57,7 +57,7 @@ export default function EventsScreen() {
           `"${(reg.specialRequirements || '').replace(/"/g, '""')}"`,
           `"${(reg.responses || '').replace(/"/g, '""')}"`,
           `"${(reg.registeredAt || '').replace(/"/g, '""')}"`,
-          '', // Attendance
+          '', // Empty attendance column for staff to fill
         ];
         csvRows.push(row.join(','));
       });
@@ -111,14 +111,10 @@ export default function EventsScreen() {
       setIsStaff(staffRole);
 
       if (staffRole) {
-        // Staff sees ALL events
+        // Staff sees ALL events - uses same data source as home page
         const allEvents = await fetchEvents();
 
-        // Fetch registration counts for all events
-        const eventIds = allEvents.map((e: any) => e.id);
-        const counts = await fetchRegistrationCounts(eventIds);
-
-        // Transform to match Event type with status and registration counts
+        // Transform to match Event type with status (uses takenSlots from events table)
         const transformedEvents = allEvents.map((event: any) => {
           const dateObj = new Date(event.date);
           const now = new Date();
@@ -141,7 +137,8 @@ export default function EventsScreen() {
             venue: event.location,
             participantSlots: event.participantSlots,
             volunteerSlots: event.volunteerSlots,
-            registrationCounts: counts[event.id] || { volunteer: 0, participant: 0, total: 0 },
+            takenSlots: event.takenSlots,
+            volunteerTakenSlots: event.volunteerTakenSlots,
           };
         });
         setEvents(transformedEvents);
