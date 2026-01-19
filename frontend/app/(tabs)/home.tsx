@@ -29,6 +29,7 @@ export default function HomeScreen() {
   const currTime = new Date();
   const [user, setUser] = useState<any>(null);
   const [isStaff, setIsStaff] = useState(false);
+  const userRole = (user?.user_type || "").trim().toLowerCase();
   const [selectedDay, setSelectedDay] = useState<string>(
     formatDate(currTime),
   );
@@ -292,14 +293,30 @@ export default function HomeScreen() {
                         />
                         <View>
                           <Text style={styles.infoLabel}>AVAILABILITY</Text>
-                          {item.participantSlots ? (
-                            <Text style={styles.infoText}>
-                              {item.participantSlots - item.takenSlots}/
-                              {item.participantSlots} slots
-                            </Text>
-                          ) : (
-                            <Text style={styles.infoText}>No capacity!</Text>
-                          )}
+                          {isStaff || userRole !== "volunteer" ? (
+                            item.participantSlots ? (
+                              <Text style={styles.infoText}>
+                                {isStaff ? "P:" : ""}{" "}
+                                {item.takenSlots ?? 0}/{item.participantSlots}
+                              </Text>
+                            ) : (
+                              <Text style={styles.infoText}>
+                                {isStaff ? "P:" : ""} No cap
+                              </Text>
+                            )
+                          ) : null}
+                          {isStaff || userRole === "volunteer" ? (
+                            item.volunteerSlots && item.volunteerSlots > 0 ? (
+                              <Text style={styles.infoText}>
+                                {isStaff ? "V:" : ""}{" "}
+                                {item.volunteerTakenSlots ?? 0}/{item.volunteerSlots}
+                              </Text>
+                            ) : (
+                              <Text style={styles.infoText}>
+                                {isStaff ? "V:" : ""} Not needed
+                              </Text>
+                            )
+                          ) : null}
                         </View>
                       </View>
 

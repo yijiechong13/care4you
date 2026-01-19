@@ -69,8 +69,10 @@ const EventModel = {
         location: eventData.location,
         start_time: eventData.startTime,
         end_time: eventData.endTime,
-        total_slots: eventData.totalSlots,
+        participant_slots: eventData.participantSlots,
+        volunteer_slots: eventData.volunteerSlots,
         taken_slots: 0,
+        volunteer_taken_slots: 0,
         tag: eventData.tag,
         reminders: eventData.reminders,
         image_url: eventData.imageUrl

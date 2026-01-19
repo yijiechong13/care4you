@@ -23,6 +23,7 @@ export interface Event {
   registrationCounts?: RegistrationCounts;
   participantSlots?: number;
   volunteerSlots?: number;
+  volunteerTakenSlots?: number;
 }
 
 export interface EventCardProps {

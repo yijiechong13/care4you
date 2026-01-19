@@ -27,6 +27,41 @@ const RegistrationModel = {
     const registrationId = registration.id;
     console.log("✅ Model: Registration created with ID:", registrationId);
 
+    if (registrationData.userId) {
+      const { data: userRow, error: userError } = await supabase
+        .from('users')
+        .select('user_type')
+        .eq('id', registrationData.userId)
+        .single();
+
+      if (userError) throw new Error(userError.message);
+
+      const { data: eventRow, error: eventError } = await supabase
+        .from('events')
+        .select('taken_slots, volunteer_taken_slots')
+        .eq('id', registrationData.eventId)
+        .single();
+
+      if (eventError) throw new Error(eventError.message);
+
+      const userType = (userRow?.user_type || '').toLowerCase();
+      if (userType === 'volunteer') {
+        const nextVolunteers = (eventRow?.volunteer_taken_slots || 0) + 1;
+        const { error: updateError } = await supabase
+          .from('events')
+          .update({ volunteer_taken_slots: nextVolunteers })
+          .eq('id', registrationData.eventId);
+        if (updateError) throw new Error(updateError.message);
+      } else {
+        const nextParticipants = (eventRow?.taken_slots || 0) + 1;
+        const { error: updateError } = await supabase
+          .from('events')
+          .update({ taken_slots: nextParticipants })
+          .eq('id', registrationData.eventId);
+        if (updateError) throw new Error(updateError.message);
+      }
+    }
+
     // 2. Save answers to registration_answers table
     if (answers && answers.length > 0) {
       const answersPayload = answers.map(answer => ({

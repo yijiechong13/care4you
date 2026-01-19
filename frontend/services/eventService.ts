@@ -41,9 +41,10 @@ export const fetchEvents = async () => {
         startTime: startTimeStr,
         endTime: endTimeStr,
         location: event.location,
-        participantSlots: event.total_slots,
+        participantSlots: event.participant_slots,
         volunteerSlots: event.volunteer_slots,
         takenSlots: event.taken_slots,
+        volunteerTakenSlots: event.volunteer_taken_slots,
         imageUrl: event.image_url,
       };
     });
