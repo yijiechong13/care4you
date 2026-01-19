@@ -131,6 +131,7 @@ const EventModel = {
         volunteer_slots: eventData.volunteerSlots,
         taken_slots: 0,
         volunteer_taken_slots: 0,
+        wheelchair_accessible: eventData.wheelchairAccessible,
         tag: eventData.tag,
         reminders: eventData.reminders,
         image_url: eventData.imageUrl
