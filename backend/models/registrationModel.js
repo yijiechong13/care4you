@@ -152,13 +152,13 @@ const RegistrationModel = {
       .select(
         `
         id,
+        user_id,
         created_at,
         special_requirements,
         emergency_contact,
         guest_name,
         guest_contact,
         guest_emergency_contact,
-        users:user_id!left(id, name, email, phone, user_type),
         registration_answers(
           question_id,
           selected_option_id,
@@ -172,8 +172,32 @@ const RegistrationModel = {
 
     if (error) throw new Error(error.message);
 
+    // Get registered user IDs (non-guests)
+    const userIds = data
+      .filter((reg) => !reg.user_id.toString().startsWith("guest_"))
+      .map((reg) => reg.user_id);
+
+    // Fetch user details for registered users
+    let usersMap = {};
+    if (userIds.length > 0) {
+      const { data: users } = await supabase
+        .from("users")
+        .select("id, name, email, phone, user_type")
+        .in("id", userIds);
+
+      if (users) {
+        usersMap = users.reduce((acc, user) => {
+          acc[user.id] = user;
+          return acc;
+        }, {});
+      }
+    }
+
     // Transform data for export
     return data.map((reg, index) => {
+      const isGuest = reg.user_id.toString().startsWith("guest_");
+      const user = usersMap[reg.user_id] || null;
+
       const responses = (reg.registration_answers || [])
         .slice()
         .sort((a, b) => {
@@ -190,12 +214,12 @@ const RegistrationModel = {
 
       return {
         sn: index + 1,
-        name: reg.guest_name || reg.users?.name || "N/A",
-        email: reg.users?.email || "N/A",
-        contact: reg.guest_contact || reg.users?.phone || "N/A",
+        name: isGuest ? (reg.guest_name || "N/A") : (user?.name || "N/A"),
+        email: isGuest ? "N/A" : (user?.email || "N/A"),
+        contact: isGuest ? (reg.guest_contact || "N/A") : (user?.phone || "N/A"),
         emergencyContact:
           reg.emergency_contact || reg.guest_emergency_contact || "N/A",
-        userType: reg.users?.user_type || "Participant",
+        userType: isGuest ? "Guest" : (user?.user_type || "Participant"),
         specialRequirements: reg.special_requirements || "",
         responses,
         registeredAt: new Date(reg.created_at).toLocaleDateString(),
