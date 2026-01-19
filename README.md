@@ -1,51 +1,86 @@
-# Hello everyone, welcome to our Expo app 👋 we are building Care4Fun as our Hack4Good hackathon project.
-# Team Lead: Yi Jie Chong
+# 🛡️ Care4Fun | Hack4Good 2026
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**Care4Fun** is a community-driven platform built to bridge the gap between volunteers, participants, and impactful social events. Designed for the **Hack4Good** hackathon, this mobile application streamlines event discovery and registration with a seamless "Virtual Guest" system for immediate engagement.
 
-## Get started
+### 👥 The Team
 
-1. Install dependencies
+- **Team Lead:** Yi Jie Chong
+- **Developer:** Tey Yee Siang
 
-   ```bash
-   npm install
-   ```
+---
 
-2. Start the app
+## 🚀 Getting Started
 
-   ```bash
-   npx expo start
-   ```
+### 1. Prerequisites
 
-In the output, you'll find options to open the app in a
+Ensure you have [Node.js](https://nodejs.org/) installed on your machine.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### 2. Installation
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+Clone the repository and install the dependencies for the frontend:
 
 ```bash
-npm run reset-project
+cd frontend
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 3. Environment Configuration
 
-## Learn more
+Create a .env file in the root of your frontend directory and add your hosted backend URL:
 
-To learn more about developing your project with Expo, look at the following resources:
+```code snippet
+EXPO_PUBLIC_API_URL=[https://care4you-backend-685548494290.asia-southeast1.run.app/api](https://care4you-backend-685548494290.asia-southeast1.run.app/api)
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```
 
-## Join the community
+### 4. Run the App
 
-Join our community of developers creating universal apps.
+Start the development server:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```Bash
+npx expo start
+```
+
+- Download Expo Go on your Android or iOS device.
+
+- Scan the QR code appearing in your terminal.
+
+---
+
+### ✨ Key Features
+
+- Virtual Guest System: Users can browse and register for events immediately without an account. A unique guest\_ ID is generated locally to track their activity.
+
+- The Conversion Deal: When a guest eventually signs up or logs in, all their previous event registrations are automatically migrated to their new permanent account.
+
+- Dynamic Event Registration: Real-time slot tracking for both volunteers and participants, ensuring event organizers have accurate data.
+
+- Role-Based Access: Specific workflows for Volunteers and Participants to ensure everyone finds the right way to help.
+
+---
+
+### 🏗️ Project Structure
+
+Development primarily focuses on the frontend directory for UI/UX enhancements while utilizing the hosted backend API.
+
+```Plaintext
+├── frontend/             # React Native (Expo) Mobile App
+│   ├── app/              # File-based routing (Expo Router)
+│   ├── services/         # API integration & Auth logic
+│   ├── components/       # Reusable UI elements
+└── backend/              # Node.js/Express API (Hosted on Google Cloud)
+```
+
+---
+
+### 🛠️ Tech Stack
+
+- Frontend: React Native, Expo, Expo Router, TypeScript.
+
+- Backend: Node.js, Express.
+
+- Database: PostgreSQL (Supabase).
+
+- Storage: AsyncStorage for local session management.
+
+---
