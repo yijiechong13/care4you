@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { publishEvent } from '@/services/eventService';
+import { postAnnouncement } from '@/services/announmentService';
 
 export default function SpecificInfoScreen() {
   const router = useRouter();
@@ -99,6 +100,14 @@ export default function SpecificInfoScreen() {
                 imageUrl: imageUri 
             }, 
             cleanedQuestions
+        );
+
+        const announcementMsg = "Hi everyone! We are super excited to announce a brand new event: " + basicInfo.title + "!" +
+        "\n\n📅 Date: " + basicInfo.startTime.split(" ")[0] + " 📍 Location: " + basicInfo.location +
+        "\n\nCome join us for a fun time together. Spots might fill up fast, so please register soon in the \"Events\" tab. Can't wait to see you there!";
+        await postAnnouncement(
+          "New Event Alert: " + basicInfo.title, 
+          announcementMsg
         );
 
         Alert.alert("Success", "Event Published!", [
