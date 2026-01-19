@@ -25,11 +25,13 @@ import {
 } from "@/constants/theme";
 import { fetchUserProfile, updateUserProfile } from "@/services/userService";
 import { fetchUserRegistrations } from "@/services/eventService";
+import { supabase } from "@/lib/supabase";
 
 const { width } = Dimensions.get("window");
 
 export default function ProfileScreen() {
   const [userData, setUserData] = useState<any>(null);
+  const [isStaff, setIsStaff] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -132,6 +134,14 @@ export default function ProfileScreen() {
             },
           });
         }
+
+        const { data: userData } = await supabase
+          .from('users')
+          .select('user_type')
+          .eq('id', userId)
+          .single();
+        const staffRole = userData?.user_type?.toLowerCase() === 'staff';
+        setIsStaff(staffRole);
       } catch (error) {
         console.error(error);
         Alert.alert("Error", "Could not load profile information.");
@@ -226,15 +236,17 @@ export default function ProfileScreen() {
         <Text style={styles.userEmail}>{userData.email}</Text>
 
         {/* Stats Cards */}
-        <View style={styles.statsContainer}>
-          <StatCard number={userData.stats.upcoming} label="Upcoming" />
-          <StatCard
-            number={userData.stats.registered}
-            label="This Month"
-            highlight
-          />
-          <StatCard number={userData.stats.total} label="Total" />
-        </View>
+        {!isStaff && (
+          <View style={styles.statsContainer}>
+            <StatCard number={userData.stats.upcoming} label="Upcoming" />
+            <StatCard
+              number={userData.stats.registered}
+              label="This Month"
+              highlight
+            />
+            <StatCard number={userData.stats.total} label="Total" />
+          </View>
+        )}
       </View>
 
       {/* Info Section */}
