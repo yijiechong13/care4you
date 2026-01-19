@@ -20,12 +20,16 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [isReady, setIsReady] = useState(false);
   const [hasUser, setHasUser] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
     const checkUser = async () => {
       const userId = await AsyncStorage.getItem("userId");
+      if (userId && userId.startsWith("guest_")) {
+        setIsGuest(true);
+      }
       setHasUser(!!userId); // true if ID exists
       setIsReady(true);
     };
@@ -42,12 +46,12 @@ export default function RootLayout() {
     if (!hasUser && inTabsGroup) {
       // No user? Go to login
       router.replace("/login" as any);
-    } else if (hasUser && inAuthGroup) {
+    } else if (!isGuest && hasUser && inAuthGroup) {
       // User found but on auth screens (login/signup)? Force them into the app
       router.replace("/(tabs)/home");
     }
     // Allow logged-in users to access eventCreation, eventRegistration, etc.
-  }, [hasUser, segments, isReady]);
+  }, [hasUser, isGuest, segments, isReady]);
 
   // 3. Show Loading Spinner while checking storage
   if (!isReady) {

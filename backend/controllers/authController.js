@@ -2,9 +2,16 @@ const User = require("../models/userModel");
 
 // Logic for Registration
 exports.signup = async (req, res) => {
-  const { name, email, password, user_type, phone } = req.body;
+  const { name, email, password, user_type, phone, guestId } = req.body;
   try {
-    const newUser = await User.create(name, email, password, user_type, phone);
+    const newUser = await User.create(
+      name,
+      email,
+      password,
+      user_type,
+      phone,
+      guestId,
+    );
     res.status(201).json({
       success: true,
       message: "Registered successfully",
@@ -24,9 +31,9 @@ exports.signup = async (req, res) => {
 
 // Logic for Login
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, guestId } = req.body;
   try {
-    const user = await User.findByEmail(email);
+    const user = await User.findByEmail(email, guestId);
     if (!user || user.password !== password) {
       return res
         .status(401)

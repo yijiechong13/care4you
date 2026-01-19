@@ -100,11 +100,10 @@ export default function ProfileScreen() {
       try {
         const userId = await AsyncStorage.getItem("userId");
 
-        if (userId === "guest_user" || !userId) {
-          // It's a guest! Set data and STOP here.
+        if (!userId || userId.startsWith("guest_")) {
           setUserData(dummy_data);
           setLoading(false);
-          return; // This return is crucial
+          return;
         }
 
         // Only runs if userId exists
@@ -159,38 +158,36 @@ export default function ProfileScreen() {
   }
 
   // Guest user - show login prompt
-  if (!userData) {
+  if (!userData || userData.name === "Guest User") {
     return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: colors.background,
-          paddingHorizontal: spacing.xl,
-        }}
-      >
-        <Ionicons name="person-circle-outline" size={80} color={colors.gray[400]} />
-        <Text style={{ fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.gray[700], marginTop: spacing.lg }}>
-          Welcome, Guest
-        </Text>
-        <Text style={{ fontSize: fontSize.md, color: colors.gray[500], textAlign: "center", marginTop: spacing.sm }}>
-          Log in to view your profile and registered events
-        </Text>
-        <TouchableOpacity
-          style={{
-            backgroundColor: colors.primary,
-            paddingVertical: spacing.md,
-            paddingHorizontal: spacing.xxl,
-            borderRadius: borderRadius.lg,
-            marginTop: spacing.xl,
-          }}
-          onPress={() => router.push("/login")}
-        >
-          <Text style={{ color: colors.white, fontSize: fontSize.md, fontWeight: fontWeight.semibold }}>
-            Log In
+      <View style={styles.guestContainer}>
+        <View style={styles.guestCard}>
+          <View style={styles.guestIconCircle}>
+            <Ionicons name="person-outline" size={40} color={colors.primary} />
+          </View>
+
+          <Text style={styles.guestTitle}>Join the Community</Text>
+          <Text style={styles.guestSubtitle}>
+            Sign up to save your event history, manage your profile, and get
+            personalized health updates.
           </Text>
-        </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.primaryActionBtn}
+            onPress={() => router.push("/onboarding")}
+          >
+            <Text style={styles.primaryActionText}>Create Account</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.secondaryActionBtn}
+            onPress={() => router.push("/login")}
+          >
+            <Text style={styles.secondaryActionText}>
+              Already have an account? Log In
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -584,5 +581,63 @@ const styles = StyleSheet.create({
     padding: 15,
     flex: 0.45,
     alignItems: "center",
+  },
+  guestContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+    justifyContent: "center",
+    padding: spacing.xl,
+  },
+  guestCard: {
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.xl,
+    padding: spacing.xl,
+    alignItems: "center",
+    ...shadow.md, // Uses your theme's shadow
+  },
+  guestIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: `${colors.primary}15`, // Light version of primary
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: spacing.lg,
+  },
+  guestTitle: {
+    fontSize: fontSize.xl,
+    fontWeight: fontWeight.bold,
+    color: colors.gray[700],
+    marginBottom: spacing.sm,
+  },
+  guestSubtitle: {
+    fontSize: fontSize.md,
+    color: colors.gray[500],
+    textAlign: "center",
+    lineHeight: 22,
+    marginBottom: spacing.xl,
+  },
+  primaryActionBtn: {
+    backgroundColor: colors.primary,
+    width: "100%",
+    paddingVertical: spacing.lg,
+    borderRadius: borderRadius.lg,
+    alignItems: "center",
+    marginBottom: spacing.md,
+  },
+  primaryActionText: {
+    color: colors.white,
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.bold,
+  },
+  secondaryActionBtn: {
+    width: "100%",
+    paddingVertical: spacing.md,
+    alignItems: "center",
+  },
+  secondaryActionText: {
+    color: colors.primary,
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
   },
 });

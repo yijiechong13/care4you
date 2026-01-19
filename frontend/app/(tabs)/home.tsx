@@ -32,14 +32,14 @@ export default function HomeScreen() {
   const [user, setUser] = useState<any>(null);
   const [isStaff, setIsStaff] = useState(false);
   const userRole = (user?.user_type || "").trim().toLowerCase();
-  const [selectedDay, setSelectedDay] = useState<string>(
-    formatDate(currTime),
-  );
+  const [selectedDay, setSelectedDay] = useState<string>(formatDate(currTime));
   const [events, setEvents] = useState<any[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [galleryVisible, setGalleryVisible] = useState(false);
-  const [selectedEventImages, setSelectedEventImages] = useState<EventImage[]>([]);
+  const [selectedEventImages, setSelectedEventImages] = useState<EventImage[]>(
+    [],
+  );
   const EVENT_CARD_WIDTH = width * 0.85;
   const SPACING = 0.15;
   const SNAP_INTERVAL = EVENT_CARD_WIDTH + SPACING;
@@ -64,7 +64,7 @@ export default function HomeScreen() {
       setGalleryVisible(true);
     } else if (event.imageUrl) {
       // Fallback for single image format
-      setSelectedEventImages([{ id: '1', url: event.imageUrl }]);
+      setSelectedEventImages([{ id: "1", url: event.imageUrl }]);
       setGalleryVisible(true);
     }
   };
@@ -175,7 +175,7 @@ export default function HomeScreen() {
     const filteredEvents = events.filter(
       (event) => formatDate(new Date(event.date)) === selectedDay,
     );
-    setFilteredEvents(filteredEvents)
+    setFilteredEvents(filteredEvents);
   }, [events, selectedDay]);
 
   return (
@@ -294,11 +294,14 @@ export default function HomeScreen() {
                     <View style={styles.blueLine} />
 
                     <View style={styles.cardContent}>
-                      <Text style={styles.cardDateTime}>{item.dateDisplay} • {item.startTime}</Text>
+                      <Text style={styles.cardDateTime}>
+                        {item.dateDisplay} • {item.startTime}
+                      </Text>
                       <Text style={styles.cardTitle}>{item.title}</Text>
 
                       {/* Event Thumbnail */}
-                      {(item.imageUrl || (item.images && item.images.length > 0)) && (
+                      {(item.imageUrl ||
+                        (item.images && item.images.length > 0)) && (
                         <TouchableOpacity
                           style={styles.thumbnailContainer}
                           onPress={() => handleImagePress(item)}
@@ -306,7 +309,9 @@ export default function HomeScreen() {
                           accessibilityRole="button"
                         >
                           <Image
-                            source={{ uri: item.images?.[0]?.url || item.imageUrl }}
+                            source={{
+                              uri: item.images?.[0]?.url || item.imageUrl,
+                            }}
                             style={styles.thumbnail}
                             contentFit="cover"
                             transition={200}
@@ -314,7 +319,9 @@ export default function HomeScreen() {
                           {item.images && item.images.length > 1 && (
                             <View style={styles.imageCountBadge}>
                               <Ionicons name="images" size={14} color="#fff" />
-                              <Text style={styles.imageCountText}>{item.images.length}</Text>
+                              <Text style={styles.imageCountText}>
+                                {item.images.length}
+                              </Text>
                             </View>
                           )}
                         </TouchableOpacity>
@@ -360,7 +367,8 @@ export default function HomeScreen() {
                             item.volunteerSlots && item.volunteerSlots > 0 ? (
                               <Text style={styles.infoText}>
                                 {isStaff ? "Volunteer:" : ""}{" "}
-                                {item.volunteerTakenSlots ?? 0}/{item.volunteerSlots}
+                                {item.volunteerTakenSlots ?? 0}/
+                                {item.volunteerSlots}
                               </Text>
                             ) : (
                               <Text style={styles.infoText}>
@@ -372,22 +380,21 @@ export default function HomeScreen() {
                       </View>
 
                       {/* Register Buttons */}
-                      {isStaff && (
+                      {!isStaff && (
                         <View style={styles.cardFooter}>
-                          {currTime > new Date(item.dateDisplay) || 
-                          userRole == "volunteer" && item.volunteerSlots <= item.volunteerTakenSlots || 
-                          userRole == "participant" && item.participantSlots && item.participantSlots <= item.takenSlots ? (
-                            <View
-                              style={styles.registerClosedBtn}
-                            >
+                          {currTime > new Date(item.dateDisplay) ||
+                          (userRole == "volunteer" &&
+                            item.volunteerSlots <= item.volunteerTakenSlots) ||
+                          (userRole == "participant" &&
+                            item.participantSlots &&
+                            item.participantSlots <= item.takenSlots) ? (
+                            <View style={styles.registerClosedBtn}>
                               <Text style={styles.registerBtnText}>
                                 REGISTRATION CLOSED
                               </Text>
                             </View>
                           ) : item.eventStatus == "cancelled" ? (
-                            <View
-                              style={styles.registerCancelBtn}
-                            >
+                            <View style={styles.registerCancelBtn}>
                               <Text style={styles.registerBtnText}>
                                 CANCELLED
                               </Text>
@@ -437,7 +444,7 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 60,
     height: "20%",
-    justifyContent: "flex-end"
+    justifyContent: "flex-end",
   },
   helloText: {
     fontSize: 24,
@@ -449,14 +456,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
     marginTop: -50,
-    borderRadius: 30
+    borderRadius: 30,
   },
   calendarWrapper: {
     backgroundColor: "#fff",
     paddingHorizontal: 10,
     paddingBottom: 8,
     paddingTop: 9,
-    borderRadius: 30
+    borderRadius: 30,
   },
   line: {
     borderWidth: 0.5,
@@ -472,7 +479,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 20,
     marginBottom: 8,
-    marginTop: 15
+    marginTop: 15,
   },
   eventText: {
     flexDirection: "row",
@@ -598,7 +605,7 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 8,
     marginBottom: 6,
-    marginTop: 7
+    marginTop: 7,
   },
   infoIcon: {
     marginRight: 12,

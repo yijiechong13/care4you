@@ -35,7 +35,8 @@ export const fetchEvents = async () => {
 
       // Transform event_images to frontend format
       const eventImages = event.event_images || [];
-      const primaryImage = eventImages.find((img: any) => img.is_primary) || eventImages[0];
+      const primaryImage =
+        eventImages.find((img: any) => img.is_primary) || eventImages[0];
       const images = eventImages.map((img: any) => ({
         id: img.id.toString(),
         url: img.image_url,
@@ -47,8 +48,8 @@ export const fetchEvents = async () => {
       return {
         id: event.id.toString(),
         title: event.title,
-        date: dateObj.toISOString(),  // ISO format for calendar parsing
-        dateDisplay: dateStr,         // Formatted string for display
+        date: dateObj.toISOString(), // ISO format for calendar parsing
+        dateDisplay: dateStr, // Formatted string for display
         startTime: startTimeStr,
         endTime: endTimeStr,
         location: event.location,
@@ -58,7 +59,7 @@ export const fetchEvents = async () => {
         volunteerTakenSlots: event.volunteer_taken_slots,
         imageUrl: primaryImage?.image_url || event.image_url, // Fallback to old field
         images: images.length > 0 ? images : undefined,
-        eventStatus: event.eventStatus
+        eventStatus: event.eventStatus,
       };
     });
   } catch (error) {
@@ -175,9 +176,10 @@ export const fetchUserRegistrations = async (userId: string) => {
         }),
         status,
         venue: event.location,
-        selectedResponses: selectedResponses.length > 0 ? selectedResponses : undefined,
+        selectedResponses:
+          selectedResponses.length > 0 ? selectedResponses : undefined,
         registrationId: registration.id,
-        eventStatus: event.eventStatus
+        eventStatus: event.eventStatus,
       };
     });
   } catch (error) {
@@ -284,7 +286,7 @@ export const addEventImage = async (
   displayOrder: number = 0,
   isPrimary: boolean = false,
   caption?: string,
-  userId?: string
+  userId?: string,
 ) => {
   try {
     const response = await fetch(`${API_URL}/${eventId}/images`, {

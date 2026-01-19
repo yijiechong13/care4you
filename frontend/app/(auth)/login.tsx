@@ -32,7 +32,12 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      const result = await loginUser({ email, password });
+      const currentId = await AsyncStorage.getItem("userId");
+      const result = await loginUser({
+        email,
+        password,
+        guestId: currentId && currentId.startsWith("guest_") ? currentId : null,
+      });
       if (result.success) {
         // Save the ID so the Gatekeeper in _layout.tsx can find it
         await AsyncStorage.setItem("userId", result.user.id.toString());
@@ -50,11 +55,18 @@ export default function LoginScreen() {
     }
   };
 
+  const generateGuestId = () => {
+    const timestamp = Date.now().toString(36); // Base36 shortens the timestamp
+    const randomPart = Math.random().toString(36).substring(2, 9); // Random 7-character string
+    return `guest_${timestamp}_${randomPart}`; // e.g., guest_m4p2z9x1_7v2k8wq
+  };
+
   const handleGuestSignIn = async () => {
     setLoading(true);
     try {
       // For guest mode, you can save a dummy ID or call a guest endpoint
-      await AsyncStorage.setItem("userId", "guest_user");
+      const uniqueGuestId = generateGuestId();
+      await AsyncStorage.setItem("userId", uniqueGuestId);
       router.replace("/(tabs)/home"); // Navigate using Expo Router
     } catch (error) {
       Alert.alert("Error", "Failed to start guest session");
@@ -69,7 +81,7 @@ export default function LoginScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
-            {/* Logo & Header */}
+      {/* Logo & Header */}
       <View style={styles.header}>
         <Image
           source={require("../../assets/images/care4youlogo.png")}

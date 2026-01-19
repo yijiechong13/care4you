@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -8,12 +8,15 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { submitRegistration, fetchEventQuestions } from '@/services/eventService';
-import { supabase } from '@/lib/supabase';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import {
+  submitRegistration,
+  fetchEventQuestions,
+} from "@/services/eventService";
+import { supabase } from "@/lib/supabase";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Type definitions
 type Option = {
@@ -38,10 +41,10 @@ export default function EventRegistrationScreen() {
   const eventTitle = params.eventTitle as string;
 
   const [userId, setUserId] = useState<string | null>(null);
-  const [fullName, setFullName] = useState('');
-  const [contactNumber, setContactNumber] = useState('');
-  const [emergencyContact, setEmergencyContact] = useState('');
-  const [specialRequirements, setSpecialRequirements] = useState('');
+  const [fullName, setFullName] = useState("");
+  const [contactNumber, setContactNumber] = useState("");
+  const [emergencyContact, setEmergencyContact] = useState("");
+  const [specialRequirements, setSpecialRequirements] = useState("");
 
   // Questions state
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -55,14 +58,18 @@ export default function EventRegistrationScreen() {
 
   const loadUserProfile = async () => {
     try {
-      const storedUserId = await AsyncStorage.getItem('userId');
+      const storedUserId = await AsyncStorage.getItem("userId");
+
       setUserId(storedUserId);
+      if (storedUserId?.startsWith("guest_")) {
+        return; // Skip loading profile for guest users
+      }
 
       if (storedUserId) {
         const { data: userData } = await supabase
-          .from('users')
-          .select('name, phone')
-          .eq('id', storedUserId)
+          .from("users")
+          .select("name, phone")
+          .eq("id", storedUserId)
           .single();
 
         if (userData?.name) {
@@ -85,9 +92,9 @@ export default function EventRegistrationScreen() {
   };
 
   const handleSelectOption = (questionId: number, optionId: number) => {
-    setAnswers(prev => ({
+    setAnswers((prev) => ({
       ...prev,
-      [questionId]: optionId
+      [questionId]: optionId,
     }));
   };
 
@@ -113,16 +120,21 @@ export default function EventRegistrationScreen() {
     // Validate all questions are answered
     for (const question of questions) {
       if (!answers[question.id]) {
-        Alert.alert("Missing Answer", `Please answer: "${question.questionText}"`);
+        Alert.alert(
+          "Missing Answer",
+          `Please answer: "${question.questionText}"`,
+        );
         return;
       }
     }
 
     // Prepare answers array for backend
-    const answersArray = Object.entries(answers).map(([questionId, selectedOptionId]) => ({
-      questionId: parseInt(questionId),
-      selectedOptionId
-    }));
+    const answersArray = Object.entries(answers).map(
+      ([questionId, selectedOptionId]) => ({
+        questionId: parseInt(questionId),
+        selectedOptionId,
+      }),
+    );
 
     try {
       await submitRegistration({
@@ -138,20 +150,28 @@ export default function EventRegistrationScreen() {
       Alert.alert(
         "Registration Submitted",
         "Your registration has been submitted successfully!",
-        [{ text: "OK", onPress: () => router.back() }]
+        [{ text: "OK", onPress: () => router.back() }],
       );
     } catch (error: any) {
-      Alert.alert("Registration Failed", error.message || "Something went wrong.");
+      Alert.alert(
+        "Registration Failed",
+        error.message || "Something went wrong.",
+      );
     }
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 50 }}>
-
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: 50 }}
+    >
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color='#002C5E' />
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="arrow-back" size={24} color="#002C5E" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Event Registration</Text>
         <Text style={styles.headerSubtitle}>Fill in your details</Text>
@@ -208,15 +228,19 @@ export default function EventRegistrationScreen() {
                     key={option.id}
                     style={[
                       styles.optionItem,
-                      answers[question.id] === option.id && styles.optionSelected,
+                      answers[question.id] === option.id &&
+                        styles.optionSelected,
                     ]}
                     onPress={() => handleSelectOption(question.id, option.id)}
                   >
                     <View style={styles.radioContainer}>
-                      <View style={[
-                        styles.radioOuter,
-                        answers[question.id] === option.id && styles.radioOuterSelected,
-                      ]}>
+                      <View
+                        style={[
+                          styles.radioOuter,
+                          answers[question.id] === option.id &&
+                            styles.radioOuterSelected,
+                        ]}
+                      >
                         {answers[question.id] === option.id && (
                           <View style={styles.radioInner} />
                         )}
@@ -247,7 +271,6 @@ export default function EventRegistrationScreen() {
         <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
           <Text style={styles.submitBtnText}>Submit Registration</Text>
         </TouchableOpacity>
-
       </View>
     </ScrollView>
   );
@@ -256,7 +279,7 @@ export default function EventRegistrationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     paddingTop: 60,
   },
   header: {
@@ -268,17 +291,17 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#002C5E',
+    fontWeight: "bold",
+    color: "#002C5E",
     marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
   },
   divider: {
     height: 1,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: "#E5E7EB",
     marginVertical: 15,
   },
   formContainer: {
@@ -286,34 +309,34 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#111827',
+    fontWeight: "700",
+    color: "#111827",
     marginBottom: 8,
     marginTop: 15,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: "#D1D5DB",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
-    color: '#1F2937',
-    backgroundColor: '#fff',
+    color: "#1F2937",
+    backgroundColor: "#fff",
   },
   textArea: {
     minHeight: 100,
     paddingTop: 12,
   },
   loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 20,
     gap: 10,
   },
   loadingText: {
-    color: '#6B7280',
+    color: "#6B7280",
     fontSize: 14,
   },
   optionsContainer: {
@@ -321,55 +344,55 @@ const styles = StyleSheet.create({
   },
   optionItem: {
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: "#D1D5DB",
     borderRadius: 8,
     padding: 15,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   optionSelected: {
-    borderColor: '#002C5E',
-    backgroundColor: '#F8FAFC',
+    borderColor: "#002C5E",
+    backgroundColor: "#F8FAFC",
   },
   radioContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   radioOuter: {
     width: 22,
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: '#D1D5DB',
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderColor: "#D1D5DB",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 12,
   },
   radioOuterSelected: {
-    borderColor: '#002C5E',
+    borderColor: "#002C5E",
   },
   radioInner: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#002C5E',
+    backgroundColor: "#002C5E",
   },
   optionText: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#1F2937',
+    fontWeight: "500",
+    color: "#1F2937",
     flex: 1,
   },
   submitBtn: {
-    backgroundColor: '#002C5E',
+    backgroundColor: "#002C5E",
     paddingVertical: 15,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 30,
     marginBottom: 40,
   },
   submitBtnText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
