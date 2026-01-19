@@ -1,11 +1,12 @@
-# 🛡️ Care4Fun | Hack4Good 2026
+# 🛡️ Care4Fun | Hack4Good 2026 | Team Hack4Fun
 
 **Care4Fun** is a community-driven platform built to bridge the gap between volunteers, participants, and impactful social events. Designed for the **Hack4Good** hackathon, this mobile application streamlines event discovery and registration with a seamless "Virtual Guest" system for immediate engagement.
 
 ### 👥 The Team
 
+- **Team Name:** Hack4Fun
 - **Team Lead:** Yi Jie Chong
-- **Developer:** Tey Yee Siang
+- **Developer:** Tan Jay, Tey Yee Siang
 
 ---
 
@@ -42,7 +43,6 @@ npx expo start
 ```
 
 - Download Expo Go on your Android or iOS device.
-
 - Scan the QR code appearing in your terminal.
 
 ---
@@ -50,11 +50,8 @@ npx expo start
 ### ✨ Key Features
 
 - Virtual Guest System: Users can browse and register for events immediately without an account. A unique guest\_ ID is generated locally to track their activity.
-
 - The Conversion Deal: When a guest eventually signs up or logs in, all their previous event registrations are automatically migrated to their new permanent account.
-
 - Dynamic Event Registration: Real-time slot tracking for both volunteers and participants, ensuring event organizers have accurate data.
-
 - Role-Based Access: Specific workflows for Volunteers and Participants to ensure everyone finds the right way to help.
 
 ---
@@ -76,11 +73,8 @@ Development primarily focuses on the frontend directory for UI/UX enhancements w
 ### 🛠️ Tech Stack
 
 - Frontend: React Native, Expo, Expo Router, TypeScript.
-
 - Backend: Node.js, Express.
-
 - Database: PostgreSQL (Supabase).
-
 - Storage: AsyncStorage for local session management.
 
 ---
