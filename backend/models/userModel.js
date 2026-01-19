@@ -60,6 +60,16 @@ const User = {
     const result = await db.query(queryText, [name, phone, id]);
     return result.rows[0];
   },
+
+  findById: async (id) => {
+    const queryText = `
+      SELECT id, name, email, phone, user_type 
+      FROM users 
+      WHERE id = $1
+    `;
+    const result = await db.query(queryText, [id]);
+    return result.rows[0];
+  },
 };
 
 module.exports = User;
