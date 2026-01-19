@@ -40,11 +40,11 @@ export default function RootLayout() {
     const inAuthGroup = (segments as string[]).includes("(auth)");
 
     if (!hasUser && inTabsGroup) {
-      // No user? Go to landing page (role selection)
+      // No user? Go to login
       router.replace("/login" as any);
     } else if (hasUser && inAuthGroup) {
       // User found but on auth screens (login/signup)? Force them into the app
-      router.replace("/home");
+      router.replace("/(tabs)/home");
     }
     // Allow logged-in users to access eventCreation, eventRegistration, etc.
   }, [hasUser, segments, isReady]);

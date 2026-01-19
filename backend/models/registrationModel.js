@@ -102,7 +102,13 @@ const RegistrationModel = {
         guest_name,
         guest_contact,
         guest_emergency_contact,
-        users:user_id(id, name, email, phone, user_type)
+        users:user_id(id, name, email, phone, user_type),
+        registration_answers(
+          question_id,
+          selected_option_id,
+          event_questions:question_id(question_text, display_order),
+          question_options:selected_option_id(option_text, display_order)
+        )
       `)
       .eq('event_id', eventId)
       .order('created_at', { ascending: true });
@@ -110,17 +116,34 @@ const RegistrationModel = {
     if (error) throw new Error(error.message);
 
     // Transform data for export
-    return data.map((reg, index) => ({
-      sn: index + 1,
-      name: reg.guest_name || reg.users?.name || 'N/A',
-      email: reg.users?.email || 'N/A',
-      contact: reg.guest_contact || reg.users?.phone || 'N/A',
-      emergencyContact: reg.guest_emergency_contact || 'N/A',
-      userType: reg.users?.user_type || 'Participant',
-      specialRequirements: reg.special_requirements || '',
-      registeredAt: new Date(reg.created_at).toLocaleDateString(),
-      attendance: '', // Empty for staff to fill in
-    }));
+    return data.map((reg, index) => {
+      const responses = (reg.registration_answers || [])
+        .slice()
+        .sort((a, b) => {
+          const aOrder = a.event_questions?.display_order ?? 0;
+          const bOrder = b.event_questions?.display_order ?? 0;
+          return aOrder - bOrder;
+        })
+        .map((answer) => {
+          const question = answer.event_questions?.question_text || 'Question';
+          const option = answer.question_options?.option_text || 'N/A';
+          return `${question}: ${option}`;
+        })
+        .join(' | ');
+
+      return {
+        sn: index + 1,
+        name: reg.guest_name || reg.users?.name || 'N/A',
+        email: reg.users?.email || 'N/A',
+        contact: reg.guest_contact || reg.users?.phone || 'N/A',
+        emergencyContact: reg.guest_emergency_contact || 'N/A',
+        userType: reg.users?.user_type || 'Participant',
+        specialRequirements: reg.special_requirements || '',
+        responses,
+        registeredAt: new Date(reg.created_at).toLocaleDateString(),
+        attendance: '', // Empty for staff to fill in
+      };
+    });
   },
 
   // Get registration counts by user type for multiple events

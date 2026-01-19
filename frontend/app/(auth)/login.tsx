@@ -10,7 +10,7 @@ import {
   Pressable,
   StyleSheet,
 } from "react-native";
-import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -69,11 +69,6 @@ export default function LoginScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
-      {/* Back Button
-      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-        <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-      </TouchableOpacity> */}
-
       {/* Logo & Header */}
       <View style={styles.header}>
         <Image
@@ -137,7 +132,7 @@ export default function LoginScreen() {
         Don't have an account?{" "}
         <Text
           style={styles.signUpText}
-          onPress={() => router.push("/onboarding")} // ✅ Absolute path to onboarding
+          onPress={() => router.push("/onboarding")} // ✅ Absolute path to signup
         >
           Sign up
         </Text>
@@ -156,10 +151,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#002B5B",
     paddingHorizontal: 24,
-  },
-  backButton: {
-    padding: 8,
-    alignSelf: "flex-start",
   },
   header: {
     alignItems: "center",

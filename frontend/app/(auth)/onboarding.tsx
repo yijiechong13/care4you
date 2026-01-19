@@ -19,7 +19,7 @@ interface RoleOption {
   id: RoleType;
   title: string;
   description: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  image: number;
 }
 
 const roles: RoleOption[] = [
@@ -27,19 +27,19 @@ const roles: RoleOption[] = [
     id: "participant",
     title: "Participant",
     description: "I want to join activities and events",
-    icon: "person-outline",
+    image: require("../../assets/images/participant logo.png"),
   },
   {
     id: "volunteer",
     title: "Volunteer",
     description: "I want to help and support events",
-    icon: "people-outline",
+    image: require("../../assets/images/volunteer logo.png"),
   },
   {
     id: "staff",
     title: "Staff",
     description: "I organise and manage activities",
-    icon: "people",
+    image: require("../../assets/images/staff logo.png"),
   },
 ];
 
@@ -56,7 +56,7 @@ export default function LandingScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
+    <View style={[styles.container, { paddingTop: insets.top + 24 }]}>
       {/* Logo Section */}
       <View style={styles.logoSection}>
         <Image
@@ -64,7 +64,7 @@ export default function LandingScreen() {
           style={styles.logo}
         />
         <Text style={styles.tagline}>
-          Making a difference together in our community
+          Making a difference together in our {"\n"} community
         </Text>
       </View>
 
@@ -80,13 +80,13 @@ export default function LandingScreen() {
             activeOpacity={0.8}
           >
             <View style={styles.roleIconContainer}>
-              <Ionicons name={role.icon} size={28} color="#002B5B" />
+              <Image source={role.image} style={styles.roleIcon} />
             </View>
             <View style={styles.roleTextContainer}>
               <Text style={styles.roleTitle}>{role.title}</Text>
               <Text style={styles.roleDescription}>{role.description}</Text>
             </View>
-            <Ionicons name="chevron-forward" size={24} color="#A0AEC0" />
+            <Ionicons name="chevron-forward" size={22} color="#C6D2E2" />
           </TouchableOpacity>
         ))}
       </View>
@@ -108,12 +108,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#002B5B",
-    paddingHorizontal: 24,
+    paddingHorizontal: 22,
   },
   logoSection: {
     alignItems: "center",
-    marginTop: 40,
-    marginBottom: 40,
+    marginTop: 28,
+    marginBottom: 30,
   },
   logo: {
     width: 180,
@@ -121,68 +121,76 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
   },
   tagline: {
-    color: "rgba(255, 255, 255, 0.8)",
-    fontSize: 16,
+    color: "rgba(234, 242, 251, 0.82)",
+    fontSize: 14,
     textAlign: "center",
-    marginTop: -10,
-    paddingHorizontal: 20,
+    marginTop: -18,
+    paddingHorizontal: 24,
+    lineHeight: 20,
   },
   roleSection: {
     flex: 1,
   },
   roleHeader: {
-    color: "#FFFFFF",
-    fontSize: 28,
-    fontWeight: "bold",
+    color: "#EAF2FB",
+    fontSize: 22,
+    fontWeight: "700",
     textAlign: "center",
-    marginBottom: 24,
+    marginBottom: 18,
   },
   roleCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 20,
+    backgroundColor: "#F9FBFF",
+    borderRadius: 18,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    paddingRight: 24,
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowColor: "#0A1E33",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 5,
   },
   roleIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#E8F4FD",
+    width: 54,
+    height: 54,
+    borderRadius: 14,
+    backgroundColor: "#EEF4FB",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 16,
+  },
+  roleIcon: {
+    width: 30,
+    height: 30,
+    resizeMode: "contain",
   },
   roleTextContainer: {
     flex: 1,
   },
   roleTitle: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: "#002B5B",
+    fontWeight: "700",
+    color: "#0B2A4A",
     marginBottom: 4,
   },
   roleDescription: {
-    fontSize: 14,
-    color: "#718096",
+    fontSize: 13,
+    color: "#5F6E80",
   },
   footer: {
     alignItems: "center",
     paddingVertical: 20,
   },
   footerText: {
-    color: "#FFFFFF",
-    fontSize: 16,
+    color: "#EAF2FB",
+    fontSize: 14,
   },
   loginLink: {
-    color: "#ADD8E6",
-    fontWeight: "bold",
+    color: "#D8E6F7",
+    fontWeight: "700",
     textDecorationLine: "underline",
   },
 });

@@ -35,7 +35,7 @@ export default function EventsScreen() {
       }
 
       // Generate CSV content
-      const headers = ['S/N', 'Name', 'Email', 'Contact', 'Emergency Contact', 'Type', 'Special Requirements', 'Registered On', 'Attendance'];
+      const headers = ['S/N', 'Name', 'Email', 'Contact', 'Emergency Contact', 'Type', 'Special Requirements', 'Responses', 'Registered On', 'Attendance'];
       const csvRows = [headers.join(',')];
 
       registrations.forEach((reg: any) => {
@@ -47,6 +47,7 @@ export default function EventsScreen() {
           `"${(reg.emergencyContact || '').replace(/"/g, '""')}"`,
           `"${(reg.userType || '').replace(/"/g, '""')}"`,
           `"${(reg.specialRequirements || '').replace(/"/g, '""')}"`,
+          `"${(reg.responses || '').replace(/"/g, '""')}"`,
           `"${(reg.registeredAt || '').replace(/"/g, '""')}"`,
           '', // Empty attendance column for staff to fill
         ];

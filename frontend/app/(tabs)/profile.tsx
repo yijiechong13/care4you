@@ -88,7 +88,7 @@ export default function ProfileScreen() {
         style: "destructive",
         onPress: async () => {
           await AsyncStorage.removeItem("userId"); //removing userId from device, old registered events gone
-          router.replace("/onboarding");
+          router.replace("/login");
         },
       },
     ]);
