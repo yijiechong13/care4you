@@ -38,6 +38,42 @@ const getEventQuestions = async (req, res) => {
   }
 };
 
+const getEventImages = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const images = await EventModel.getEventImages(eventId);
+    res.status(200).json(images);
+  } catch (error) {
+    console.error("❌ Controller Error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const addEventImage = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { imageUrl, displayOrder, isPrimary, caption, userId } = req.body;
+    const image = await EventModel.addEventImage(
+      eventId, imageUrl, displayOrder, isPrimary, caption, userId
+    );
+    res.status(201).json(image);
+  } catch (error) {
+    console.error("❌ Controller Error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const deleteEventImage = async (req, res) => {
+  try {
+    const { imageId } = req.params;
+    await EventModel.deleteEventImage(imageId);
+    res.status(200).json({ message: 'Image deleted' });
+  } catch (error) {
+    console.error("❌ Controller Error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const cancelEvent = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -54,4 +90,4 @@ const cancelEvent = async (req, res) => {
   }
 };
 
-module.exports = { getEvents, createEvent, getEventQuestions, cancelEvent };
+module.exports = { getEvents, createEvent, getEventQuestions, getEventImages, addEventImage, deleteEventImage, cancelEvent };

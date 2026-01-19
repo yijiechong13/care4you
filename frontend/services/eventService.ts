@@ -33,6 +33,17 @@ export const fetchEvents = async () => {
         hour12: true,
       });
 
+      // Transform event_images to frontend format
+      const eventImages = event.event_images || [];
+      const primaryImage = eventImages.find((img: any) => img.is_primary) || eventImages[0];
+      const images = eventImages.map((img: any) => ({
+        id: img.id.toString(),
+        url: img.image_url,
+        caption: img.caption,
+        displayOrder: img.display_order,
+        isPrimary: img.is_primary,
+      }));
+
       return {
         id: event.id.toString(),
         title: event.title,
@@ -45,7 +56,8 @@ export const fetchEvents = async () => {
         volunteerSlots: event.volunteer_slots,
         takenSlots: event.taken_slots,
         volunteerTakenSlots: event.volunteer_taken_slots,
-        imageUrl: event.image_url,
+        imageUrl: primaryImage?.image_url || event.image_url, // Fallback to old field
+        images: images.length > 0 ? images : undefined,
         eventStatus: event.eventStatus
       };
     });
@@ -248,6 +260,73 @@ export const fetchRegistrationCounts = async (eventIds: string[]) => {
   } catch (error) {
     console.error("Fetch Registration Counts Failed:", error);
     return {};
+  }
+};
+
+// Fetch images for a specific event
+export const fetchEventImages = async (eventId: string) => {
+  try {
+    const response = await fetch(`${API_URL}/${eventId}/images`);
+    if (!response.ok) {
+      throw new Error(`Server error: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Fetch Event Images Failed:", error);
+    return [];
+  }
+};
+
+// Add image to an event
+export const addEventImage = async (
+  eventId: string,
+  imageUrl: string,
+  displayOrder: number = 0,
+  isPrimary: boolean = false,
+  caption?: string,
+  userId?: string
+) => {
+  try {
+    const response = await fetch(`${API_URL}/${eventId}/images`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        imageUrl,
+        displayOrder,
+        isPrimary,
+        caption,
+        userId,
+      }),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || "Failed to add image");
+    }
+    return result;
+  } catch (error) {
+    console.error("Add Event Image Failed:", error);
+    throw error;
+  }
+};
+
+// Delete an event image
+export const deleteEventImage = async (imageId: string) => {
+  try {
+    const response = await fetch(`${API_URL}/images/${imageId}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      const result = await response.json();
+      throw new Error(result.error || "Failed to delete image");
+    }
+    return true;
+  } catch (error) {
+    console.error("Delete Event Image Failed:", error);
+    throw error;
   }
 };
 

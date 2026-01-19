@@ -6,9 +6,18 @@ const EventModel = {
 
     const { data, error } = await supabase
       .from('events')
-      .select('*')
+      .select(`
+        *,
+        event_images (
+          id,
+          image_url,
+          display_order,
+          is_primary,
+          caption
+        )
+      `)
       .order('start_time', { ascending: true });
-      
+
     if (error) {
       console.error("❌ Backend: Supabase Error:", error.message);
       throw new Error(error.message);
@@ -16,6 +25,55 @@ const EventModel = {
 
     console.log("✅ Backend: Supabase returned:", data.length, "rows");
     return data;
+  },
+
+  // Get all images for an event
+  getEventImages: async (eventId) => {
+    const { data, error } = await supabase
+      .from('event_images')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('display_order', { ascending: true });
+
+    if (error) throw new Error(error.message);
+    return data;
+  },
+
+  // Add image to event
+  addEventImage: async (eventId, imageUrl, displayOrder = 0, isPrimary = false, caption = null, createdBy = null) => {
+    // If setting as primary, unset other primary images first
+    if (isPrimary) {
+      await supabase
+        .from('event_images')
+        .update({ is_primary: false })
+        .eq('event_id', eventId);
+    }
+
+    const { data, error } = await supabase
+      .from('event_images')
+      .insert([{
+        event_id: eventId,
+        image_url: imageUrl,
+        display_order: displayOrder,
+        is_primary: isPrimary,
+        caption: caption,
+        created_by: createdBy
+      }])
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data;
+  },
+
+  // Delete image
+  deleteEventImage: async (imageId) => {
+    const { error } = await supabase
+      .from('event_images')
+      .delete()
+      .eq('id', imageId);
+
+    if (error) throw new Error(error.message);
   },
 
   // Get event questions with options
@@ -82,6 +140,28 @@ const EventModel = {
 
     if (eventError) throw new Error(eventError.message);
     const eventId = event.id;
+
+    // Save multiple images to event_images table
+    if (eventData.images && eventData.images.length > 0) {
+      const imagesPayload = eventData.images.map((img, index) => ({
+        event_id: eventId,
+        image_url: img.uri,
+        display_order: img.displayOrder ?? index,
+        is_primary: img.isPrimary ?? (index === 0),
+        caption: img.caption || null
+      }));
+
+      const { error: imgError } = await supabase
+        .from('event_images')
+        .insert(imagesPayload);
+
+      if (imgError) {
+        console.error("❌ Error saving images:", imgError.message);
+        // Don't throw - event was created successfully, just images failed
+      } else {
+        console.log("✅ Saved", imagesPayload.length, "images for event", eventId);
+      }
+    }
 
     if (questions && questions.length > 0) {
       for (let i = 0; i < questions.length; i++) {

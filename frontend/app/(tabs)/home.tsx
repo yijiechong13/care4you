@@ -7,8 +7,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Image } from "expo-image";
 
 import { ThemedView } from "@/components/themed-view";
+import { ImageGalleryModal, EventImage } from "@/components/ImageGalleryModal";
 import { useRouter, useFocusEffect } from "expo-router";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Colors } from "@/constants/theme";
@@ -36,6 +38,8 @@ export default function HomeScreen() {
   const [events, setEvents] = useState<any[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [galleryVisible, setGalleryVisible] = useState(false);
+  const [selectedEventImages, setSelectedEventImages] = useState<EventImage[]>([]);
   const EVENT_CARD_WIDTH = width * 0.85;
   const SPACING = 0.15;
   const SNAP_INTERVAL = EVENT_CARD_WIDTH + SPACING;
@@ -52,6 +56,17 @@ export default function HomeScreen() {
         eventTitle: event.title,
       },
     });
+  };
+
+  const handleImagePress = (event: any) => {
+    if (event.images && event.images.length > 0) {
+      setSelectedEventImages(event.images);
+      setGalleryVisible(true);
+    } else if (event.imageUrl) {
+      // Fallback for single image format
+      setSelectedEventImages([{ id: '1', url: event.imageUrl }]);
+      setGalleryVisible(true);
+    }
   };
 
   useEffect(() => {
@@ -167,10 +182,10 @@ export default function HomeScreen() {
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }}>
       <ThemedView style={styles.container}>
         <ThemedView style={styles.headerColour}>
-          <Text style={styles.helloText}>Hello, </Text>
-          <Text style={styles.nameText}>{user ? user.name : "Guest123"}</Text>
+          <Text style={styles.helloText}>
+            Hello, {user ? user.name : "Guest"}
+          </Text>
         </ThemedView>
-
         <ThemedView style={styles.body}>
           <View style={styles.calendarWrapper}>
             <Calendar
@@ -191,13 +206,13 @@ export default function HomeScreen() {
                 dayTextColor: "black",
                 textDisabledColor: "lightgray",
                 arrowColor: themeColour,
-                textMonthFontSize: 24,
+                textMonthFontSize: 18,
                 textMonthFontWeight: "bold",
-                textDayHeaderFontSize: 14,
+                textDayHeaderFontSize: 12,
                 textDayHeaderFontWeight: "600",
-                textDayFontSize: 18,
+                textDayFontSize: 14,
                 textDayFontWeight: "500",
-                arrowWidth: 40,
+                arrowWidth: 30,
                 dotColor: themeColour,
                 selectedDotColor: "white",
                 // @ts-ignore
@@ -206,11 +221,19 @@ export default function HomeScreen() {
                     flexDirection: "row",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    borderBottomWidth: 2,
+                    borderBottomWidth: 1,
                     borderBottomColor: "#adafb3",
-                    paddingBottom: 5,
-                    marginBottom: 5,
+                    paddingBottom: 4,
+                    marginBottom: 4,
                     marginHorizontal: 10,
+                  },
+                },
+                "stylesheet.day.basic": {
+                  base: {
+                    width: 28,
+                    height: 28,
+                    alignItems: "center",
+                    justifyContent: "center",
                   },
                 },
               }}
@@ -274,6 +297,29 @@ export default function HomeScreen() {
                       <Text style={styles.cardDateTime}>{item.dateDisplay} • {item.startTime}</Text>
                       <Text style={styles.cardTitle}>{item.title}</Text>
 
+                      {/* Event Thumbnail */}
+                      {(item.imageUrl || (item.images && item.images.length > 0)) && (
+                        <TouchableOpacity
+                          style={styles.thumbnailContainer}
+                          onPress={() => handleImagePress(item)}
+                          accessibilityLabel={`View ${item.title} photos`}
+                          accessibilityRole="button"
+                        >
+                          <Image
+                            source={{ uri: item.images?.[0]?.url || item.imageUrl }}
+                            style={styles.thumbnail}
+                            contentFit="cover"
+                            transition={200}
+                          />
+                          {item.images && item.images.length > 1 && (
+                            <View style={styles.imageCountBadge}>
+                              <Ionicons name="images" size={14} color="#fff" />
+                              <Text style={styles.imageCountText}>{item.images.length}</Text>
+                            </View>
+                          )}
+                        </TouchableOpacity>
+                      )}
+
                       {/* Location */}
                       <View style={styles.infoBox}>
                         <Ionicons
@@ -301,24 +347,24 @@ export default function HomeScreen() {
                           {isStaff || userRole !== "volunteer" ? (
                             item.participantSlots ? (
                               <Text style={styles.infoText}>
-                                {isStaff ? "P:" : ""}{" "}
+                                {isStaff ? "Participant:" : ""}{" "}
                                 {item.takenSlots ?? 0}/{item.participantSlots}
                               </Text>
                             ) : (
                               <Text style={styles.infoText}>
-                                {isStaff ? "P:" : ""} No cap
+                                {isStaff ? "Participant:" : ""} No cap
                               </Text>
                             )
                           ) : null}
                           {isStaff || userRole === "volunteer" ? (
                             item.volunteerSlots && item.volunteerSlots > 0 ? (
                               <Text style={styles.infoText}>
-                                {isStaff ? "V:" : ""}{" "}
+                                {isStaff ? "Volunteer:" : ""}{" "}
                                 {item.volunteerTakenSlots ?? 0}/{item.volunteerSlots}
                               </Text>
                             ) : (
                               <Text style={styles.infoText}>
-                                {isStaff ? "V:" : ""} Not needed
+                                {isStaff ? "Volunteer:" : ""} Not needed
                               </Text>
                             )
                           ) : null}
@@ -366,6 +412,13 @@ export default function HomeScreen() {
           </View>
         </ThemedView>
       </ThemedView>
+
+      {/* Image Gallery Modal */}
+      <ImageGalleryModal
+        visible={galleryVisible}
+        images={selectedEventImages}
+        onClose={() => setGalleryVisible(false)}
+      />
     </ScrollView>
   );
 }
@@ -378,49 +431,43 @@ const styles = StyleSheet.create({
   },
   headerColour: {
     flexDirection: "column",
-    height: height * 0.2,
     width: "100%",
     backgroundColor: "#002C5E",
-    paddingLeft: width * 0.1,
-    justifyContent: "flex-end",
-    paddingBottom: 60,
+    paddingHorizontal: 16,
+    paddingTop: 60,
+    paddingBottom: 20,
   },
   helloText: {
-    fontSize: 18,
-    fontWeight: 600,
-    color: "#fff",
-  },
-  nameText: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 700,
     color: "#fff",
+    lineHeight: 30,
   },
   body: {
     flex: 1,
+    backgroundColor: "#fff",
   },
   calendarWrapper: {
     backgroundColor: "#fff",
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
     paddingHorizontal: 10,
-    paddingBottom: 10,
-    marginTop: -50,
-    paddingTop: 8,
+    paddingBottom: 8,
+    paddingTop: 9,
   },
   line: {
     borderWidth: 0.5,
     borderColor: "#adafb3",
-    marginHorizontal: 10,
+    marginHorizontal: 13,
   },
   bottomContainer: {
-    paddingTop: 15,
+    paddingTop: 8,
     flex: 1,
   },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 20,
-    marginBottom: 10,
+    marginBottom: 8,
+    marginTop: 15
   },
   eventText: {
     flexDirection: "row",
@@ -479,7 +526,7 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     flex: 1,
-    padding: 16,
+    padding: 12,
     backgroundColor: "white",
   },
   cardHeader: {
@@ -498,6 +545,35 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: "#F3F4F6",
   },
+  thumbnailContainer: {
+    marginVertical: 8,
+    borderRadius: 8,
+    overflow: "hidden",
+    position: "relative",
+  },
+  thumbnail: {
+    width: "100%",
+    height: 120,
+    borderRadius: 8,
+    backgroundColor: "#F3F4F6",
+  },
+  imageCountBadge: {
+    position: "absolute",
+    bottom: 8,
+    right: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 44, 94, 0.8)",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    gap: 4,
+  },
+  imageCountText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
   cardDateTime: {
     color: "#6B7280",
     fontWeight: "500",
@@ -514,9 +590,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#F3F4F6",
-    padding: 12,
-    borderRadius: 10,
-    marginBottom: 10,
+    padding: 8,
+    borderRadius: 8,
+    marginBottom: 6,
   },
   infoIcon: {
     marginRight: 12,
@@ -536,12 +612,12 @@ const styles = StyleSheet.create({
   cardFooter: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    marginTop: 8,
+    marginTop: 4,
   },
   registerBtn: {
     backgroundColor: "#002C5E",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
     borderRadius: 8,
   },
   registerBtnText: {
