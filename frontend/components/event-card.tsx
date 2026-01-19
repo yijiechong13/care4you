@@ -1,13 +1,17 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Event } from '@/types/event';
 import { borderRadius, colors, fontSize, fontWeight, shadow, spacing } from '@/constants/theme';
 
 interface EventCardProps {
   event: Event;
+  isStaff?: boolean;
+  onExport?: (eventId: string, eventTitle: string) => void;
+  isExporting?: boolean;
 }
 
-export function EventCard({ event }: EventCardProps) {
+export function EventCard({ event, isStaff, onExport, isExporting }: EventCardProps) {
   const formatTime = (start: string, end: string) => `${start} - ${end}`;
 
   const formatDate = (date: Date) => {
@@ -54,7 +58,25 @@ export function EventCard({ event }: EventCardProps) {
       {/* Registration Counts - Staff View */}
       {event.registrationCounts && (
         <View style={styles.registrationContainer}>
-          <Text style={styles.signUpTitle}>SIGN-UPS</Text>
+          <View style={styles.signUpHeader}>
+            <Text style={styles.signUpTitle}>SIGN-UPS</Text>
+            {isStaff && onExport && (
+              <TouchableOpacity
+                style={styles.exportButton}
+                onPress={() => onExport(event.id, event.title)}
+                disabled={isExporting}
+              >
+                {isExporting ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <>
+                    <Ionicons name="download-outline" size={16} color={colors.primary} />
+                    <Text style={styles.exportButtonText}>Export</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
           <View style={styles.countsRow}>
             <View style={styles.countItem}>
               <Text style={styles.countNumber}>
@@ -211,6 +233,22 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
     color: colors.gray[400],
+  },
+  exportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.gray[100],
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  exportButtonText: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.medium,
+    color: colors.primary,
+    marginLeft: 4,
   },
   capacityText: {
     fontSize: fontSize.sm,

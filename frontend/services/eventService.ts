@@ -195,6 +195,24 @@ export const submitRegistration = async (registrationData: {
   }
 };
 
+// Fetch detailed registrations for CSV export (staff only)
+export const fetchRegistrationsForExport = async (eventId: string) => {
+  try {
+    const response = await fetch(
+      `${API_URL.replace("/events", "/registrations")}/export/${eventId}`,
+    );
+
+    if (!response.ok) {
+      throw new Error(`Server error: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Fetch Registrations For Export Failed:", error);
+    return [];
+  }
+};
+
 // Fetch registration counts by user type for multiple events (for staff view)
 export const fetchRegistrationCounts = async (eventIds: string[]) => {
   try {

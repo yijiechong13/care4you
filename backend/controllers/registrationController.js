@@ -71,6 +71,17 @@ const getUserRegistrations = async (req, res) => {
   }
 };
 
+const getEventRegistrationsForExport = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const registrations = await RegistrationModel.getDetailedByEventId(eventId);
+    res.status(200).json(registrations);
+  } catch (error) {
+    console.error("❌ Controller Error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const getRegistrationCounts = async (req, res) => {
   try {
     const { eventIds } = req.body;
@@ -92,4 +103,5 @@ module.exports = {
   getEventRegistrations,
   getUserRegistrations,
   getRegistrationCounts,
+  getEventRegistrationsForExport,
 };

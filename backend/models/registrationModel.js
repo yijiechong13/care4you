@@ -91,6 +91,38 @@ const RegistrationModel = {
     return data;
   },
 
+  // Get detailed registrations for export (CSV)
+  getDetailedByEventId: async (eventId) => {
+    const { data, error } = await supabase
+      .from('registrations')
+      .select(`
+        id,
+        created_at,
+        special_requirements,
+        guest_name,
+        guest_contact,
+        guest_emergency_contact,
+        users:user_id(id, name, email, contact_number, user_type)
+      `)
+      .eq('event_id', eventId)
+      .order('created_at', { ascending: true });
+
+    if (error) throw new Error(error.message);
+
+    // Transform data for export
+    return data.map((reg, index) => ({
+      sn: index + 1,
+      name: reg.guest_name || reg.users?.name || 'N/A',
+      email: reg.users?.email || 'N/A',
+      contact: reg.guest_contact || reg.users?.contact_number || 'N/A',
+      emergencyContact: reg.guest_emergency_contact || 'N/A',
+      userType: reg.users?.user_type || 'Participant',
+      specialRequirements: reg.special_requirements || '',
+      registeredAt: new Date(reg.created_at).toLocaleDateString(),
+      attendance: '', // Empty for staff to fill in
+    }));
+  },
+
   // Get registration counts by user type for multiple events
   getCountsByEventIds: async (eventIds) => {
     if (!eventIds || eventIds.length === 0) {
