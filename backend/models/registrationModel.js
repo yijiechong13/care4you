@@ -83,7 +83,16 @@ const RegistrationModel = {
   findByUserId: async (userId) => {
     const { data, error } = await supabase
       .from('registrations')
-      .select('*, events(*)')
+      .select(`
+        *,
+        events(*),
+        registration_answers(
+          question_id,
+          selected_option_id,
+          event_questions:question_id(question_text),
+          question_options:selected_option_id(option_text)
+        )
+      `)
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 

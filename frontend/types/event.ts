@@ -19,7 +19,7 @@ export interface Event {
   icon?: string;
   importantNotice?: string;
   venue: string;
-  meetingPoint?: string;
+  selectedResponses?: { question: string; answer: string }[];
   registrationCounts?: RegistrationCounts;
   participantSlots?: number;
   volunteerSlots?: number;

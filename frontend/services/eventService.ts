@@ -118,6 +118,14 @@ export const fetchUserRegistrations = async (userId: string) => {
       const dateObj = new Date(event.start_time);
       const endTimeObj = new Date(event.end_time);
 
+      const answers = registration.registration_answers || [];
+      const selectedResponses = answers
+        .map((answer: any) => ({
+          question: answer.event_questions?.question_text || "Question",
+          answer: answer.question_options?.option_text || "N/A",
+        }))
+        .filter((entry: any) => entry.question || entry.answer);
+
       // Determine status based on date
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -152,6 +160,7 @@ export const fetchUserRegistrations = async (userId: string) => {
         }),
         status,
         venue: event.location,
+        selectedResponses: selectedResponses.length > 0 ? selectedResponses : undefined,
         registrationId: registration.id,
       };
     });

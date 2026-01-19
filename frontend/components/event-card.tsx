@@ -111,15 +111,17 @@ export function EventCard({ event, isStaff, onExport, isExporting }: EventCardPr
           </View>
         </View>
 
-        {event.meetingPoint && (
-          <View style={styles.detailRow}>
-            <Text style={styles.detailIcon}>🚇</Text>
-            <View>
-              <Text style={styles.detailLabel}>YOUR MEETING POINT</Text>
-              <Text style={styles.detailValue}>{event.meetingPoint}</Text>
-            </View>
+        {event.selectedResponses?.length ? (
+          <View style={styles.qaContainer}>
+            <Text style={styles.qaTitle}>YOUR RESPONSES</Text>
+            {event.selectedResponses.map((item, index) => (
+              <View key={`${item.question}-${index}`} style={styles.qaRow}>
+                <Text style={styles.qaQuestion}>{item.question}</Text>
+                <Text style={styles.qaAnswer}>{item.answer}</Text>
+              </View>
+            ))}
           </View>
-        )}
+        ) : null}
       </View>
     </View>
   );
@@ -216,6 +218,32 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     fontWeight: fontWeight.medium,
     color: colors.gray[700],
+  },
+  qaContainer: {
+    marginTop: spacing.md,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.gray[100],
+  },
+  qaTitle: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.bold,
+    color: colors.gray[500],
+    marginBottom: spacing.sm,
+    letterSpacing: 0.4,
+  },
+  qaRow: {
+    marginBottom: spacing.sm,
+  },
+  qaQuestion: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    color: colors.gray[700],
+    marginBottom: 2,
+  },
+  qaAnswer: {
+    fontSize: fontSize.sm,
+    color: colors.gray[500],
   },
   registrationContainer: {
     backgroundColor: colors.gray[100],
