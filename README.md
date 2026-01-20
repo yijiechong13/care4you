@@ -93,7 +93,7 @@ Since this is a prototype build, it runs on the **iOS Simulator** (part of Xcode
 **Steps:**
 1. Open **Xcode** on your Mac.
 2. Go to the top menu bar: **Xcode** > **Open Developer Tool** > **Simulator**. Wait for the virtual iPhone to boot up.
-3. **Download the iOS Build:** [CLICK HERE TO DOWNLOAD .APP ZIP](https://expo.dev/artifacts/eas/gyuPx5kk5Et4jVRZFfPAoo.tar.gz)
+3. **Download the iOS Build:** [CLICK HERE TO DOWNLOAD .APP ZIP](https://expo.dev/artifacts/eas/3V8xyBYqqyJsW31gdWmNqY.tar.gz)
 4. Unzip the file to reveal `hack4fun.app` (or similar).
 5. **Drag and Drop** the `.app` file directly onto the virtual iPhone screen in the Simulator.
 6. The app icon will appear on the home screen. Tap it to launch!
