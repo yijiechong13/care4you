@@ -1,24 +1,10 @@
-# 🛡️ Care4Fun | Hack4Good 2026 | Team: Hack4Fun
+# 🛡️ Care4 | Hack4Good 2026 | Team: Hack4Fun
 
-**Care4Fun** is a community-driven platform built to bridge the gap between volunteers, participants, and impactful social events. Designed for the **Hack4Good** hackathon, this mobile application streamlines event discovery and registration with a seamless "Virtual Guest" system for immediate engagement.
+**Care4You** is a community-driven platform built to bridge the gap between volunteers, participants, and impactful social events. Designed for the **Hack4Good** hackathon, this mobile application streamlines event discovery and registration with a seamless "Virtual Guest" system for immediate engagement.
 
 ---
 
-<!--
 ### ⚠️ The Problem
-
-**Problem Statement: "How might we reduce friction in activity sign-ups for both individuals and caregivers, while reducing manual effort for staff in managing and consolidating registration data?"**
-
-Traditional registration flows often lose users at the "Sign Up" wall. Meanwhile, staff struggle with fragmented data from various sources.
-
-### ✅ Our Solution: The "Frictionless" Workflow
-
-We solve this by allowing users to act immediately and authenticate later.
-
-1. **Virtual Guest System:** Users join events instantly using locally generated unique IDs.
-2. **The Conversion Deal:** An automated backend "handover" that migrates guest data to permanent accounts upon registration, eliminating manual data consolidation for staff. -->
-
-### 🌍 The Problem
 
 **Problem Statement: "How might we reduce friction in activity sign-ups for both individuals and caregivers, while reducing manual effort for staff in managing and consolidating registration data?"**
 
@@ -30,7 +16,7 @@ We solve this by allowing users to act immediately and authenticate later.
 
 ### 💡 Our Solution: Frictionless Participation & Management
 
-Care4Fun reduces friction at both the user and staff level by removing unnecessary steps at the point of action, while ensuring data remains structured and manageable.
+Care4You reduces friction at both the user and staff level by removing unnecessary steps at the point of action, while ensuring data remains structured and manageable.
 
 ### 🔑 Core Principle
 
@@ -87,45 +73,61 @@ Instead of forcing users to adapt to the system, Care4Fun adapts to user behavio
 
 ### 🚀 Getting Started
 
-### 1. Prerequisites
+### Option 1: Android Users (Easiest for Android)
+If you have an Android device, you can install the app directly via our APK file.
 
-Ensure you have [Node.js](https://nodejs.org/) installed on your machine.
+1. **Download the APK:** [CLICK HERE TO DOWNLOAD ANDROID APK](https://expo.dev/accounts/jayyy25/projects/hack4fun/builds/e2a46f80-5647-4310-8d00-b4484603d7f7)
+2. **Install:** Open the file on your phone.
+   - *Note:* You may need to allow "Install from Unknown Sources" in your settings if prompted.
+3. **Run:** Open the "Care4You" app from your app drawer.
 
-### 2. Clone the Repository
+---
 
-```md
-git clone https://github.com/Hack4Funnn/care4you
-cd care4fun
-```
+### Option 2: iOS Users (Requires Mac & Xcode)
+Since this is a prototype build, it runs on the **iOS Simulator** (part of Xcode) rather than a physical iPhone.
 
-### 3. Installation
+**Prerequisites:**
+- A Mac computer
+- Xcode installed (Free on the App Store)
 
-Install the dependencies for the frontend:
+**Steps:**
+1. Open **Xcode** on your Mac.
+2. Go to the top menu bar: **Xcode** > **Open Developer Tool** > **Simulator**. Wait for the virtual iPhone to boot up.
+3. **Download the iOS Build:** [CLICK HERE TO DOWNLOAD .APP ZIP](https://expo.dev/artifacts/eas/gyuPx5kk5Et4jVRZFfPAoo.tar.gz)
+4. Unzip the file to reveal `hack4fun.app` (or similar).
+5. **Drag and Drop** the `.app` file directly onto the virtual iPhone screen in the Simulator.
+6. The app icon will appear on the home screen. Tap it to launch!
 
-```bash
-cd frontend
-npm install
-```
+---
 
-### 4. Environment Configuration
+### Option 3: For Developers (Run from Source)
+If you want to modify the code or run the development version on your own setup.
 
-Create a .env file in the root of your frontend directory and add your hosted backend URL:
+**Prerequisites:**
+- Node.js installed
+- Expo Go app installed on your physical phone (optional)
 
-```code snippet
-EXPO_PUBLIC_API_URL=https://care4you-backend-685548494290.asia-southeast1.run.app/api
-```
-
-### 5. Run the App
-
-Start the development server:
-
-```Bash
-npx expo start
-```
-
-- Download Expo Go on your Android or iOS device.
-- Scan the QR code appearing in your terminal.
-
+**Steps:**
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Hack4Funnn/care4you.git
+   ```
+2. **Navigate to frontend directory:**
+    ```bash
+   cd frontend
+   ```
+3. **Install dependencies:**
+    ```bash
+   npm install
+   ```
+4. **Start the app:**
+    ```bash
+   npx expo start
+   ```
+5. **Scan & Run:**
+  - Scan the QR code with the Expo Go app (Android)
+  - Or press `a` to run on Android Emulator / `i` to run on iOS Simulator / `w` to run on local webpage
+  
 ---
 
 ### ✨ Key Features
