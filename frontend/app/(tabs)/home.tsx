@@ -38,6 +38,7 @@ export default function HomeScreen() {
   const currTime = new Date();
   const [user, setUser] = useState<any>(null);
   const [isStaff, setIsStaff] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
   const userRole = (user?.user_type || "").trim().toLowerCase();
   const [selectedDay, setSelectedDay] = useState<string>(formatDate(currTime));
   const [events, setEvents] = useState<any[]>([]);
@@ -91,7 +92,13 @@ export default function HomeScreen() {
       const userId = await AsyncStorage.getItem("userId");
       if (!userId) {
         setUser(null);
+        setIsGuest(false);
         setIsStaff(false);
+        return;
+      }
+
+      if (userId.startsWith("guest_")) {
+        setIsGuest(true);
         return;
       }
 
@@ -111,6 +118,7 @@ export default function HomeScreen() {
     } catch (error) {
       console.log("Not logged in");
       setUser(null);
+      setIsGuest(false);
       setIsStaff(false);
     }
   };
@@ -406,7 +414,7 @@ export default function HomeScreen() {
                           {currTime > new Date(item.dateDisplay) ||
                           (userRole == "volunteer" &&
                             item.volunteerSlots <= item.volunteerTakenSlots) ||
-                          (userRole == "participant" &&
+                          ((userRole == "participant" || isGuest) &&
                             item.participantSlots &&
                             item.participantSlots <= item.takenSlots) ? (
                             <View style={styles.registerClosedBtn}>
