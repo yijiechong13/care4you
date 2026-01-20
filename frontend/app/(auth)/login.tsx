@@ -9,11 +9,6 @@ import {
   ActivityIndicator,
   Pressable,
   StyleSheet,
-  TouchableWithoutFeedback,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Keyboard,
 } from "react-native";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -29,6 +24,37 @@ export default function LoginScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
+  // const handleSignIn = async () => {
+  //   if (!email || !password) {
+  //     Alert.alert("Error", "Please enter your email and password.");
+  //     return;
+  //   }
+
+  //   setLoading(true);
+  //   try {
+  //     const currentId = await AsyncStorage.getItem("userId");
+  //     const result = await loginUser({
+  //       email,
+  //       password,
+  //       guestId: currentId && currentId.startsWith("guest_") ? currentId : null,
+  //     });
+  //     if (result.success) {
+  //       // Save the ID so the Gatekeeper in _layout.tsx can find it
+  //       await AsyncStorage.setItem("userId", result.user.id.toString());
+
+  //       // Navigate to the main app
+  //       router.replace("/(tabs)/home");
+  //       console.log("✅ Backend: Supabase returned rows");
+  //     } else {
+  //       Alert.alert("Login Failed", result.error);
+  //     }
+  //   } catch (error) {
+  //     Alert.alert("Error", "Could not connect to the server");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const handleSignIn = async () => {
     if (!email || !password) {
       Alert.alert("Error", "Please enter your email and password.");
@@ -37,7 +63,15 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      const result = await loginUser({ email, password });
+      const currentId = await AsyncStorage.getItem("userId");
+      const result = await loginUser({
+        email,
+        password,
+        guestId:
+          currentId && currentId.toString().startsWith("guest_")
+            ? currentId
+            : null,
+      });
       if (result.success) {
         // Save the ID so the Gatekeeper in _layout.tsx can find it
         await AsyncStorage.setItem("userId", result.user.id.toString());
@@ -80,110 +114,85 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#002B5B" }}>
-      <KeyboardAvoidingView
-        style={styles.mainWrapper}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+    <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
+      {/* Logo & Header */}
+      <View style={styles.header}>
+        <Image
+          source={require("../../assets/images/care4youlogo.png")}
+          style={styles.logo}
+        />
+        <Text style={styles.welcomeText}>Welcome back!</Text>
+      </View>
+
+      {/* Input Fields */}
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>EMAIL</Text>
+        <TextInput
+          style={styles.input}
+          keyboardType="email-address"
+          placeholder="Enter your email"
+          placeholderTextColor="#A9A9A9"
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+        />
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>PASSWORD</Text>
+          {/* Corrected: Capital 'V' on View and removed individual input margin */}
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.passwordInput} // Renamed for clarity
+              placeholder="Enter your password"
+              placeholderTextColor="#A9A9A9"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={secureTextEntry}
+            />
+            <Pressable onPress={showPassword} style={styles.toggleButton}>
+              <MaterialCommunityIcons
+                name={secureTextEntry ? "eye-off" : "eye"}
+                size={24}
+                color="gray"
+              />
+            </Pressable>
+          </View>
+        </View>
+      </View>
+
+      {/* Action Buttons */}
+      <TouchableOpacity
+        style={styles.signInButton}
+        onPress={handleSignIn}
+        disabled={loading}
       >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={[
-              styles.scrollContent,
-              { paddingTop: insets.top + 20, flexGrow: 1, paddingBottom: 60 },
-            ]}
-          >
-            <View style={styles.header}>
-              <Image
-                source={require("../../assets/images/care4youlogo.png")}
-                style={styles.logo}
-              />
-              <Text style={styles.welcomeText}>Welcome back!</Text>
-            </View>
+        {loading ? (
+          <ActivityIndicator color="#FFF" />
+        ) : (
+          <Text style={styles.buttonText}>Sign In</Text>
+        )}
+      </TouchableOpacity>
 
-            {/* Input Fields */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>EMAIL</Text>
-              <TextInput
-                style={styles.input}
-                keyboardType="email-address"
-                placeholder="Enter your email"
-                placeholderTextColor="#A9A9A9"
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-              />
+      {/* UPDATED FOOTER SECTION */}
+      <Text style={styles.footerText}>
+        Don't have an account?{" "}
+        <Text
+          style={styles.signUpText}
+          onPress={() => router.push("/onboarding")} // ✅ Absolute path to onboarding
+        >
+          Sign up
+        </Text>
+      </Text>
 
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>PASSWORD</Text>
-                {/* Corrected: Capital 'V' on View and removed individual input margin */}
-                <View style={styles.passwordContainer}>
-                  <TextInput
-                    style={styles.passwordInput} // Renamed for clarity
-                    placeholder="Enter your password"
-                    placeholderTextColor="#A9A9A9"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={secureTextEntry}
-                  />
-                  <Pressable onPress={showPassword} style={styles.toggleButton}>
-                    <MaterialCommunityIcons
-                      name={secureTextEntry ? "eye-off" : "eye"}
-                      size={24}
-                      color="gray"
-                    />
-                  </Pressable>
-                </View>
-              </View>
-            </View>
-
-            {/* Action Buttons */}
-            <TouchableOpacity
-              style={styles.signInButton}
-              onPress={handleSignIn}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#FFF" />
-              ) : (
-                <Text style={styles.buttonText}>Sign In</Text>
-              )}
-            </TouchableOpacity>
-
-            {/* UPDATED FOOTER SECTION */}
-            <Text style={styles.footerText}>
-              Don't have an account?{" "}
-              <Text
-                style={styles.signUpText}
-                onPress={() => router.push("/onboarding")} // ✅ Absolute path to onboarding
-              >
-                Sign up
-              </Text>
-            </Text>
-
-            {/* GUEST MODE BUTTON */}
-            <TouchableOpacity
-              onPress={handleGuestSignIn}
-              style={styles.guestLink}
-            >
-              <Text style={styles.guestText}>Continue as Guest</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
+      {/* GUEST MODE BUTTON */}
+      <TouchableOpacity onPress={handleGuestSignIn} style={styles.guestLink}>
+        <Text style={styles.guestText}>Continue as Guest</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  mainWrapper: {
-    flex: 1,
-    backgroundColor: "#002B5B",
-  },
-  scrollContent: {
-    paddingHorizontal: 24,
-  },
   container: {
     flex: 1,
     backgroundColor: "#002B5B",
@@ -248,7 +257,6 @@ const styles = StyleSheet.create({
     padding: 18,
     alignItems: "center",
     elevation: 5,
-    marginTop: -20,
   },
   buttonText: {
     color: "#FFF",

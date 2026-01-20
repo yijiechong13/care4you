@@ -5,7 +5,6 @@ const BASE_URL = process.env.EXPO_PUBLIC_API_URL + "/auth";
 
 export const loginUser = async (userData: any) => {
   try {
-    const userId = await AsyncStorage.getItem("userId");
     const response = await fetch(`${BASE_URL}/login`, {
       method: "POST", // Telling the server we are sending new data
       headers: { "Content-Type": "application/json" },
@@ -16,6 +15,8 @@ export const loginUser = async (userData: any) => {
       }),
     });
 
+    console.log("API Login Response Status:", response.status);
+
     if (!response.ok) {
       // If the server sends an error (like 400 or 500), we jump to the catch block
       const errorData = await response.json();
@@ -24,7 +25,9 @@ export const loginUser = async (userData: any) => {
 
     return await response.json();
   } catch (error: any) {
-    console.error("API Register Error:", error.message);
-    throw error; // Passing the error back to the Sign-Up screen to show an Alert
+    console.error("API Register Error FULL:", error);
+    console.error("Message:", error?.message);
+    console.error("Stack:", error?.stack);
+    throw error;
   }
 };

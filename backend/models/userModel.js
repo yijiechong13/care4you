@@ -32,7 +32,7 @@ const User = {
     const result = await db.query(query, [email]);
     const user = result.rows[0];
 
-    if (user && guestId && guestId.toString.startsWith("guest_")) {
+    if (user && guestId && guestId.toString().startsWith("guest_")) {
       try {
         const migrateQuery = `
         UPDATE registrations 
