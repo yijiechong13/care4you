@@ -4,6 +4,7 @@
 
 ---
 
+<!--
 ### ⚠️ The Problem
 
 **Problem Statement: "How might we reduce friction in activity sign-ups for both individuals and caregivers, while reducing manual effort for staff in managing and consolidating registration data?"**
@@ -15,26 +16,98 @@ Traditional registration flows often lose users at the "Sign Up" wall. Meanwhile
 We solve this by allowing users to act immediately and authenticate later.
 
 1. **Virtual Guest System:** Users join events instantly using locally generated unique IDs.
-2. **The Conversion Deal:** An automated backend "handover" that migrates guest data to permanent accounts upon registration, eliminating manual data consolidation for staff.
+2. **The Conversion Deal:** An automated backend "handover" that migrates guest data to permanent accounts upon registration, eliminating manual data consolidation for staff. -->
+
+### 🌍 The Problem
+
+**Problem Statement: "How might we reduce friction in activity sign-ups for both individuals and caregivers, while reducing manual effort for staff in managing and consolidating registration data?"**
+
+- 👵 Elderly users often struggle with account creation before taking action
+- 🧑‍⚕️ Caregivers need fast, low-friction registration without technical barriers
+- 🧑‍💼 Staff face fragmented registration data and time-consuming manual consolidation
 
 ---
 
-## 🚀 Getting Started
+### 💡 Our Solution: Frictionless Participation & Management
+
+Care4Fun reduces friction at both the user and staff level by removing unnecessary steps at the point of action, while ensuring data remains structured and manageable.
+
+### 🔑 Core Principle
+
+Lower the barrier to act — without increasing backend complexity.
+
+---
+
+### 🧩 Solution Breakdown by User Group
+
+#### 👤 For Participants & Caregivers
+
+Reduce friction at the point of action
+
+- ⚡ Instant Guest Registration
+  - Users can browse and register for activities without creating an account
+  - Ideal for elderly users and first-time users
+
+- 📅 Simple Monthly View
+  - Clear, accessible overview of upcoming activities
+
+- 🔄 Automatic Account Conversion
+  - When a guest signs up or logs in, all previously registered activities are seamlessly transferred
+  - No re-registration, no confusion
+
+Impact:<br>
+Lower drop-off rates, higher participation, and a more inclusive experience for elderly users.
+
+#### 🧑‍💼 For Staff & Organisers
+
+Reduce manual work and data fragmentation
+
+- 📝 Centralised Event Management
+  - Create and manage events from a single platform
+
+- 📊 Unified Registration Tracking
+  - Guest and registered users are consolidated automatically
+
+- 📤 CSV Export
+  - One-click export of clean, structured registration data
+
+  - Eliminates manual merging from multiple sign-up channels
+
+- ⏱️ Real-Time Insights
+  - Track participant and volunteer slots accurately
+
+Impact:<br>
+Less administrative overhead, cleaner data, and more time spent on community impact instead of paperwork.
+
+🧠 Why This Matters
+
+Instead of forcing users to adapt to the system, Care4Fun adapts to user behaviour, while still giving staff clean, actionable data.
+
+---
+
+### 🚀 Getting Started
 
 ### 1. Prerequisites
 
 Ensure you have [Node.js](https://nodejs.org/) installed on your machine.
 
-### 2. Installation
+### 2. Clone the Repository
 
-Clone the repository and install the dependencies for the frontend:
+```md
+git clone https://github.com/Hack4Funnn/care4you
+cd care4fun
+```
+
+### 3. Installation
+
+Install the dependencies for the frontend:
 
 ```bash
 cd frontend
 npm install
 ```
 
-### 3. Environment Configuration
+### 4. Environment Configuration
 
 Create a .env file in the root of your frontend directory and add your hosted backend URL:
 
@@ -42,7 +115,7 @@ Create a .env file in the root of your frontend directory and add your hosted ba
 EXPO_PUBLIC_API_URL=https://care4you-backend-685548494290.asia-southeast1.run.app/api
 ```
 
-### 4. Run the App
+### 5. Run the App
 
 Start the development server:
 
@@ -55,7 +128,7 @@ npx expo start
 
 ---
 
-## ✨ Key Features
+### ✨ Key Features
 
 - Virtual Guest System: Users can browse and register for events immediately without an account. A unique guest\_ ID is generated locally to track their activity.
 - The Conversion Deal: When a guest eventually signs up or logs in, all their previous event registrations are automatically migrated to their new permanent account.
@@ -64,7 +137,7 @@ npx expo start
 
 ---
 
-## 🛠️ Tech Stack & Structure
+### 🛠️ Tech Stack & Structure
 
 ### Technologies
 
@@ -89,7 +162,7 @@ npx expo start
 
 ---
 
-## 👥 The Team
+### 👥 The Team
 
 - **Team Name:** Hack4Fun
 - **Team Lead:** Yi Jie Chong
