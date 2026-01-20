@@ -76,7 +76,7 @@ Instead of forcing users to adapt to the system, Care4Fun adapts to user behavio
 ### Option 1: Android Users (Easiest for Android)
 If you have an Android device, you can install the app directly via our APK file.
 
-1. **Download the APK:** [CLICK HERE TO DOWNLOAD ANDROID APK](https://expo.dev/accounts/jayyy25/projects/hack4fun/builds/e2a46f80-5647-4310-8d00-b4484603d7f7)
+1. **Download the APK:** [CLICK HERE TO DOWNLOAD ANDROID APK](https://expo.dev/accounts/ys_tey/projects/hack4fun/builds/782dbe0e-b9a5-4bd5-bc6c-b2ab8276a31f)
 2. **Install:** Open the file on your phone.
    - *Note:* You may need to allow "Install from Unknown Sources" in your settings if prompted.
 3. **Run:** Open the "Care4You" app from your app drawer.
