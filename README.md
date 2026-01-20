@@ -1,4 +1,4 @@
-# 🛡️ Care4 | Hack4Good 2026 | Team: Hack4Fun
+# 🛡️ Care4You | Hack4Good 2026 | Team: Hack4Fun
 
 **Care4You** is a community-driven platform built to bridge the gap between volunteers, participants, and impactful social events. Designed for the **Hack4Good** hackathon, this mobile application streamlines event discovery and registration with a seamless "Virtual Guest" system for immediate engagement.
 
