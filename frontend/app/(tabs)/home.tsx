@@ -43,7 +43,7 @@ export default function HomeScreen() {
   const [selectedDay, setSelectedDay] = useState<string>(formatDate(currTime));
   const [events, setEvents] = useState<any[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [galleryVisible, setGalleryVisible] = useState(false);
   const [selectedEventImages, setSelectedEventImages] = useState<EventImage[]>(
     [],
@@ -124,10 +124,15 @@ export default function HomeScreen() {
   };
 
   const loadEvents = async () => {
-    setLoading(true);
-    const data = await fetchEvents();
-    setEvents(data);
-    setLoading(false);
+    try {
+      setLoading(true);
+      const data = await fetchEvents();
+      setEvents(data);
+    } catch (error) {
+      console.error("Error loading events:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   function formatDate(date: Date) {
@@ -293,8 +298,6 @@ export default function HomeScreen() {
                 decelerationRate="fast"
                 pagingEnabled={false}
                 disableIntervalMomentum={true}
-                onRefresh={loadEvents}
-                refreshing={loading}
                 contentContainerStyle={{
                   paddingHorizontal: 20,
                   paddingBottom: 30,
