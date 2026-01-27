@@ -14,15 +14,18 @@ const createAnnouncement = async (req, res) => {
   try {
     const { title, message } = req.body;
 
-    if (!title || !message) {
-      return res.status(400).json({ error: "Title and message are required" });
+    if (!title || !title.trim()) {
+      return res.status(400).json({ error: "Title is required" });
     }
 
-    const newAnnouncement = await AnnouncementModel.create(title, message);
-    
-    res.status(201).json({ 
-      message: "Announcement posted successfully", 
-      data: newAnnouncement 
+    // Handle empty message - convert empty string to empty string or null based on DB schema
+    const messageValue = message && message.trim() ? message.trim() : "";
+
+    const newAnnouncement = await AnnouncementModel.create(title.trim(), messageValue);
+
+    res.status(201).json({
+      message: "Announcement posted successfully",
+      data: newAnnouncement
     });
 
   } catch (error) {

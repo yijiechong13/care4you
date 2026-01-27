@@ -102,28 +102,30 @@ export default function EventsScreen() {
         scrollEnabled={true}
       >
         {announcements.length > 0 ? (
-          announcements.map((item) => (
-            <View key={item.id} style={styles.cardContainer}>
-              <View style={styles.cardContent}>
-                
-                {/* Title & Date Row */}
-                <View style={styles.cardHeaderRow}>
-                  <Text style={styles.cardTitle}>{item.title}</Text>
-                  {item.date && (
-                    <Text style={styles.cardDate}>{item.date}</Text>
-                  )}
+          announcements.map((item, index) => (
+            <View key={item.id} style={[styles.cardContainer, index === announcements.length - 1 && styles.lastCard]}>
+
+              {/* Title */}
+              <Text style={styles.cardTitle}>{item.title}</Text>
+
+              {/* Divider */}
+              <View style={styles.divider} />
+
+              {/* Message Body */}
+              <Text style={styles.cardMessage}>{item.message}</Text>
+
+              {/* Date at Bottom Right */}
+              {item.date && (
+                <View style={styles.dateContainer}>
+                  <Text style={styles.cardDate}>{item.date}</Text>
                 </View>
-
-                {/* Message Body */}
-                <Text style={styles.cardMessage}>{item.message}</Text>
-              </View>
-
-              <View style={styles.separator} />
+              )}
             </View>
           ))
         ) : (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No announcements found</Text>
+            <Text style={styles.emptyText}>No announcements yet</Text>
+            <Text style={styles.emptySubtext}>Check back later for updates</Text>
           </View>
         )}
       </ScrollView>
@@ -168,53 +170,64 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
+    paddingTop: spacing.lg,
     paddingBottom: 100,
   },
   cardContainer: {
     backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  cardContent: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.lg,
-  },
-  cardHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: spacing.sm,
+  lastCard: {
+    marginBottom: spacing.md,
   },
   cardTitle: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize.xl,
     fontWeight: '700',
     color: '#002C5E',
-    flex: 1, 
-    marginRight: 10,
+    marginBottom: spacing.sm,
+    lineHeight: 28,
   },
-  cardDate: {
-    fontSize: fontSize.xs,
-    color: '#6B7280',
-    marginTop: 4,
+  divider: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginVertical: spacing.sm,
   },
   cardMessage: {
     fontSize: fontSize.md,
-    color: '#374151',
-    lineHeight: 22,
+    color: '#4B5563',
+    lineHeight: 24,
+    marginBottom: spacing.lg,
   },
-  separator: {
-    height: 1,
-    backgroundColor: '#E5E7EB',
-    marginHorizontal: spacing.lg,
+  dateContainer: {
+    alignItems: 'flex-end',
+  },
+  cardDate: {
+    fontSize: fontSize.xs,
+    color: '#9CA3AF',
+    fontWeight: '500',
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: spacing.xxl * 2,
+    paddingVertical: spacing.xxl * 3,
   },
   emptyText: {
-    fontSize: fontSize.lg,
-    color: colors.gray[400],
+    fontSize: fontSize.xl,
+    fontWeight: '600',
+    color: '#9CA3AF',
+    marginBottom: spacing.xs,
+  },
+  emptySubtext: {
+    fontSize: fontSize.md,
+    color: '#D1D5DB',
   },
   loadingContainer: {
     flex: 1,

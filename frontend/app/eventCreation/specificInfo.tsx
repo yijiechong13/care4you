@@ -148,11 +148,14 @@ export default function SpecificInfoScreen() {
             cleanedQuestions
         );
 
-        const announcementMsg = "Hi everyone! We are super excited to announce a brand new event: " + basicInfo.title + "!" +
-        "\n\n📅 Date: " + basicInfo.startTime.split(" ")[0] + " 📍 Location: " + basicInfo.location +
-        "\n\nCome join us for a fun time together. Spots might fill up fast, so please register soon in the \"Events\" tab. Can't wait to see you there!";
+        const announcementMsg = "We're excited to announce a new event!\n\n" +
+        "🎉 " + basicInfo.title + "\n" +
+        "📅 " + basicInfo.startTime.split(" ")[0] + "\n" +
+        "📍 " + basicInfo.location + "\n\n" +
+        "Join us for a great time together! Spots are limited, so register early in the Events tab.\n\n" +
+        "See you there!";
         await postAnnouncement(
-          "New Event Alert: " + basicInfo.title, 
+          "New Event: " + basicInfo.title,
           announcementMsg
         );
 

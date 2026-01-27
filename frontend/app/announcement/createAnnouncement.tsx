@@ -20,15 +20,15 @@ export default function CreateAnnouncementScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handlePost = async () => {
-    if (!title.trim() || !message.trim()) {
-      Alert.alert("Missing Fields", "Please fill in both the title and message.");
+    if (!title.trim()) {
+      Alert.alert("Missing Title", "Please enter a title for your announcement.");
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      await postAnnouncement(title, message);
+      await postAnnouncement(title, message.trim());
       Alert.alert("Success", "Announcement posted successfully!", [
         { text: "OK", onPress: () => router.navigate("/(tabs)/announcement") }
       ]);
@@ -70,7 +70,7 @@ export default function CreateAnnouncementScreen() {
         />
 
         {/* 2. MESSAGE INPUT (Multiline) */}
-        <Text style={styles.label}>Message</Text>
+        <Text style={styles.label}>Message <Text style={styles.optionalLabel}>(Optional)</Text></Text>
         <TextInput
           style={[styles.input, styles.textArea]}
           placeholder="Type your announcement details here..."
@@ -139,6 +139,11 @@ const styles = StyleSheet.create({
     color: '#111827',
     marginBottom: 8,
     marginTop: 15,
+  },
+  optionalLabel: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#9CA3AF',
   },
   input: {
     borderWidth: 1,
