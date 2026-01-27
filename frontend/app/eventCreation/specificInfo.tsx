@@ -149,7 +149,7 @@ export default function SpecificInfoScreen() {
         );
 
         const announcementMsg = "We're excited to announce a new event!\n\n" +
-        "🎉 " + basicInfo.title + "\n" +
+        "🎟️ " + basicInfo.title + "\n" +
         "📅 " + basicInfo.startTime.split(" ")[0] + "\n" +
         "📍 " + basicInfo.location + "\n\n" +
         "Join us for a great time together! Spots are limited, so register early in the Events tab.\n\n" +
