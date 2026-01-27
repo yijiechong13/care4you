@@ -17,6 +17,8 @@ import {
 } from "react-native";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/hooks/useLanguage";
 import { signupUser } from "../../services/signupService";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -33,16 +35,18 @@ export default function SignupScreen() {
   const router = useRouter();
   const { role } = useLocalSearchParams<{ role: string }>();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
+  const { language, toggleLanguage } = useLanguage();
 
   const handleCreateAccount = async () => {
     // 1. Validation
     if (!email || !name || !retypePassword || !phone || !password) {
-      Alert.alert("Error", "Please fill in all fields");
+      Alert.alert(t('common.error'), t('signup.fillAllFields'));
       return;
     }
 
     if (password !== retypePassword) {
-      Alert.alert("Error", "Passwords do not match");
+      Alert.alert(t('common.error'), t('signup.passwordsNoMatch'));
       return;
     }
 
@@ -70,7 +74,7 @@ export default function SignupScreen() {
         router.replace("/(tabs)/home");
       }
     } catch (error: any) {
-      Alert.alert("Sign Up Failed", error.message);
+      Alert.alert(t('signup.signUpFailed'), error.message);
     } finally {
       setLoading(false);
     }
@@ -92,58 +96,65 @@ export default function SignupScreen() {
             ]}
           >
             {/* Header Section */}
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => router.back()}
-            >
-              <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
+            <View style={styles.headerRow}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => router.back()}
+              >
+                <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.langToggle} onPress={toggleLanguage}>
+                <Text style={styles.langToggleText}>
+                  {language === 'en' ? '中文' : 'EN'}
+                </Text>
+              </TouchableOpacity>
+            </View>
 
             <View style={styles.header}>
               <Image
                 source={require("../../assets/images/care4youlogo.png")}
                 style={styles.logo}
               />
-              <Text style={styles.welcomeText}>Create your account</Text>
+              <Text style={styles.welcomeText}>{t('signup.createYourAccount')}</Text>
             </View>
 
             {/* Form Fields */}
             <View style={styles.formContainer}>
-              <Text style={styles.label}>FULL NAME</Text>
+              <Text style={styles.label}>{t('signup.fullName')}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Enter your name"
+                placeholder={t('signup.namePlaceholder')}
                 placeholderTextColor="#A9A9A9"
                 value={name}
                 onChangeText={setName}
               />
 
-              <Text style={styles.label}>EMAIL</Text>
+              <Text style={styles.label}>{t('signup.email')}</Text>
               <TextInput
                 style={styles.input}
                 keyboardType="email-address"
-                placeholder="Enter your email"
+                placeholder={t('signup.emailPlaceholder')}
                 placeholderTextColor="#A9A9A9"
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
               />
 
-              <Text style={styles.label}>PHONE NUMBER</Text>
+              <Text style={styles.label}>{t('signup.phone')}</Text>
               <TextInput
                 style={styles.input}
                 keyboardType="phone-pad"
-                placeholder="Enter your phone number"
+                placeholder={t('signup.phonePlaceholder')}
                 placeholderTextColor="#A9A9A9"
                 value={phone}
                 onChangeText={setPhone}
               />
 
-              <Text style={styles.label}>PASSWORD</Text>
+              <Text style={styles.label}>{t('signup.password')}</Text>
               <View style={styles.passwordWrapper}>
                 <TextInput
                   style={styles.passwordInput}
-                  placeholder="Create a secure password"
+                  placeholder={t('signup.passwordPlaceholder')}
                   placeholderTextColor="#A9A9A9"
                   value={password}
                   onChangeText={setPassword}
@@ -161,11 +172,11 @@ export default function SignupScreen() {
                 </Pressable>
               </View>
 
-              <Text style={styles.label}>CONFIRM PASSWORD</Text>
+              <Text style={styles.label}>{t('signup.confirmPassword')}</Text>
               <View style={styles.passwordWrapper}>
                 <TextInput
                   style={styles.passwordInput}
-                  placeholder="Re-enter your password"
+                  placeholder={t('signup.confirmPasswordPlaceholder')}
                   placeholderTextColor="#A9A9A9"
                   value={retypePassword}
                   onChangeText={setRetypePassword}
@@ -183,17 +194,17 @@ export default function SignupScreen() {
               {loading ? (
                 <ActivityIndicator color="#FFF" />
               ) : (
-                <Text style={styles.buttonText}>Create Account</Text>
+                <Text style={styles.buttonText}>{t('signup.createAccount')}</Text>
               )}
             </TouchableOpacity>
 
             <Text style={styles.footerText}>
-              Already have an account?{" "}
+              {t('signup.alreadyHaveAccount')}{" "}
               <Text
                 style={styles.linkText}
                 onPress={() => router.push("/login")}
               >
-                Log In
+                {t('signup.logIn')}
               </Text>
             </Text>
           </ScrollView>
@@ -291,5 +302,22 @@ const styles = StyleSheet.create({
     color: "#ADD8E6",
     fontWeight: "bold",
     textDecorationLine: "underline",
+  },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+  },
+  langToggle: {
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  langToggleText: {
+    color: "#FFF",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

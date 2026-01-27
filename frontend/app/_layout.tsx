@@ -10,6 +10,9 @@ import { ActivityIndicator, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import "react-native-reanimated";
 
+// Initialize i18n
+import "@/lib/i18n";
+
 import { useColorScheme } from "@/hooks/use-color-scheme";
 
 export const unstable_settings = {

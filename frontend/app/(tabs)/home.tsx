@@ -8,6 +8,7 @@ import {
   View,
 } from "react-native";
 import { Image } from "expo-image";
+import { useTranslation } from "react-i18next";
 
 import { ThemedView } from "@/components/themed-view";
 import { ImageGalleryModal, EventImage } from "@/components/ImageGalleryModal";
@@ -36,6 +37,7 @@ export default function HomeScreen() {
   const colorScheme = useColorScheme();
   const themeColour = Colors[colorScheme ?? "light"].themeColor;
   const currTime = new Date();
+  const { t } = useTranslation();
   const [user, setUser] = useState<any>(null);
   const [isStaff, setIsStaff] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
@@ -203,7 +205,7 @@ export default function HomeScreen() {
       <ThemedView style={styles.container}>
         <ThemedView style={styles.headerColour}>
           <Text style={styles.helloText}>
-            Hello, {user ? user.name : "Guest"}
+            {t('home.hello', { name: user ? user.name : t('common.guest') })}
           </Text>
         </ThemedView>
         <ThemedView style={styles.body}>
@@ -265,19 +267,19 @@ export default function HomeScreen() {
           <View style={styles.bottomContainer}>
             <View style={styles.sectionHeader}>
               <View style={styles.eventText}>
-                <Text style={styles.sectionTitle}>Events</Text>
+                <Text style={styles.sectionTitle}>{t('home.events')}</Text>
               </View>
 
               {isStaff ? (
                 <View style={styles.staffButton}>
                   <View style={styles.badge}>
-                    <Text style={styles.badgeText}>STAFF</Text>
+                    <Text style={styles.badgeText}>{t('home.staff')}</Text>
                   </View>
                   <TouchableOpacity
                     style={styles.createBtn}
                     onPress={handleCreateEvent}
                   >
-                    <Text style={styles.createBtnText}>+ CREATE</Text>
+                    <Text style={styles.createBtnText}>{t('home.create')}</Text>
                   </TouchableOpacity>
                 </View>
               ) : null}
@@ -286,7 +288,7 @@ export default function HomeScreen() {
             {filteredEvents.length === 0 ? (
               <View style={styles.noEventSection}>
                 <Text style={styles.noEventText}>
-                  No event happening today!
+                  {t('home.noEvents')}
                 </Text>
               </View>
             ) : (
@@ -368,7 +370,7 @@ export default function HomeScreen() {
                           style={styles.infoIcon}
                         />
                         <View>
-                          <Text style={styles.infoLabel}>LOCATION</Text>
+                          <Text style={styles.infoLabel}>{t('home.location')}</Text>
                           <Text style={styles.infoText}>{item.location}</Text>
                         </View>
                       </View>
@@ -382,29 +384,29 @@ export default function HomeScreen() {
                           style={styles.infoIcon}
                         />
                         <View>
-                          <Text style={styles.infoLabel}>AVAILABILITY</Text>
+                          <Text style={styles.infoLabel}>{t('home.availability')}</Text>
                           {isStaff || userRole !== "volunteer" ? (
                             item.participantSlots ? (
                               <Text style={styles.infoText}>
-                                {isStaff ? "Participant:" : ""}{" "}
+                                {isStaff ? t('home.participant') : ""}{" "}
                                 {item.takenSlots ?? 0}/{item.participantSlots}
                               </Text>
                             ) : (
                               <Text style={styles.infoText}>
-                                {isStaff ? "Participant:" : ""} No cap
+                                {isStaff ? t('home.participant') : ""} {t('home.noCap')}
                               </Text>
                             )
                           ) : null}
                           {isStaff || userRole === "volunteer" ? (
                             item.volunteerSlots && item.volunteerSlots > 0 ? (
                               <Text style={styles.infoText}>
-                                {isStaff ? "Volunteer:" : ""}{" "}
+                                {isStaff ? t('home.volunteer') : ""}{" "}
                                 {item.volunteerTakenSlots ?? 0}/
                                 {item.volunteerSlots}
                               </Text>
                             ) : (
                               <Text style={styles.infoText}>
-                                {isStaff ? "Volunteer:" : ""} Not needed
+                                {isStaff ? t('home.volunteer') : ""} {t('home.notNeeded')}
                               </Text>
                             )
                           ) : null}
@@ -422,13 +424,13 @@ export default function HomeScreen() {
                             item.participantSlots <= item.takenSlots) ? (
                             <View style={styles.registerClosedBtn}>
                               <Text style={styles.registerBtnText}>
-                                REGISTRATION CLOSED
+                                {t('home.registrationClosed')}
                               </Text>
                             </View>
                           ) : item.eventStatus == "cancelled" ? (
                             <View style={styles.registerCancelBtn}>
                               <Text style={styles.registerBtnText}>
-                                CANCELLED
+                                {t('home.cancelled')}
                               </Text>
                             </View>
                           ) : (
@@ -437,7 +439,7 @@ export default function HomeScreen() {
                               onPress={() => handleRegister(item)}
                             >
                               <Text style={styles.registerBtnText}>
-                                REGISTER NOW
+                                {t('home.registerNow')}
                               </Text>
                             </TouchableOpacity>
                           )}

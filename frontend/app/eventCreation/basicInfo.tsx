@@ -14,12 +14,20 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 
 // Event Types
-const TAG_OPTIONS = ['Activities at MTC Office', 'Outings', 'Nature Walks', 'Gym and Dance', 'Reading'];
+const TAG_OPTIONS = [
+  { value: 'Activities at MTC Office', labelKey: 'eventCreation.tagActivities' },
+  { value: 'Outings', labelKey: 'eventCreation.tagOutings' },
+  { value: 'Nature Walks', labelKey: 'eventCreation.tagNatureWalks' },
+  { value: 'Gym and Dance', labelKey: 'eventCreation.tagGymDance' },
+  { value: 'Reading', labelKey: 'eventCreation.tagReading' },
+];
 
 export default function CreateEventScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [title, setTitle] = useState('');
   const [location, setLocation] = useState('');
   const currDate = new Date();
@@ -36,7 +44,7 @@ export default function CreateEventScreen() {
   const [noCap, setNoCap] = useState(false);
   const [noNeed, setNoNeed] = useState(false);
   const [isWheelchairAccessible, setIsWheelchairAccessible] = useState(false);
-  const [tag, setTag] = useState(TAG_OPTIONS[0]);
+  const [tag, setTag] = useState(TAG_OPTIONS[0].value);
   const [showTagDropdown, setShowTagDropdown] = useState(false);
 
   const onDateChange = (event: any, selectedDate?: Date, isStart = true) => {
@@ -70,19 +78,19 @@ export default function CreateEventScreen() {
 
   const handleNext = () => {
     if (!title || !location || !startDate || !endDate || !tag) {
-      Alert.alert("Missing Fields", "Please fill in all required information.");
+      Alert.alert(t('eventCreation.missingFields'), t('eventCreation.fillRequired'));
       return;
     }
 
     // Validate start and end datetime
     if (endDate <= startDate) {
-      Alert.alert("Invalid Date/Time", "End date and time must be after start date and time.");
+      Alert.alert(t('eventCreation.invalidDateTime'), t('eventCreation.endAfterStart'));
       return;
     }
 
     const currDate = new Date();
     if (currDate > startDate) {
-      Alert.alert("Invalid Date/Time", "You could not create event happened in the past.");
+      Alert.alert(t('eventCreation.invalidDateTime'), t('eventCreation.pastEvent'));
       return;
     }
 
@@ -115,8 +123,8 @@ export default function CreateEventScreen() {
           <Ionicons name="arrow-back" size={24} color='#002C5E' />
         </TouchableOpacity>
         <View style={styles.headerText}>
-          <Text style={styles.headerTitle}>Create New Event</Text>
-          <Text style={styles.headerSubtitle}>Fill in event details</Text>
+          <Text style={styles.headerTitle}>{t('eventCreation.createNewEvent')}</Text>
+          <Text style={styles.headerSubtitle}>{t('eventCreation.fillDetails')}</Text>
         </View>        
       </View>
       
@@ -125,25 +133,25 @@ export default function CreateEventScreen() {
       <View style={styles.formContainer}>
         
         {/* 1. EVENT TITLE */}
-        <Text style={styles.label}>Event Title</Text>
+        <Text style={styles.label}>{t('eventCreation.eventTitle')}</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter event name"
+          placeholder={t('eventCreation.eventTitlePlaceholder')}
           value={title}
           onChangeText={setTitle}
         />
 
         {/* 2. LOCATION */}
-        <Text style={styles.label}>Location</Text>
+        <Text style={styles.label}>{t('eventCreation.location')}</Text>
         <TextInput
           style={styles.input}
-          placeholder="e.g. MTC Office"
+          placeholder={t('eventCreation.locationPlaceholder')}
           value={location}
           onChangeText={setLocation}
         />
 
         {/* 3. START DATETIME */}
-        <Text style={styles.label}>Start Date & Time</Text>
+        <Text style={styles.label}>{t('eventCreation.startDateTime')}</Text>
         <View style={styles.row}>
           <TouchableOpacity 
             style={styles.dateButton} 
@@ -165,7 +173,7 @@ export default function CreateEventScreen() {
         </View>
 
         {/* 4. END DATETIME */}
-        <Text style={styles.label}>End Date & Time</Text>
+        <Text style={styles.label}>{t('eventCreation.endDateTime')}</Text>
         <View style={styles.row}>
           <TouchableOpacity 
             style={styles.dateButton} 
@@ -205,18 +213,18 @@ export default function CreateEventScreen() {
         )}
 
         {/* 5. PARTICIPANTS */}
-        <Text style={styles.label}>Total Participants Allowed</Text>
+        <Text style={styles.label}>{t('eventCreation.totalParticipants')}</Text>
         <View style={styles.rowCentered}>
           <TextInput
             style={[styles.input, { flex: 1, marginBottom: 0 }, noCap && styles.disabledInput]}
-            placeholder="e.g. 20"
+            placeholder={t('eventCreation.participantsPlaceholder')}
             keyboardType="numeric"
             value={participants}
             onChangeText={setParticipants}
             editable={!noCap}
           />
           <View style={styles.switchContainer}>
-            <Text style={styles.switchLabel}>No Cap</Text>
+            <Text style={styles.switchLabel}>{t('eventCreation.noCap')}</Text>
             <Switch
               value={noCap}
               onValueChange={setNoCap}
@@ -226,18 +234,18 @@ export default function CreateEventScreen() {
         </View>
 
         {/* 6. VOLUNTEERS */}
-        <Text style={styles.label}>Total Volunteers Needed</Text>
+        <Text style={styles.label}>{t('eventCreation.totalVolunteers')}</Text>
         <View style={styles.rowCentered}>
           <TextInput
             style={[styles.input, { flex: 1, marginBottom: 0 }, noNeed && styles.disabledInput]}
-            placeholder="e.g. 5"
+            placeholder={t('eventCreation.volunteersPlaceholder')}
             keyboardType="numeric"
             value={volunteers}
             onChangeText={setVolunteers}
             editable={!noNeed}
           />
           <View style={styles.switchContainer}>
-            <Text style={styles.switchLabel}>No Need</Text>
+            <Text style={styles.switchLabel}>{t('eventCreation.noNeed')}</Text>
             <Switch
               value={noNeed}
               onValueChange={setNoNeed}
@@ -247,7 +255,7 @@ export default function CreateEventScreen() {
         </View>
 
         {/* 7. WHEELCHAIR ACCESSIBLE (NEW) */}
-        <Text style={styles.label}>Wheelchair Accessible</Text>
+        <Text style={styles.label}>{t('eventCreation.wheelchairAccessible')}</Text>
         <View style={styles.radioGroup}>
           <TouchableOpacity 
             style={[styles.radioButton, isWheelchairAccessible && styles.radioButtonSelected]} 
@@ -258,7 +266,9 @@ export default function CreateEventScreen() {
               size={20} 
               color={isWheelchairAccessible ? "#002C5E" : "#666"} 
             />
-            <Text style={[styles.radioText, isWheelchairAccessible && styles.radioTextSelected]}>Yes</Text>
+            <Text style={[styles.radioText, isWheelchairAccessible && styles.radioTextSelected]}>
+              {t('common.yes')}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
@@ -270,17 +280,21 @@ export default function CreateEventScreen() {
               size={20} 
               color={!isWheelchairAccessible ? "#002C5E" : "#666"} 
             />
-            <Text style={[styles.radioText, !isWheelchairAccessible && styles.radioTextSelected]}>No</Text>
+            <Text style={[styles.radioText, !isWheelchairAccessible && styles.radioTextSelected]}>
+              {t('common.no')}
+            </Text>
           </TouchableOpacity>
         </View>
 
         {/* 8. TAG */}
-        <Text style={styles.label}>Category Tag</Text>
+        <Text style={styles.label}>{t('eventCreation.categoryTag')}</Text>
         <TouchableOpacity 
           style={styles.dropdownButton} 
           onPress={() => setShowTagDropdown(!showTagDropdown)}
         >
-          <Text style={styles.dropdownText}>{tag}</Text>
+          <Text style={styles.dropdownText}>
+            {t(TAG_OPTIONS.find((option) => option.value === tag)?.labelKey ?? '')}
+          </Text>
           <Ionicons name="chevron-down" size={20} color="#666" />
         </TouchableOpacity>
         
@@ -288,15 +302,15 @@ export default function CreateEventScreen() {
           <View style={styles.dropdownList}>
             {TAG_OPTIONS.map((option) => (
               <TouchableOpacity 
-                key={option} 
+                key={option.value} 
                 style={styles.dropdownItem}
                 onPress={() => {
-                  setTag(option);
+                  setTag(option.value);
                   setShowTagDropdown(false);
                 }}
               >
-                <Text style={[styles.dropdownItemText, tag === option && styles.activeDropdownItem]}>
-                  {option}
+                <Text style={[styles.dropdownItemText, tag === option.value && styles.activeDropdownItem]}>
+                  {t(option.labelKey)}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -305,7 +319,7 @@ export default function CreateEventScreen() {
 
         {/* NEXT BUTTON */}
         <TouchableOpacity style={styles.submitBtn} onPress={handleNext}>
-          <Text style={styles.submitBtnText}>Next</Text>
+          <Text style={styles.submitBtnText}>{t('common.next')}</Text>
         </TouchableOpacity>
 
       </View>

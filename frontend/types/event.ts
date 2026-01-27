@@ -35,8 +35,8 @@ export interface EventCardProps {
 }
 
 export const filterTabs = [
-  { key: 'all', label: 'All' },
-  { key: 'today', label: 'Today' },
-  { key: 'upcoming', label: 'Upcoming' },
-  { key: 'completed', label: 'Completed' },
+  { key: 'all', labelKey: 'events.filterAll' },
+  { key: 'today', labelKey: 'events.filterToday' },
+  { key: 'upcoming', labelKey: 'events.filterUpcoming' },
+  { key: 'completed', labelKey: 'events.filterCompleted' },
 ] as const;

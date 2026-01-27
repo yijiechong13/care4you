@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -9,7 +10,8 @@ import { Dimensions } from 'react-native';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const { width, height } = Dimensions.get("window");
+  const { height } = Dimensions.get("window");
+  const { t } = useTranslation();
 
   return (
     <Tabs
@@ -23,28 +25,28 @@ export default function TabLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: 'Home',
+          title: t('tabs.home'),
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
         }}
       />
       <Tabs.Screen
         name="events"
         options={{
-          title: 'My Events',
+          title: t('tabs.events'),
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="list.bullet.rectangle.fill" color={color} />,
         }}
       />
       <Tabs.Screen
         name="announcement"
         options={{
-          title: 'Announcements',
+          title: t('tabs.announcements'),
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="newspaper" color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: t('tabs.profile'),
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
         }}
       />

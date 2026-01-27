@@ -27,8 +27,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { useFocusEffect } from "expo-router";
+import { useTranslation } from "react-i18next";
 
 export default function EventsScreen() {
+  const { t } = useTranslation();
   const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,8 +58,8 @@ export default function EventsScreen() {
 
       if (registrations.length === 0) {
         Alert.alert(
-          "No Registrations",
-          "There are no registrations to export for this event.",
+          t('events.noRegistrations'),
+          t('events.noRegistrationsMessage'),
         );
         setExportingEventId(null);
         return;
@@ -111,17 +113,20 @@ export default function EventsScreen() {
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(file.uri, {
           mimeType: "text/csv",
-          dialogTitle: `Export ${eventTitle} Registrations`,
+          dialogTitle: t("events.exportDialogTitle", { title: eventTitle }),
           UTI: "public.comma-separated-values-text",
         });
       } else {
-        Alert.alert("Success", `CSV saved to: ${file.uri}`);
+        Alert.alert(
+          t("common.success"),
+          t("events.exportSavedMessage", { path: file.uri }),
+        );
       }
     } catch (error) {
       console.error("Export error:", error);
       Alert.alert(
-        "Export Failed",
-        "Unable to export registrations. Please try again.",
+        t('events.exportFailed'),
+        t('events.exportFailedMessage'),
       );
     } finally {
       setExportingEventId(null);
@@ -222,13 +227,13 @@ export default function EventsScreen() {
         <View style={styles.header}>
           <View style={styles.headerContent}>
             <Text style={styles.headerTitle}>
-              {isStaff ? "All Events" : "My Events"}
+              {isStaff ? t('events.allEvents') : t('events.title')}
             </Text>
           </View>
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading events...</Text>
+          <Text style={styles.loadingText}>{t('events.loadingEvents')}</Text>
         </View>
       </View>
     );
@@ -240,10 +245,10 @@ export default function EventsScreen() {
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>
-            {isStaff ? "All Events" : "My Events"}
+            {isStaff ? t('events.allEvents') : t('events.title')}
           </Text>
           <View style={styles.eventCountBadge}>
-            <Text style={styles.eventCountText}>{activeEventCount} Events</Text>
+            <Text style={styles.eventCountText}>{t('events.eventsCount', { count: activeEventCount })}</Text>
           </View>
         </View>
       </View>
@@ -265,7 +270,7 @@ export default function EventsScreen() {
                 activeFilter === tab.key && styles.filterTabTextActive,
               ]}
             >
-              {tab.label}
+              {t(tab.labelKey)}
             </Text>
           </TouchableOpacity>
         ))}
@@ -291,7 +296,7 @@ export default function EventsScreen() {
           ))
         ) : (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No events found</Text>
+            <Text style={styles.emptyText}>{t('events.noEvents')}</Text>
           </View>
         )}
       </ScrollView>

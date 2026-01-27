@@ -5,40 +5,39 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
-  Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-const { width } = Dimensions.get("window");
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/hooks/useLanguage";
 
 type RoleType = "participant" | "volunteer" | "staff";
 
 interface RoleOption {
   id: RoleType;
-  title: string;
-  description: string;
+  titleKey: string;
+  descriptionKey: string;
   image: number;
 }
 
-const roles: RoleOption[] = [
+const roleData: RoleOption[] = [
   {
     id: "participant",
-    title: "Participant",
-    description: "I want to join activities and events",
+    titleKey: "onboarding.participant",
+    descriptionKey: "onboarding.participantDesc",
     image: require("../../assets/images/participant logo.png"),
   },
   {
     id: "volunteer",
-    title: "Volunteer",
-    description: "I want to help and support events",
+    titleKey: "onboarding.volunteer",
+    descriptionKey: "onboarding.volunteerDesc",
     image: require("../../assets/images/volunteer logo.png"),
   },
   {
     id: "staff",
-    title: "Staff",
-    description: "I organise and manage activities",
+    titleKey: "onboarding.staff",
+    descriptionKey: "onboarding.staffDesc",
     image: require("../../assets/images/staff logo.png"),
   },
 ];
@@ -46,6 +45,8 @@ const roles: RoleOption[] = [
 export default function LandingScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
+  const { language, toggleLanguage } = useLanguage();
 
   const handleRoleSelect = (role: RoleType) => {
     // Navigate to signup with selected role
@@ -57,22 +58,27 @@ export default function LandingScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 24 }]}>
+      {/* Language Toggle */}
+      <TouchableOpacity style={styles.langToggle} onPress={toggleLanguage}>
+        <Text style={styles.langToggleText}>
+          {language === 'en' ? '中文' : 'EN'}
+        </Text>
+      </TouchableOpacity>
+
       {/* Logo Section */}
       <View style={styles.logoSection}>
         <Image
           source={require("../../assets/images/care4youlogo.png")}
           style={styles.logo}
         />
-        <Text style={styles.tagline}>
-          Making a difference together in our {"\n"} community
-        </Text>
+        <Text style={styles.tagline}>{t('onboarding.tagline')}</Text>
       </View>
 
       {/* Role Selection Section */}
       <View style={styles.roleSection}>
-        <Text style={styles.roleHeader}>I am a...</Text>
+        <Text style={styles.roleHeader}>{t('onboarding.iAmA')}</Text>
 
-        {roles.map((role) => (
+        {roleData.map((role) => (
           <TouchableOpacity
             key={role.id}
             style={styles.roleCard}
@@ -83,8 +89,8 @@ export default function LandingScreen() {
               <Image source={role.image} style={styles.roleIcon} />
             </View>
             <View style={styles.roleTextContainer}>
-              <Text style={styles.roleTitle}>{role.title}</Text>
-              <Text style={styles.roleDescription}>{role.description}</Text>
+              <Text style={styles.roleTitle}>{t(role.titleKey)}</Text>
+              <Text style={styles.roleDescription}>{t(role.descriptionKey)}</Text>
             </View>
             <Ionicons name="chevron-forward" size={22} color="#C6D2E2" />
           </TouchableOpacity>
@@ -94,9 +100,9 @@ export default function LandingScreen() {
       {/* Footer - Login Link */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
         <Text style={styles.footerText}>
-          Already have an account?{" "}
+          {t('onboarding.alreadyHaveAccount')}{" "}
           <Text style={styles.loginLink} onPress={() => router.push("/login")}>
-            Log In
+            {t('onboarding.logIn')}
           </Text>
         </Text>
       </View>
@@ -192,5 +198,20 @@ const styles = StyleSheet.create({
     color: "#D8E6F7",
     fontWeight: "700",
     textDecorationLine: "underline",
+  },
+  langToggle: {
+    position: "absolute",
+    top: 50,
+    right: 22,
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    zIndex: 10,
+  },
+  langToggleText: {
+    color: "#FFF",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

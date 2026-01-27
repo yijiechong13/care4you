@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useTranslation } from "react-i18next";
 import {
   colors,
   spacing,
@@ -26,6 +27,7 @@ import {
 import { fetchUserProfile, updateUserProfile } from "@/services/userService";
 import { fetchUserRegistrations } from "@/services/eventService";
 import { supabase } from "@/lib/supabase";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const { width } = Dimensions.get("window");
 
@@ -39,10 +41,12 @@ export default function ProfileScreen() {
   const [editName, setEditName] = useState("");
   const [editPhone, setEditPhone] = useState("");
   const [saving, setSaving] = useState(false);
+  const { t } = useTranslation();
+  const { language, setLanguage } = useLanguage();
 
   const handleEditProfile = () => {
     if (userData.name === "Guest User") {
-      Alert.alert("Access Denied", "Please log in to edit your profile.");
+      Alert.alert(t('profile.accessDenied'), t('profile.loginToEdit'));
       return;
     }
     setEditName(userData.name);
@@ -52,7 +56,7 @@ export default function ProfileScreen() {
 
   const handleSaveProfile = async () => {
     if (!editName.trim() || !editPhone.trim()) {
-      Alert.alert("Error", "Name and Phone cannot be empty.");
+      Alert.alert(t('common.error'), t('profile.namePhoneRequired'));
       return;
     }
 
@@ -65,10 +69,10 @@ export default function ProfileScreen() {
       if (result.success) {
         setUserData({ ...userData, name: editName, phone: editPhone });
         setIsEditModalVisible(false);
-        Alert.alert("Success", "Profile updated successfully!");
+        Alert.alert(t('common.success'), t('profile.profileUpdated'));
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to update profile.");
+      Alert.alert(t('common.error'), t('profile.failedToUpdate'));
     } finally {
       setSaving(false);
     }
@@ -83,10 +87,10 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert("Log Out", "Are you sure you want to log out?", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(t('profile.logOut'), t('profile.logOutConfirm'), [
+      { text: t('common.cancel'), style: "cancel" },
       {
-        text: "Log Out",
+        text: t('profile.logOut'),
         style: "destructive",
         onPress: async () => {
           await AsyncStorage.removeItem("userId"); //removing userId from device, old registered events gone
@@ -176,17 +180,16 @@ export default function ProfileScreen() {
             <Ionicons name="person-outline" size={40} color={colors.primary} />
           </View>
 
-          <Text style={styles.guestTitle}>Join the Community</Text>
+          <Text style={styles.guestTitle}>{t('profile.joinCommunity')}</Text>
           <Text style={styles.guestSubtitle}>
-            Sign up to save your event history, manage your profile, and get
-            personalized health updates.
+            {t('profile.joinSubtitle')}
           </Text>
 
           <TouchableOpacity
             style={styles.primaryActionBtn}
             onPress={() => router.push("/onboarding")}
           >
-            <Text style={styles.primaryActionText}>Create Account</Text>
+            <Text style={styles.primaryActionText}>{t('profile.createAccount')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -194,7 +197,7 @@ export default function ProfileScreen() {
             onPress={() => router.push("/login")}
           >
             <Text style={styles.secondaryActionText}>
-              Already have an account? Log In
+              {t('profile.alreadyHaveAccount')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -235,33 +238,79 @@ export default function ProfileScreen() {
         {/* Stats Cards */}
         {!isStaff && (
           <View style={styles.statsContainer}>
-            <StatCard number={userData.stats.upcoming} label="Upcoming" />
+            <StatCard number={userData.stats.upcoming} label={t('profile.upcoming')} />
             <StatCard
               number={userData.stats.registered}
-              label="This Month"
+              label={t('profile.thisMonth')}
               highlight
             />
-            <StatCard number={userData.stats.total} label="Total" />
+            <StatCard number={userData.stats.total} label={t('profile.total')} />
           </View>
         )}
       </View>
 
       {/* Info Section */}
       <View style={styles.infoSection}>
-        <Text style={styles.sectionTitle}>Personal Information</Text>
+        <Text style={styles.sectionTitle}>{t('profile.personalInfo')}</Text>
         <View style={styles.infoCard}>
           <InfoRow
             icon="person-outline"
-            label="Full Name"
+            label={t('profile.fullName')}
             value={userData?.name}
           />
-          <InfoRow icon="mail-outline" label="Email" value={userData?.email} />
+          <InfoRow icon="mail-outline" label={t('profile.email')} value={userData?.email} />
           <InfoRow
             icon="call-outline"
-            label="Phone"
+            label={t('profile.phone')}
             value={userData?.phone}
             isLast // This is now the last row
           />
+        </View>
+      </View>
+
+      {/* Language Section */}
+      <View style={styles.infoSection}>
+        <Text style={styles.sectionTitle}>{t('profile.language')}</Text>
+        <View style={styles.languageCard}>
+          <TouchableOpacity
+            style={[
+              styles.languageOption,
+              language === 'en' && styles.languageOptionActive,
+            ]}
+            onPress={() => setLanguage('en')}
+          >
+            <Text
+              style={[
+                styles.languageText,
+                language === 'en' && styles.languageTextActive,
+              ]}
+            >
+              {t('profile.english')}
+            </Text>
+            {language === 'en' && (
+              <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
+            )}
+          </TouchableOpacity>
+          <View style={styles.languageDivider} />
+          <TouchableOpacity
+            style={[
+              styles.languageOption,
+              language === 'zh' && styles.languageOptionActive,
+            ]}
+            onPress={() => setLanguage('zh')}
+          >
+            <Text
+              style={[
+                styles.languageText,
+                language === 'zh' && styles.languageTextActive,
+              ]}
+            >
+              {t('profile.chinese')}
+            </Text>
+            {language === 'zh' && (
+              <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
+            )}
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -269,7 +318,7 @@ export default function ProfileScreen() {
       <View style={styles.actionsSection}>
         <TouchableOpacity style={styles.actionButton} onPress={handleLogout}>
           <Ionicons name="log-out-outline" size={20} color="#DC2626" />
-          <Text style={styles.logoutButtonText}>Log Out</Text>
+          <Text style={styles.logoutButtonText}>{t('profile.logOut')}</Text>
           <Ionicons name="chevron-forward" size={20} color={colors.gray[400]} />
         </TouchableOpacity>
       </View>
@@ -278,16 +327,16 @@ export default function ProfileScreen() {
       <Modal visible={isEditModalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Edit Profile</Text>
+            <Text style={styles.modalTitle}>{t('profile.editProfile')}</Text>
 
-            <Text style={styles.inputLabel}>FULL NAME</Text>
+            <Text style={styles.inputLabel}>{t('profile.fullName').toUpperCase()}</Text>
             <TextInput
               style={styles.modalInput}
               value={editName}
               onChangeText={setEditName}
             />
 
-            <Text style={styles.inputLabel}>EMAIL (Non-editable)</Text>
+            <Text style={styles.inputLabel}>{t('profile.emailNonEditable').toUpperCase()}</Text>
             <TextInput
               style={[
                 styles.modalInput,
@@ -297,7 +346,7 @@ export default function ProfileScreen() {
               editable={false}
             />
 
-            <Text style={styles.inputLabel}>PHONE NUMBER</Text>
+            <Text style={styles.inputLabel}>{t('profile.phoneNumber').toUpperCase()}</Text>
             <TextInput
               style={styles.modalInput}
               value={editPhone}
@@ -310,7 +359,7 @@ export default function ProfileScreen() {
                 onPress={() => setIsEditModalVisible(false)}
                 style={styles.cancelBtn}
               >
-                <Text>Cancel</Text>
+                <Text>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleSaveProfile}
@@ -320,7 +369,7 @@ export default function ProfileScreen() {
                 {saving ? (
                   <ActivityIndicator color="#FFF" />
                 ) : (
-                  <Text style={{ color: "#FFF" }}>Save</Text>
+                  <Text style={{ color: "#FFF" }}>{t('common.save')}</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -651,5 +700,34 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
+  },
+  languageCard: {
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.xl,
+    ...shadow.md,
+  },
+  languageOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
+  },
+  languageOptionActive: {
+    backgroundColor: `${colors.primary}08`,
+  },
+  languageText: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.medium,
+    color: colors.gray[500],
+  },
+  languageTextActive: {
+    color: colors.primary,
+    fontWeight: fontWeight.semibold,
+  },
+  languageDivider: {
+    height: 1,
+    backgroundColor: colors.gray[100],
+    marginHorizontal: spacing.lg,
   },
 });

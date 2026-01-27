@@ -14,6 +14,8 @@ import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/hooks/useLanguage";
 import { loginUser } from "@/services/loginService";
 
 export default function LoginScreen() {
@@ -23,6 +25,8 @@ export default function LoginScreen() {
   const [secureTextEntry, setSecureTextEntry] = useState(true);
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
+  const { language, toggleLanguage } = useLanguage();
 
   // const handleSignIn = async () => {
   //   if (!email || !password) {
@@ -57,7 +61,7 @@ export default function LoginScreen() {
 
   const handleSignIn = async () => {
     if (!email || !password) {
-      Alert.alert("Error", "Please enter your email and password.");
+      Alert.alert(t('common.error'), t('auth.enterEmailPassword'));
       return;
     }
 
@@ -80,10 +84,10 @@ export default function LoginScreen() {
         router.replace("/(tabs)/home");
         console.log("✅ Backend: Supabase returned rows");
       } else {
-        Alert.alert("Login Failed", result.error);
+        Alert.alert(t('auth.loginFailed'), result.error);
       }
     } catch (error) {
-      Alert.alert("Error", "Could not connect to the server");
+      Alert.alert(t('common.error'), t('auth.couldNotConnect'));
     } finally {
       setLoading(false);
     }
@@ -103,7 +107,7 @@ export default function LoginScreen() {
       await AsyncStorage.setItem("userId", uniqueGuestId);
       router.replace("/(tabs)/home"); // Navigate using Expo Router
     } catch (error) {
-      Alert.alert("Error", "Failed to start guest session");
+      Alert.alert(t('common.error'), t('auth.failedGuestSession'));
     } finally {
       setLoading(false);
     }
@@ -115,22 +119,29 @@ export default function LoginScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
+      {/* Language Toggle */}
+      <TouchableOpacity style={styles.langToggle} onPress={toggleLanguage}>
+        <Text style={styles.langToggleText}>
+          {language === 'en' ? '中文' : 'EN'}
+        </Text>
+      </TouchableOpacity>
+
       {/* Logo & Header */}
       <View style={styles.header}>
         <Image
           source={require("../../assets/images/care4youlogo.png")}
           style={styles.logo}
         />
-        <Text style={styles.welcomeText}>Welcome back!</Text>
+        <Text style={styles.welcomeText}>{t('auth.welcomeBack')}</Text>
       </View>
 
       {/* Input Fields */}
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>EMAIL</Text>
+        <Text style={styles.label}>{t('auth.email')}</Text>
         <TextInput
           style={styles.input}
           keyboardType="email-address"
-          placeholder="Enter your email"
+          placeholder={t('auth.emailPlaceholder')}
           placeholderTextColor="#A9A9A9"
           value={email}
           onChangeText={setEmail}
@@ -138,12 +149,12 @@ export default function LoginScreen() {
         />
 
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>PASSWORD</Text>
+          <Text style={styles.label}>{t('auth.password')}</Text>
           {/* Corrected: Capital 'V' on View and removed individual input margin */}
           <View style={styles.passwordContainer}>
             <TextInput
               style={styles.passwordInput} // Renamed for clarity
-              placeholder="Enter your password"
+              placeholder={t('auth.passwordPlaceholder')}
               placeholderTextColor="#A9A9A9"
               value={password}
               onChangeText={setPassword}
@@ -169,24 +180,24 @@ export default function LoginScreen() {
         {loading ? (
           <ActivityIndicator color="#FFF" />
         ) : (
-          <Text style={styles.buttonText}>Sign In</Text>
+          <Text style={styles.buttonText}>{t('auth.signIn')}</Text>
         )}
       </TouchableOpacity>
 
       {/* UPDATED FOOTER SECTION */}
       <Text style={styles.footerText}>
-        Don't have an account?{" "}
+        {t('auth.noAccount')}{" "}
         <Text
           style={styles.signUpText}
-          onPress={() => router.push("/onboarding")} // ✅ Absolute path to onboarding
+          onPress={() => router.push("/onboarding")}
         >
-          Sign up
+          {t('auth.signUp')}
         </Text>
       </Text>
 
       {/* GUEST MODE BUTTON */}
       <TouchableOpacity onPress={handleGuestSignIn} style={styles.guestLink}>
-        <Text style={styles.guestText}>Continue as Guest</Text>
+        <Text style={styles.guestText}>{t('auth.continueAsGuest')}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -280,5 +291,20 @@ const styles = StyleSheet.create({
   guestText: {
     color: "#4FA8FF",
     textDecorationLine: "underline",
+  },
+  langToggle: {
+    position: "absolute",
+    top: 50,
+    right: 24,
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    zIndex: 10,
+  },
+  langToggleText: {
+    color: "#FFF",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

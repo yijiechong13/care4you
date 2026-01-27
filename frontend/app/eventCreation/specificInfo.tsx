@@ -14,6 +14,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { publishEvent } from '@/services/eventService';
 import { postAnnouncement } from '@/services/announmentService';
+import { useTranslation } from 'react-i18next';
 
 interface EventImageUpload {
   uri: string;
@@ -22,6 +23,7 @@ interface EventImageUpload {
 
 export default function SpecificInfoScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [reminders, setReminders] = useState('');
   const [images, setImages] = useState<EventImageUpload[]>([]);
   const [questions, setQuestions] = useState([
@@ -33,7 +35,7 @@ export default function SpecificInfoScreen() {
   // 1. Image Picker - supports multiple images
   const pickImage = async () => {
     if (images.length >= 5) {
-      Alert.alert("Limit Reached", "You can upload up to 5 images per event.");
+      Alert.alert(t('eventCreation.limitReached'), t('eventCreation.limitReachedMessage'));
       return;
     }
 
@@ -159,11 +161,11 @@ export default function SpecificInfoScreen() {
           announcementMsg
         );
 
-        Alert.alert("Success", "Event Published!", [
-            { text: "OK", onPress: () => router.navigate('/(tabs)/events') }
+        Alert.alert(t('common.success'), t('eventCreation.eventPublished'), [
+            { text: t('common.ok'), onPress: () => router.navigate('/(tabs)/events') }
         ]);
     } catch (error) {
-        Alert.alert("Error", "Failed to publish event.");
+        Alert.alert(t('common.error'), t('eventCreation.failedToPublish'));
     }
   };
 
@@ -175,21 +177,21 @@ export default function SpecificInfoScreen() {
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#002C5E" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Additional Details</Text>
-        <Text style={styles.headerSubtitle}>Customize your registration form</Text>
+        <Text style={styles.headerTitle}>{t('eventCreation.additionalDetails')}</Text>
+        <Text style={styles.headerSubtitle}>{t('eventCreation.customizeForm')}</Text>
       </View>
       <View style={styles.divider} />
 
       <View style={styles.formContainer}>
 
         {/* SECTION 1 */}
-        <Text style={styles.sectionHeader}>EVENT INFORMATION</Text>
+        <Text style={styles.sectionHeader}>{t('eventCreation.eventInfo')}</Text>
 
         {/* Reminders */}
-        <Text style={styles.label}>Important Reminders</Text>
+        <Text style={styles.label}>{t('eventCreation.importantReminders')}</Text>
         <TextInput
           style={[styles.input, styles.textArea]}
-          placeholder="e.g. Please bring your own towel and water bottle."
+          placeholder={t('eventCreation.remindersPlaceholder')}
           multiline={true}
           numberOfLines={4}
           textAlignVertical="top"
@@ -198,7 +200,7 @@ export default function SpecificInfoScreen() {
         />
 
         {/* Photo Upload - Multiple Images */}
-        <Text style={styles.label}>Event Photos (up to 5)</Text>
+        <Text style={styles.label}>{t('eventCreation.eventPhotos')}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imagesScrollView}>
           <View style={styles.imagesRow}>
             {images.map((img, index) => (
@@ -215,7 +217,7 @@ export default function SpecificInfoScreen() {
                   onPress={() => setPrimaryImage(index)}
                 >
                   <Text style={[styles.primaryBadgeText, img.isPrimary && styles.primaryBadgeTextActive]}>
-                    {img.isPrimary ? '★ Primary' : 'Set Primary'}
+                    {img.isPrimary ? `★ ${t('eventCreation.primary')}` : t('eventCreation.setPrimary')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -223,7 +225,7 @@ export default function SpecificInfoScreen() {
             {images.length < 5 && (
               <TouchableOpacity style={styles.addImageBtn} onPress={pickImage}>
                 <Ionicons name="add" size={32} color="#666" />
-                <Text style={styles.addImageText}>Add Photo</Text>
+                <Text style={styles.addImageText}>{t('eventCreation.addPhoto')}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -232,7 +234,7 @@ export default function SpecificInfoScreen() {
 
         {/* SECTION 2: MCQ BUILDER */}
         <View style={styles.mcqHeaderContainer}>
-            <Text style={styles.sectionHeader}>REGISTRATION QUESTIONS (MCQ)</Text>
+            <Text style={styles.sectionHeader}>{t('eventCreation.registrationQuestions')}</Text>
         </View>
 
         {questions.map((q, qIndex) => (
@@ -240,7 +242,9 @@ export default function SpecificInfoScreen() {
             
             {/* Question Title Header */}
             <View style={styles.questionHeader}>
-                <Text style={styles.questionLabel}>Question {qIndex + 1}</Text>
+                <Text style={styles.questionLabel}>
+                  {t('eventCreation.question')} {qIndex + 1}
+                </Text>
                 {questions.length > 1 && (
                     <TouchableOpacity onPress={() => removeQuestion(qIndex)}>
                         <Ionicons name="trash-outline" size={20} color="#EF4444" />
@@ -251,7 +255,7 @@ export default function SpecificInfoScreen() {
             {/* Question Input */}
             <TextInput
               style={styles.input}
-              placeholder="e.g. Dietary Requirements / Meeting points?"
+              placeholder={t('eventCreation.questionPlaceholder')}
               value={q.title}
               onChangeText={(text) => updateQuestionTitle(text, qIndex)}
             />
@@ -262,7 +266,7 @@ export default function SpecificInfoScreen() {
                 <Ionicons name="radio-button-off" size={20} color="#9CA3AF" />
                 <TextInput
                   style={styles.optionInput}
-                  placeholder={`Option ${oIndex + 1}`}
+                  placeholder={`${t('eventCreation.option')} ${oIndex + 1}`}
                   value={option}
                   onChangeText={(text) => updateOption(text, qIndex, oIndex)}
                 />
@@ -276,7 +280,7 @@ export default function SpecificInfoScreen() {
 
             {/* Add Option Button */}
             <TouchableOpacity style={styles.addOptionBtn} onPress={() => addOption(qIndex)}>
-              <Text style={styles.addOptionText}>+ Add Option</Text>
+              <Text style={styles.addOptionText}>{t('eventCreation.addOption')}</Text>
             </TouchableOpacity>
           </View>
         ))}
@@ -284,12 +288,12 @@ export default function SpecificInfoScreen() {
         {/* Add Question Button */}
         <TouchableOpacity style={styles.addQuestionBtn} onPress={addQuestion}>
             <Ionicons name="add-circle-outline" size={20} color="#002C5E" />
-            <Text style={styles.addQuestionText}>Add Another Question</Text>
+            <Text style={styles.addQuestionText}>{t('eventCreation.addAnotherQuestion')}</Text>
         </TouchableOpacity>
 
         {/* PUBLISH BUTTON */}
         <TouchableOpacity style={styles.publishBtn} onPress={handlePublish}>
-          <Text style={styles.publishBtnText}>Publish Event</Text>
+          <Text style={styles.publishBtnText}>{t('eventCreation.publishEvent')}</Text>
         </TouchableOpacity>
 
       </View>

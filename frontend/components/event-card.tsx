@@ -20,6 +20,7 @@ import {
 import { cancelEvent } from "@/services/eventService";
 import { useRouter } from "expo-router";
 import { postAnnouncement } from "@/services/announmentService";
+import { useTranslation } from "react-i18next";
 
 interface EventCardProps {
   event: Event;
@@ -35,12 +36,13 @@ export function EventCard({
   isExporting,
 }: EventCardProps) {
   const router = useRouter();
+  const { t } = useTranslation();
   const formatTime = (start: string, end: string) => `${start} - ${end}`;
 
   const formatDate = (date: Date) => {
     const today = new Date();
     if (date.toDateString() === today.toDateString()) {
-      return "Today";
+      return t("events.todayLabel");
     }
     return date.toLocaleDateString("en-US", {
       weekday: "short",
@@ -52,26 +54,27 @@ export function EventCard({
   const handleCancel = async () => {
     try {
       Alert.alert(
-        "Cancel Event",
-        "Are you sure you want to cancel this event?",
+        t("events.cancelEventTitle"),
+        t("events.cancelEventMessage"),
         [
-          { text: "Exit", style: "cancel" },
+          { text: t("common.exit"), style: "cancel" },
           {
-            text: "Cancel",
+            text: t("common.cancel"),
             style: "destructive",
             onPress: async () => {
               await cancelEvent(event.id);
 
               const announcementMsg =
-                "We regret to inform you that " +
-                event.title +
-                ", originally scheduled for " +
-                event.date.toDateString() +
-                ", has been cancelled." +
-                "\n\nWe apologize for any inconvenience this may cause. If you have already registered, your slot has been released. We hope to see you at our future events." +
-                "\n\nThank you for your understanding.";
+                t("events.cancelAnnouncementIntro", {
+                  title: event.title,
+                  date: event.date.toDateString(),
+                }) +
+                "\n\n" +
+                t("events.cancelAnnouncementBody") +
+                "\n\n" +
+                t("events.cancelAnnouncementThanks");
               await postAnnouncement(
-                "❌ Event Cancelled: " + event.title,
+                t("events.cancelAnnouncementTitle", { title: event.title }),
                 announcementMsg,
               );
               router.replace("/(tabs)/home");
@@ -80,7 +83,7 @@ export function EventCard({
         ],
       );
     } catch (error) {
-      Alert.alert("Error", "Failed to cancel event");
+      Alert.alert(t("common.error"), t("events.cancelFailed"));
     }
   };
 
@@ -92,7 +95,7 @@ export function EventCard({
         <Text
           style={[styles.statusText, { color: statusColors[event.status] }]}
         >
-          {statusLabels[event.status]}
+          {t(`events.status.${event.status}`)}
         </Text>
       </View>
 
@@ -107,13 +110,17 @@ export function EventCard({
         </View>
         {event.eventStatus == "cancelled" && (
           <View style={styles.cancelButton}>
-            <Text style={styles.cancelButtonText}>Cancelled</Text>
+            <Text style={styles.cancelButtonText}>
+              {t("events.cancelled")}
+            </Text>
           </View>
         )}
 
         {isStaff && event.eventStatus != "cancelled" && (
           <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
-            <Text style={styles.cancelButtonText}>X Cancel</Text>
+            <Text style={styles.cancelButtonText}>
+              {t("events.cancelAction")}
+            </Text>
           </TouchableOpacity>
         )}
       </View>
@@ -121,7 +128,7 @@ export function EventCard({
       {/* Important Notice */}
       {event.reminders && (
         <View style={styles.noticeContainer}>
-          <Text style={styles.noticeTitle}>IMPORTANT NOTICE</Text>
+          <Text style={styles.noticeTitle}>{t("events.importantNotice")}</Text>
           <Text style={styles.noticeText}>{event.reminders}</Text>
         </View>
       )}
@@ -130,7 +137,7 @@ export function EventCard({
       {isStaff && (
         <View style={styles.registrationContainer}>
           <View style={styles.signUpHeader}>
-            <Text style={styles.signUpTitle}>SIGN-UPS</Text>
+            <Text style={styles.signUpTitle}>{t("events.signUps")}</Text>
             {onExport && (
               <TouchableOpacity
                 style={styles.exportButton}
@@ -146,7 +153,9 @@ export function EventCard({
                       size={16}
                       color={colors.primary}
                     />
-                    <Text style={styles.exportButtonText}>Export</Text>
+                    <Text style={styles.exportButtonText}>
+                      {t("events.export")}
+                    </Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -163,7 +172,7 @@ export function EventCard({
                   </Text>
                 )}
               </Text>
-              <Text style={styles.countLabel}>Participants</Text>
+              <Text style={styles.countLabel}>{t("events.participants")}</Text>
             </View>
             <View style={styles.countDivider} />
             <View style={styles.countItem}>
@@ -173,7 +182,7 @@ export function EventCard({
                   <Text style={styles.countCap}> / {event.volunteerSlots}</Text>
                 )}
               </Text>
-              <Text style={styles.countLabel}>Volunteers</Text>
+              <Text style={styles.countLabel}>{t("events.volunteers")}</Text>
             </View>
           </View>
         </View>
@@ -181,19 +190,19 @@ export function EventCard({
 
       {/* Event Details */}
       <View style={styles.detailsContainer}>
-        <Text style={styles.detailsTitle}>EVENT DETAILS</Text>
+        <Text style={styles.detailsTitle}>{t("events.eventDetails")}</Text>
 
         <View style={styles.detailRow}>
           <Text style={styles.detailIcon}>📍</Text>
           <View>
-            <Text style={styles.detailLabel}>VENUE</Text>
+            <Text style={styles.detailLabel}>{t("events.venue")}</Text>
             <Text style={styles.detailValue}>{event.venue}</Text>
           </View>
         </View>
 
         {event.selectedResponses?.length ? (
           <View style={styles.qaContainer}>
-            <Text style={styles.qaTitle}>YOUR RESPONSES</Text>
+            <Text style={styles.qaTitle}>{t("events.yourResponses")}</Text>
             {event.selectedResponses.map((item, index) => (
               <View key={`${item.question}-${index}`} style={styles.qaRow}>
                 <Text style={styles.qaQuestion}>{item.question}</Text>
@@ -410,10 +419,4 @@ const statusColors = {
   today: colors.primary,
   upcoming: colors.primary,
   completed: colors.gray[500],
-} as const;
-
-const statusLabels = {
-  today: "TODAY'S EVENT",
-  upcoming: "UPCOMING",
-  completed: "COMPLETED",
 } as const;

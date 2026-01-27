@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import { useTranslation } from "react-i18next";
 import {
   submitRegistration,
   fetchEventQuestions,
@@ -35,6 +36,7 @@ type Question = {
 export default function EventRegistrationScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { t } = useTranslation();
 
   // Parse event data from params
   const eventId = params.eventId as string;
@@ -100,20 +102,32 @@ export default function EventRegistrationScreen() {
 
   const handleSubmit = async () => {
     if (!userId) {
-      Alert.alert("Login Required", "Please log in before registering.");
+      Alert.alert(
+        t("eventRegistration.loginRequiredTitle"),
+        t("eventRegistration.loginRequiredMessage"),
+      );
       return;
     }
 
     if (!fullName.trim()) {
-      Alert.alert("Missing Field", "Please enter your full name.");
+      Alert.alert(
+        t("eventRegistration.missingFieldTitle"),
+        t("eventRegistration.missingFullName"),
+      );
       return;
     }
     if (!contactNumber.trim()) {
-      Alert.alert("Missing Field", "Please enter your contact number.");
+      Alert.alert(
+        t("eventRegistration.missingFieldTitle"),
+        t("eventRegistration.missingContactNumber"),
+      );
       return;
     }
     if (!emergencyContact.trim()) {
-      Alert.alert("Missing Field", "Please enter an emergency contact number.");
+      Alert.alert(
+        t("eventRegistration.missingFieldTitle"),
+        t("eventRegistration.missingEmergencyContact"),
+      );
       return;
     }
 
@@ -121,8 +135,10 @@ export default function EventRegistrationScreen() {
     for (const question of questions) {
       if (!answers[question.id]) {
         Alert.alert(
-          "Missing Answer",
-          `Please answer: "${question.questionText}"`,
+          t("eventRegistration.missingAnswerTitle"),
+          t("eventRegistration.missingAnswerPrompt", {
+            question: question.questionText,
+          }),
         );
         return;
       }
@@ -148,14 +164,14 @@ export default function EventRegistrationScreen() {
       });
 
       Alert.alert(
-        "Registration Submitted",
-        "Your registration has been submitted successfully!",
+        t("eventRegistration.registrationSuccess"),
+        t("eventRegistration.registrationSubmittedMessage"),
         [{ text: "OK", onPress: () => router.back() }],
       );
     } catch (error: any) {
       Alert.alert(
-        "Registration Failed",
-        error.message || "Something went wrong.",
+        t("eventRegistration.registrationFailed"),
+        error.message || t("eventRegistration.registrationFailedMessage"),
       );
     }
   };
@@ -173,28 +189,34 @@ export default function EventRegistrationScreen() {
         >
           <Ionicons name="arrow-back" size={24} color="#002C5E" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Event Registration</Text>
-        <Text style={styles.headerSubtitle}>Fill in your details</Text>
+        <Text style={styles.headerTitle}>
+          {eventTitle
+            ? t("eventRegistration.registerFor", { title: eventTitle })
+            : t("eventRegistration.register")}
+        </Text>
+        <Text style={styles.headerSubtitle}>
+          {t("eventRegistration.headerSubtitle")}
+        </Text>
       </View>
 
       <View style={styles.divider} />
 
       <View style={styles.formContainer}>
         {/* Full Name */}
-        <Text style={styles.label}>Full Name</Text>
+        <Text style={styles.label}>{t("eventRegistration.fullName")}</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter your full name"
+          placeholder={t("eventRegistration.fullNamePlaceholder")}
           placeholderTextColor="#9CA3AF"
           value={fullName}
           onChangeText={setFullName}
         />
 
         {/* Contact Number */}
-        <Text style={styles.label}>Contact Number</Text>
+        <Text style={styles.label}>{t("eventRegistration.contactNumber")}</Text>
         <TextInput
           style={styles.input}
-          placeholder="+65 XXXX XXXX"
+          placeholder={t("eventRegistration.contactPlaceholder")}
           placeholderTextColor="#9CA3AF"
           value={contactNumber}
           onChangeText={setContactNumber}
@@ -202,10 +224,12 @@ export default function EventRegistrationScreen() {
         />
 
         {/* Emergency Contact */}
-        <Text style={styles.label}>Emergency Contact</Text>
+        <Text style={styles.label}>
+          {t("eventRegistration.emergencyContact")}
+        </Text>
         <TextInput
           style={styles.input}
-          placeholder="Emergency contact number"
+          placeholder={t("eventRegistration.emergencyPlaceholder")}
           placeholderTextColor="#9CA3AF"
           value={emergencyContact}
           onChangeText={setEmergencyContact}
@@ -216,7 +240,9 @@ export default function EventRegistrationScreen() {
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="small" color="#002C5E" />
-            <Text style={styles.loadingText}>Loading questions...</Text>
+            <Text style={styles.loadingText}>
+              {t("eventRegistration.loadingQuestions")}
+            </Text>
           </View>
         ) : (
           questions.map((question) => (
@@ -255,10 +281,12 @@ export default function EventRegistrationScreen() {
         )}
 
         {/* Special Requirements */}
-        <Text style={styles.label}>Special Requirements (Optional)</Text>
+        <Text style={styles.label}>
+          {t("eventRegistration.specialRequirementsOptional")}
+        </Text>
         <TextInput
           style={[styles.input, styles.textArea]}
-          placeholder="Any special needs or requirements"
+          placeholder={t("eventRegistration.requirementsPlaceholder")}
           placeholderTextColor="#9CA3AF"
           value={specialRequirements}
           onChangeText={setSpecialRequirements}
@@ -269,7 +297,9 @@ export default function EventRegistrationScreen() {
 
         {/* Submit Button */}
         <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
-          <Text style={styles.submitBtnText}>Submit Registration</Text>
+          <Text style={styles.submitBtnText}>
+            {t("eventRegistration.submitRegistration")}
+          </Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

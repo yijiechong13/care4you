@@ -12,16 +12,21 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { postAnnouncement } from '@/services/announmentService';
+import { useTranslation } from 'react-i18next';
 
 export default function CreateAnnouncementScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handlePost = async () => {
     if (!title.trim()) {
-      Alert.alert("Missing Title", "Please enter a title for your announcement.");
+      Alert.alert(
+        t('announcements.missingTitle'),
+        t('announcements.missingTitleMessage'),
+      );
       return;
     }
 
@@ -29,12 +34,15 @@ export default function CreateAnnouncementScreen() {
 
     try {
       await postAnnouncement(title, message.trim());
-      Alert.alert("Success", "Announcement posted successfully!", [
-        { text: "OK", onPress: () => router.navigate("/(tabs)/announcement") }
+      Alert.alert(t('common.success'), t('announcements.announcementPosted'), [
+        { text: t('common.ok'), onPress: () => router.navigate("/(tabs)/announcement") }
       ]);
     } catch (error) {
       console.error(error);
-      Alert.alert("Error", "Failed to post announcement. Please check your connection.");
+      Alert.alert(
+        t('common.error'),
+        t('announcements.failedToPost'),
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -50,8 +58,8 @@ export default function CreateAnnouncementScreen() {
           <Ionicons name="arrow-back" size={24} color='#002C5E' />
         </TouchableOpacity>
         
-        <Text style={styles.headerTitle}>New Announcement</Text>
-        <Text style={styles.headerSubtitle}>Share updates with everyone</Text>
+        <Text style={styles.headerTitle}>{t('createAnnouncement.title')}</Text>
+        <Text style={styles.headerSubtitle}>{t('createAnnouncement.subtitle')}</Text>
       </View>
       
       <View style={styles.divider} />
@@ -59,10 +67,10 @@ export default function CreateAnnouncementScreen() {
       <View style={styles.formContainer}>
         
         {/* 1. TITLE INPUT */}
-        <Text style={styles.label}>Title</Text>
+        <Text style={styles.label}>{t('createAnnouncement.announcementTitle')}</Text>
         <TextInput
           style={styles.input}
-          placeholder="e.g. Activity Canceled / New Event"
+          placeholder={t('createAnnouncement.titlePlaceholder')}
           value={title}
           onChangeText={setTitle}
           maxLength={60}
@@ -70,10 +78,13 @@ export default function CreateAnnouncementScreen() {
         />
 
         {/* 2. MESSAGE INPUT (Multiline) */}
-        <Text style={styles.label}>Message <Text style={styles.optionalLabel}>(Optional)</Text></Text>
+        <Text style={styles.label}>
+          {t('createAnnouncement.message')}{' '}
+          <Text style={styles.optionalLabel}>({t('announcements.optional')})</Text>
+        </Text>
         <TextInput
           style={[styles.input, styles.textArea]}
-          placeholder="Type your announcement details here..."
+          placeholder={t('createAnnouncement.messagePlaceholder')}
           value={message}
           onChangeText={setMessage}
           multiline={true}
@@ -91,7 +102,7 @@ export default function CreateAnnouncementScreen() {
           {isSubmitting ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.submitBtnText}>Post Announcement</Text>
+            <Text style={styles.submitBtnText}>{t('createAnnouncement.postAnnouncement')}</Text>
           )}
         </TouchableOpacity>
 

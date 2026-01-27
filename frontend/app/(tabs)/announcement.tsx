@@ -8,9 +8,11 @@ import { fetchEvents, fetchUserRegistrations } from '@/services/eventService';
 import { fetchAnnouncements } from '@/services/announmentService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 
 export default function EventsScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,12 +66,12 @@ export default function EventsScreen() {
       <View style={styles.container}>
         <View style={styles.header}>
           <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>Announcements</Text>
+            <Text style={styles.headerTitle}>{t('announcements.title')}</Text>
           </View>
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading announcements...</Text>
+          <Text style={styles.loadingText}>{t('announcements.loadingAnnouncements')}</Text>
         </View>
       </View>
     );
@@ -84,10 +86,10 @@ export default function EventsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Announcements</Text>
+          <Text style={styles.headerTitle}>{t('announcements.title')}</Text>
           {isStaff && (
             <TouchableOpacity style={styles.eventCountBadge} onPress={handleCreateAnnouncement}>
-              <Text style={styles.eventCountText}>+ Create</Text>
+              <Text style={styles.eventCountText}>{t('announcements.create')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -124,8 +126,8 @@ export default function EventsScreen() {
           ))
         ) : (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No announcements yet</Text>
-            <Text style={styles.emptySubtext}>Check back later for updates</Text>
+            <Text style={styles.emptyText}>{t('announcements.noAnnouncements')}</Text>
+            <Text style={styles.emptySubtext}>{t('announcements.checkBack')}</Text>
           </View>
         )}
       </ScrollView>
