@@ -1,9 +1,9 @@
-import { Platform } from "react-native";
+import { Alert, Platform } from "react-native";
 
 // CHANGE TO DEPLOYED BACKEND events
-// const API_URL = process.env.EXPO_PUBLIC_API_URL + "/events";
+const API_URL = process.env.EXPO_PUBLIC_API_URL + "/events";
 
-const API_URL = "http://172.31.88.150:8080/api/events";
+// const API_URL = "http://localhost:8080/api/events";
 
 export const fetchEvents = async () => {
   try {
@@ -153,8 +153,12 @@ export const fetchUserRegistrations = async (userId: string) => {
         dateObj.getDate(),
       );
 
-      let status: "today" | "upcoming" | "completed";
-      if (eventDate.getTime() === today.getTime()) {
+      let status: "today" | "upcoming" | "waitlist" | "completed" | "cancelled";
+      if (registration.status == "waitlist") {
+        status = "waitlist";
+      } else if (registration.status == "cancelled" || event.eventStatus == "cancelled") {
+        status = "cancelled"
+      } else if (eventDate.getTime() === today.getTime()) {
         status = "today";
       } else if (eventDate < today) {
         status = "completed";
@@ -182,6 +186,7 @@ export const fetchUserRegistrations = async (userId: string) => {
         selectedResponses:
           selectedResponses.length > 0 ? selectedResponses : undefined,
         registrationId: registration.id,
+        registrationStatus: registration.status,
         eventStatus: event.eventStatus,
       };
     });
@@ -359,9 +364,17 @@ export const cancelRegistration = async (registrationId: string) => {
         method: "PATCH",
       }
     );
+
+    const data = await response.json();
     
-    if (!response.ok) {
-      throw new Error("Failed to cancel registration");
+    if (response.status == 403) {
+      Alert.alert(
+        "Cancellation Failed",
+        data.error || "You cannot cancel this event within 48 hours."
+      );
+      return false
+    } else if (!response.ok) {
+      throw new Error(data.error || "Failed to cancel registration");
     }
 
     return true;

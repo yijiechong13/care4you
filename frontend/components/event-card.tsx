@@ -17,7 +17,7 @@ import {
   shadow,
   spacing,
 } from "@/constants/theme";
-import { cancelEvent } from "@/services/eventService";
+import { cancelEvent, cancelRegistration } from "@/services/eventService";
 import { useRouter } from "expo-router";
 import { postAnnouncement } from "@/services/announmentService";
 import { useTranslation } from "react-i18next";
@@ -27,6 +27,8 @@ interface EventCardProps {
   isStaff?: boolean;
   onExport?: (eventId: string, eventTitle: string) => void;
   isExporting?: boolean;
+  regId: string;
+  regStatus: string;
 }
 
 export function EventCard({
@@ -34,6 +36,8 @@ export function EventCard({
   isStaff,
   onExport,
   isExporting,
+  regId,
+  regStatus
 }: EventCardProps) {
   const router = useRouter();
   const { t } = useTranslation();
@@ -87,6 +91,29 @@ export function EventCard({
     }
   };
 
+  const handleCancelRegistration = () => {
+    try {
+      Alert.alert(
+        t("events.cancelRegistrationTitle"),
+        t("events.cancelRegistrationMessage"),
+        [
+          { text: t("common.exit"), style: "cancel" },
+          {
+            text: t("common.cancel"),
+            style: "destructive",
+            onPress: async () => {
+              await cancelRegistration(regId);
+
+              router.replace("/(tabs)/home");
+            },
+          },
+        ],
+      );
+    } catch (error) {
+      Alert.alert(t("common.error"), t("events.cancelRegFailed"));
+    }
+  }
+
   return (
     <View style={styles.card}>
       {/* Status Badge */}
@@ -120,6 +147,22 @@ export function EventCard({
           <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
             <Text style={styles.cancelButtonText}>
               {t("events.cancelAction")}
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        {regStatus == "cancelled" && (
+          <View style={styles.cancelButton}>
+            <Text style={styles.cancelButtonText}>
+              {t("events.withdraw")}
+            </Text>
+          </View>
+        )}
+
+        {!isStaff && event.eventStatus != "cancelled" && regStatus != "cancelled" && (
+          <TouchableOpacity style={styles.cancelButton} onPress={handleCancelRegistration}>
+            <Text style={styles.cancelButtonText}>
+              {t("events.withdrawAction")}
             </Text>
           </TouchableOpacity>
         )}

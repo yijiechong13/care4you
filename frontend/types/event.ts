@@ -38,5 +38,7 @@ export const filterTabs = [
   { key: 'all', labelKey: 'events.filterAll' },
   { key: 'today', labelKey: 'events.filterToday' },
   { key: 'upcoming', labelKey: 'events.filterUpcoming' },
+  { key: 'waitlist', labelKey: 'events.filterWaitlist'},
   { key: 'completed', labelKey: 'events.filterCompleted' },
+  { key: 'cancelled', labelKey: 'events.filterCancelled'},
 ] as const;

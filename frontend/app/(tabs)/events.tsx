@@ -32,7 +32,7 @@ import { useTranslation } from "react-i18next";
 export default function EventsScreen() {
   const { t } = useTranslation();
   const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isStaff, setIsStaff] = useState(false);
   const [exportingEventId, setExportingEventId] = useState<string | null>(null);
@@ -171,8 +171,11 @@ export default function EventsScreen() {
             dateObj.getDate(),
           );
 
-          let status: "today" | "upcoming" | "completed";
-          if (eventDate.getTime() === today.getTime()) {
+          let status: "today" | "upcoming" | "completed" | "cancelled";
+          if (event.eventStatus == "cancelled") {
+            status = "cancelled";
+          }
+          else if (eventDate.getTime() === today.getTime()) {
             status = "today";
           } else if (eventDate < today) {
             status = "completed";
@@ -208,18 +211,16 @@ export default function EventsScreen() {
 
   //filtering for each tab
   const filteredEvents = events
-    .filter((event: Event) => {
-      if (activeFilter === "all") return event.status !== "completed";
+    .filter((event) => {
+      if (activeFilter === "all") return true;
       return event.status === activeFilter;
     })
     .sort(
-      (event1: Event, event2: Event) =>
+      (event1, event2) =>
         event1.date.getTime() - event2.date.getTime(),
     );
 
-  const activeEventCount = events.filter(
-    (e: Event) => e.status !== "completed",
-  ).length;
+  const activeEventCount = events.length;
 
   if (loading) {
     return (
@@ -254,7 +255,11 @@ export default function EventsScreen() {
       </View>
 
       {/* Filter Tabs */}
-      <View style={styles.filterContainer}>
+      <ScrollView 
+      horizontal 
+      showsVerticalScrollIndicator={false}
+      style={styles.filterContainer}
+      contentContainerStyle={styles.filterContentContainer}>
         {filterTabs.map((tab) => (
           <TouchableOpacity
             key={tab.key}
@@ -274,7 +279,7 @@ export default function EventsScreen() {
             </Text>
           </TouchableOpacity>
         ))}
-      </View>
+      </ScrollView>
 
       {/* Event List */}
       <ScrollView
@@ -292,6 +297,8 @@ export default function EventsScreen() {
               isStaff={isStaff}
               onExport={handleExportCSV}
               isExporting={exportingEventId === event.id}
+              regId={isStaff ? null : event.registrationId}
+              regStatus={isStaff ? null : event.registrationStatus}
             />
           ))
         ) : (
@@ -337,10 +344,13 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.medium,
   },
   filterContainer: {
-    flexDirection: "row",
+    flexGrow: 0
+  },
+  filterContentContainer: {
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     gap: spacing.sm,
+    alignItems: "center"
   },
   filterTab: {
     paddingHorizontal: spacing.lg,
