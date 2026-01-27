@@ -5,6 +5,7 @@ const {
   getUserRegistrations,
   getRegistrationCounts,
   getEventRegistrationsForExport,
+  cancelRegistration
 } = require('../controllers/registrationController');
 
 const router = express.Router();
@@ -23,5 +24,8 @@ router.post('/counts', getRegistrationCounts);
 
 // GET /api/registrations/export/:eventId - Get detailed registrations for CSV export
 router.get('/export/:eventId', getEventRegistrationsForExport);
+
+// POST /api/registrations/:registrationId/cancel - Cancel a user registration
+router.patch('/:registrationId/cancel', cancelRegistration);
 
 module.exports = router;

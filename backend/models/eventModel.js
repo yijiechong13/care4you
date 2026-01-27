@@ -208,7 +208,19 @@ const EventModel = {
 
     if (error) throw new Error(error.message);
     return data;
-  }
+  },
+
+  // Get an event by its id
+  findByEventId: async (eventId) => {
+    const { data, error } = await supabase
+      .from("events")
+      .select("*")
+      .eq("id", eventId)
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data;
+  },
 };
 
 module.exports = { EventModel };

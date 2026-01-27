@@ -1,9 +1,9 @@
 import { Platform } from "react-native";
 
 // CHANGE TO DEPLOYED BACKEND events
-const API_URL = process.env.EXPO_PUBLIC_API_URL + "/events";
+// const API_URL = process.env.EXPO_PUBLIC_API_URL + "/events";
 
-// const API_URL = "http://localhost:8080/api/events";
+const API_URL = "http://172.31.88.150:8080/api/events";
 
 export const fetchEvents = async () => {
   try {
@@ -349,5 +349,24 @@ export const cancelEvent = async (eventId: string) => {
   } catch (error) {
     console.error("Cancel Event Failed:", error);
     throw error;
+  }
+};
+
+export const cancelRegistration = async (registrationId: string) => {
+  try {
+    const response = await fetch(
+      `${API_URL.replace("events", "registrations")}/${registrationId}/cancel`, {
+        method: "PATCH",
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error("Failed to cancel registration");
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Cancel Registration Failed:", error);
+    throw error
   }
 };

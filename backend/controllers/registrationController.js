@@ -1,4 +1,6 @@
+const { EventModel } = require("../models/eventModel");
 const { RegistrationModel } = require("../models/registrationModel");
+const User = require("../models/userModel");
 
 const createRegistration = async (req, res) => {
   try {
@@ -28,6 +30,17 @@ const createRegistration = async (req, res) => {
         .json({ error: "You have already registered for this event" });
     }
 
+    const event = EventModel.findByEventId(eventId);
+    const user_type = User.findById(userId).user_type;
+    const isGuest = userId.toString().startsWith("guest_");
+    var isFull = true;
+    if (isGuest || user_type == "participant") {
+      isFull = event.taken_slots && event.taken_slots >= event.participant_slots;
+    } else if (user_type == "volunteer") {
+      isFull = event.volunteer_taken_slots && event.volunteer_taken_slots >= event.volunteer_slots;
+    }
+    const status = isFull ? "waitlist" : "confirmed";
+
     // Prepare registration data
     const registrationData = {
       eventId,
@@ -37,6 +50,7 @@ const createRegistration = async (req, res) => {
       guest_name: fullName || null,
       guest_contact: contactNumber || null,
       guest_emergency_contact: emergencyContact || null,
+      status: status
     };
 
     const registration = await RegistrationModel.createWithAnswers(
@@ -103,10 +117,83 @@ const getRegistrationCounts = async (req, res) => {
   }
 };
 
+const cancelRegistration = async (req, res) => {
+  const { registrationId } = req.params;
+
+  try {
+    const registration = await RegistrationModel.findRegistrationById(registrationId);
+    if (!registration || registration.status === 'cancelled') {
+      return res.status(400).json({ error: "Registration not found or already cancelled" });
+    }
+
+    const event = await EventModel.findByEventId(registration.event_id);
+
+    // CHECK 48-HOUR RULE
+    const eventDate = new Date(event.start_time);
+    const now = new Date();
+    // Calculate hours difference
+    const hoursDiff = (eventDate - now) / (1000 * 60 * 60);
+
+    if (hoursDiff < 48) {
+      return res.status(403).json({ error: "Cannot cancel less than 48 hours before the event." });
+    }
+
+    const isGuest = registration.user_id.toString().startsWith("guest_");
+    const cancelledUserType = isGuest 
+        ? "participant" 
+        : (await User.findById(registration.user_id).user_type || "participant").toLowerCase();
+
+    await RegistrationModel.updateStatus(registrationId, 'cancelled');
+
+    if (registration.status === 'confirmed') {
+      console.log(`User ${registration.user_id} (${cancelledUserType}) cancelled. Checking waitlist...`);
+
+      // Try to find a replacement of the SAME TYPE (Volunteer for Volunteer, etc)
+      const nextInLine = await RegistrationModel.findNextWaitlistCandidate(registration.event_id, cancelledUserType);
+
+      if (nextInLine) {
+        // --- SCENARIO A: Replacement Found ---
+        // Promote them to confirmed
+        await RegistrationModel.updateStatus(nextInLine.id, 'confirmed');
+        console.log(`🚀 Auto-promoted user ${nextInLine.user_id} from waitlist`);
+      } else {
+        // --- SCENARIO B: No Waitlist ---
+        // We must decrement the taken_slots count in the events table
+        console.log(`No waitlist for ${cancelledUserType}. Freeing up slot.`);
+        
+        const { data: eventRow } = await supabase
+          .from("events")
+          .select("taken_slots, volunteer_taken_slots")
+          .eq("id", registration.event_id)
+          .single();
+
+        if (cancelledUserType === "volunteer") {
+          await supabase
+            .from("events")
+            .update({ volunteer_taken_slots: Math.max(0, (eventRow.volunteer_taken_slots || 0) - 1) })
+            .eq("id", registration.event_id);
+        } else {
+          await supabase
+            .from("events")
+            .update({ taken_slots: Math.max(0, (eventRow.taken_slots || 0) - 1) })
+            .eq("id", registration.event_id);
+        }
+      }
+    }
+
+    res.status(200).json({ message: "Cancellation successful" });
+
+  } catch (error) {
+    console.error("❌ Cancel Error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   createRegistration,
   getEventRegistrations,
   getUserRegistrations,
   getRegistrationCounts,
   getEventRegistrationsForExport,
+  cancelRegistration
 };

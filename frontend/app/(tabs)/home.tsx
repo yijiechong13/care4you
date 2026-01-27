@@ -416,12 +416,7 @@ export default function HomeScreen() {
                       {/* Register Buttons */}
                       {!isStaff && (
                         <View style={styles.cardFooter}>
-                          {currTime > new Date(item.dateDisplay) ||
-                          (userRole == "volunteer" &&
-                            item.volunteerSlots <= item.volunteerTakenSlots) ||
-                          ((userRole == "participant" || isGuest) &&
-                            item.participantSlots &&
-                            item.participantSlots <= item.takenSlots) ? (
+                          {currTime > new Date(item.dateDisplay) ? (
                             <View style={styles.registerClosedBtn}>
                               <Text style={styles.registerBtnText}>
                                 {t('home.registrationClosed')}
@@ -438,9 +433,18 @@ export default function HomeScreen() {
                               style={styles.registerBtn}
                               onPress={() => handleRegister(item)}
                             >
-                              <Text style={styles.registerBtnText}>
-                                {t('home.registerNow')}
-                              </Text>
+                              {(userRole == "volunteer" && item.volunteerSlots <= item.volunteerTakenSlots) ||
+                                ((userRole == "participant" || isGuest) &&
+                                item.participantSlots &&
+                                item.participantSlots <= item.takenSlots) ? (
+                                  <Text style={styles.registerBtnText}>
+                                    JOIN WAITLIST
+                                  </Text>
+                                ) : (
+                                  <Text style={styles.registerBtnText}>
+                                    REGISTER NOW
+                                  </Text>
+                                )}
                             </TouchableOpacity>
                           )}
                         </View>

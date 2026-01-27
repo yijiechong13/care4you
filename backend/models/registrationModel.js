@@ -1,4 +1,5 @@
 const { supabase } = require("../config/supabase");
+const User = require("./userModel");
 
 const RegistrationModel = {
   // Create a new registration with answers
@@ -20,6 +21,7 @@ const RegistrationModel = {
           guest_emergency_contact: isGuest
             ? registrationData.emergencyContact
             : null,
+          status: registrationData.status,
         },
       ])
       .select()
@@ -33,41 +35,43 @@ const RegistrationModel = {
     const registrationId = registration.id;
     console.log("✅ Model: Registration created with ID:", registrationId);
 
-    const { data: eventRow } = await supabase
-      .from("events")
-      .select("taken_slots, volunteer_taken_slots")
-      .eq("id", registrationData.eventId)
-      .single();
-
-    if (!isGuest) {
-      // ONLY check the users table for REAL members
-      const { data: userRow } = await supabase
-        .from("users")
-        .select("user_type")
-        .eq("id", registrationData.userId)
+    if (registrationData.status == "confirmed") {
+      const { data: eventRow } = await supabase
+        .from("events")
+        .select("taken_slots, volunteer_taken_slots")
+        .eq("id", registrationData.eventId)
         .single();
 
-      const userType = (userRow?.user_type || "").toLowerCase();
+      if (!isGuest) {
+        // ONLY check the users table for REAL members
+        const { data: userRow } = await supabase
+          .from("users")
+          .select("user_type")
+          .eq("id", registrationData.userId)
+          .single();
 
-      if (userType === "volunteer") {
-        await supabase
-          .from("events")
-          .update({
-            volunteer_taken_slots: (eventRow?.volunteer_taken_slots || 0) + 1,
-          })
-          .eq("id", registrationData.eventId);
+        const userType = (userRow?.user_type || "").toLowerCase();
+
+        if (userType === "volunteer") {
+          await supabase
+            .from("events")
+            .update({
+              volunteer_taken_slots: (eventRow?.volunteer_taken_slots || 0) + 1,
+            })
+            .eq("id", registrationData.eventId);
+        } else {
+          await supabase
+            .from("events")
+            .update({ taken_slots: (eventRow?.taken_slots || 0) + 1 })
+            .eq("id", registrationData.eventId);
+        }
       } else {
+        // For Guests, skip user lookup and just increment participant slots
         await supabase
           .from("events")
           .update({ taken_slots: (eventRow?.taken_slots || 0) + 1 })
           .eq("id", registrationData.eventId);
       }
-    } else {
-      // For Guests, skip user lookup and just increment participant slots
-      await supabase
-        .from("events")
-        .update({ taken_slots: (eventRow?.taken_slots || 0) + 1 })
-        .eq("id", registrationData.eventId);
     }
 
     // 2. Save answers to registration_answers table
@@ -168,6 +172,7 @@ const RegistrationModel = {
       `,
       )
       .eq("event_id", eventId)
+      .filter("status", "eq", "confirmed")
       .order("created_at", { ascending: true });
 
     if (error) throw new Error(error.message);
@@ -253,18 +258,92 @@ const RegistrationModel = {
       }
 
       const userType = (row.users?.user_type || "").toLowerCase();
-      if (userType === "volunteer") {
+      const status = row.status;
+      if (userType === "volunteer" && status == "confirmed") {
         counts[eventId].volunteer += 1;
-      } else if (userType === "participant") {
-        counts[eventId].participant += 1;
-      } else {
+      } else if (userType === "participant" && status == "confirmed") {
         counts[eventId].participant += 1;
       }
 
-      counts[eventId].total += 1;
+      if (status == "confirmed") {
+        counts[eventId].total += 1;
+      }
     });
 
     return counts;
+  },
+
+  findRegistrationById: async (id) => {
+    const { data, error } = await supabase
+      .from("registrations")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data;
+  },
+
+  updateStatus: async (id, status) => {
+    const { data, error } = await supabase
+      .from("registrations")
+      .update({ status })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data;
+  },
+
+  // Find the next person on the waitlist for a specific role
+  findNextWaitlistCandidate: async (eventId, requiredType) => {
+    const { data: registrations, error } = await supabase
+      .from("registrations")
+      .select("*")
+      .eq("event_id", eventId)
+      .eq("status", "waitlist")
+      .order("created_at", { ascending: true }); // Oldest first
+
+    if (error) throw new Error(error.message);
+    if (!registrations || registrations.length === 0) return null;
+
+    // Separate real users from guests
+    const realUserIds = registrations
+      .filter(reg => !reg.user_id.toString().startsWith("guest_"))
+      .map(reg => reg.user_id);
+
+    let userTypeMap = {};
+    if (realUserIds.length > 0) {
+      const { data: users } = await supabase
+        .from("users")
+        .select("id, user_type")
+        .in("id", realUserIds);
+      
+      // Create a lookup: { "user_123": "volunteer", "user_456": "participant" }
+      if (users) {
+        users.forEach(user => {
+          userTypeMap[user.id] = (user.user_type || "participant").toLowerCase();
+        });
+      }
+    }
+
+    // Find the first match
+    const candidate = registrations.find((reg) => {
+      let regType = "participant"; // Default
+
+      if (reg.user_id.toString().startsWith("guest_")) {
+        // ✅ GUESTS are automatically Participants
+        regType = "participant";
+      } else {
+        // ✅ USERS get looked up from our map
+        regType = userTypeMap[reg.user_id] || "participant";
+      }
+
+      return regType === requiredType.toLowerCase();
+    });
+
+    return candidate || null;
   },
 };
 
