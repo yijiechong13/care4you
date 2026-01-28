@@ -45,6 +45,7 @@ export default function HomeScreen() {
   const [selectedDay, setSelectedDay] = useState<string>(formatDate(currTime));
   const [events, setEvents] = useState<any[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<any[]>([]);
+  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
   const [loading, setLoading] = useState(false);
   const [galleryVisible, setGalleryVisible] = useState(false);
   const [selectedEventImages, setSelectedEventImages] = useState<EventImage[]>(
@@ -200,15 +201,83 @@ export default function HomeScreen() {
     setFilteredEvents(filteredEvents);
   }, [events, selectedDay]);
 
+  // All upcoming/active events for list view (exclude past and cancelled)
+  // Time-sensitive: hide events whose end time has already passed
+  const upcomingEvents = useMemo(() => {
+    const now = new Date();
+    const today = new Date(now);
+    today.setHours(0, 0, 0, 0);
+
+    return events
+      .filter((event) => {
+        if (event.eventStatus === 'cancelled') return false;
+
+        const eventDate = new Date(event.date);
+        const eventDateOnly = new Date(eventDate);
+        eventDateOnly.setHours(0, 0, 0, 0);
+
+        // Future dates: always show
+        if (eventDateOnly > today) return true;
+
+        // Past dates: hide
+        if (eventDateOnly < today) return false;
+
+        // Today: check if end time has passed
+        // Parse endTime (format: "HH:MM" or "H:MM AM/PM")
+        const endTimeParts = event.endTime.match(/(\d+):(\d+)\s*(AM|PM)?/i);
+        if (!endTimeParts) return true; // Can't parse, show it
+
+        let hours = parseInt(endTimeParts[1], 10);
+        const minutes = parseInt(endTimeParts[2], 10);
+        const ampm = endTimeParts[3];
+
+        if (ampm) {
+          if (ampm.toUpperCase() === 'PM' && hours !== 12) hours += 12;
+          if (ampm.toUpperCase() === 'AM' && hours === 12) hours = 0;
+        }
+
+        const eventEndTime = new Date(eventDate);
+        eventEndTime.setHours(hours, minutes, 0, 0);
+
+        return eventEndTime > now;
+      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [events]);
+
   return (
-    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }}>
+    <View style={{ flex: 1 }}>
       <ThemedView style={styles.container}>
         <ThemedView style={styles.headerColour}>
-          <Text style={styles.helloText}>
-            {t('home.hello', { name: user ? user.name : t('common.guest') })}
-          </Text>
+          <View style={styles.headerTopRow}>
+            <Text style={styles.helloText}>
+              {t('home.hello', { name: user ? user.name : t('common.guest') })}
+            </Text>
+            <View style={styles.headerToggle}>
+              <TouchableOpacity
+                style={[styles.headerToggleBtn, viewMode === 'calendar' && styles.headerToggleBtnActive]}
+                onPress={() => setViewMode('calendar')}
+              >
+                <Ionicons
+                  name="calendar-outline"
+                  size={18}
+                  color={viewMode === 'calendar' ? '#002C5E' : '#fff'}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.headerToggleBtn, viewMode === 'list' && styles.headerToggleBtnActive]}
+                onPress={() => setViewMode('list')}
+              >
+                <Ionicons
+                  name="list-outline"
+                  size={18}
+                  color={viewMode === 'list' ? '#002C5E' : '#fff'}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
         </ThemedView>
         <ThemedView style={styles.body}>
+          {viewMode === 'calendar' && (
           <View style={styles.calendarWrapper}>
             <Calendar
               markingType="custom"
@@ -261,14 +330,13 @@ export default function HomeScreen() {
               }}
             />
           </View>
+          )}
 
-          <View style={styles.line} />
+          {viewMode === 'calendar' && <View style={styles.line} />}
 
           <View style={styles.bottomContainer}>
             <View style={styles.sectionHeader}>
-              <View style={styles.eventText}>
-                <Text style={styles.sectionTitle}>{t('home.events')}</Text>
-              </View>
+              <Text style={styles.sectionTitle}>{t('home.events')}</Text>
 
               {isStaff ? (
                 <View style={styles.staffButton}>
@@ -285,30 +353,32 @@ export default function HomeScreen() {
               ) : null}
             </View>
 
-            {filteredEvents.length === 0 ? (
-              <View style={styles.noEventSection}>
-                <Text style={styles.noEventText}>
-                  {t('home.noEvents')}
-                </Text>
-              </View>
-            ) : (
-              <FlatList
-                data={filteredEvents}
-                horizontal={true}
-                showsHorizontalScrollIndicator={true}
-                snapToInterval={SNAP_INTERVAL}
-                decelerationRate="fast"
-                pagingEnabled={false}
-                disableIntervalMomentum={true}
-                contentContainerStyle={{
-                  paddingHorizontal: 20,
-                  paddingBottom: 30,
-                }}
-                ItemSeparatorComponent={() => (
-                  <View style={{ width: SPACING }} />
-                )}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
+            {/* Calendar View - shows events for selected day */}
+            {viewMode === 'calendar' && (
+              filteredEvents.length === 0 ? (
+                <View style={styles.noEventSection}>
+                  <Text style={styles.noEventText}>
+                    {t('home.noEvents')}
+                  </Text>
+                </View>
+              ) : (
+                <FlatList
+                  data={filteredEvents}
+                  horizontal={true}
+                  showsHorizontalScrollIndicator={true}
+                  snapToInterval={SNAP_INTERVAL}
+                  decelerationRate="fast"
+                  pagingEnabled={false}
+                  disableIntervalMomentum={true}
+                  contentContainerStyle={{
+                    paddingHorizontal: 20,
+                    paddingBottom: 30,
+                  }}
+                  ItemSeparatorComponent={() => (
+                    <View style={{ width: SPACING }} />
+                  )}
+                  keyExtractor={(item) => item.id}
+                  renderItem={({ item }) => (
                   <View style={styles.cardWrapperHorizontal}>
                     {/* Blue Line */}
                     <View style={styles.blueLine} />
@@ -322,7 +392,7 @@ export default function HomeScreen() {
                           <View style={{ flexDirection: "row", alignItems: "center" }}>
                             <Text style={styles.cardTitle}>{item.title}</Text>
                             {item.wheelchairAccessible && (
-                              <Fontisto name="wheelchair" size={20} style={{ marginLeft: 6 }} />
+                              <Fontisto name="wheelchair" size={18} style={{ marginLeft: 6 }} />
                             )}
                           </View>
                         </View>
@@ -453,6 +523,167 @@ export default function HomeScreen() {
                   </View>
                 )}
               />
+              )
+            )}
+
+            {/* List View - shows all upcoming events */}
+            {viewMode === 'list' && (
+              upcomingEvents.length === 0 ? (
+                <View style={styles.noEventSection}>
+                  <Text style={styles.noEventText}>
+                    {t('home.noUpcomingEvents')}
+                  </Text>
+                </View>
+              ) : (
+                <ScrollView
+                  style={styles.listViewContainer}
+                  contentContainerStyle={styles.listViewContent}
+                  showsVerticalScrollIndicator={true}
+                  nestedScrollEnabled={true}
+                >
+                  {upcomingEvents.map((item) => (
+                    <View key={item.id} style={styles.cardWrapperVertical}>
+                      <View style={styles.blueLine} />
+                      <View style={styles.cardContent}>
+                        <View style={styles.headerRow}>
+                          <View style={styles.headerTextStack}>
+                            <Text style={styles.cardDateTime}>
+                              {item.dateDisplay} • {item.startTime} - {item.endTime}
+                            </Text>
+                            <View style={{ flexDirection: "row", alignItems: "center" }}>
+                              <Text style={styles.cardTitle}>{item.title}</Text>
+                              {item.wheelchairAccessible && (
+                                <Fontisto name="wheelchair" size={18} style={{ marginLeft: 6 }} />
+                              )}
+                            </View>
+                          </View>
+                          <Image
+                            source={EVENT_TYPE_ICONS[item.tag]}
+                            style={styles.typeIcon}
+                            contentFit="contain"
+                          />
+                        </View>
+
+                        {/* Event Thumbnail */}
+                        {(item.imageUrl ||
+                          (item.images && item.images.length > 0)) && (
+                          <TouchableOpacity
+                            style={styles.thumbnailContainer}
+                            onPress={() => handleImagePress(item)}
+                            accessibilityLabel={`View ${item.title} photos`}
+                            accessibilityRole="button"
+                          >
+                            <Image
+                              source={{
+                                uri: item.images?.[0]?.url || item.imageUrl,
+                              }}
+                              style={styles.thumbnail}
+                              contentFit="cover"
+                              transition={200}
+                            />
+                            {item.images && item.images.length > 1 && (
+                              <View style={styles.imageCountBadge}>
+                                <Ionicons name="images" size={14} color="#fff" />
+                                <Text style={styles.imageCountText}>
+                                  {item.images.length}
+                                </Text>
+                              </View>
+                            )}
+                          </TouchableOpacity>
+                        )}
+
+                        {/* Location */}
+                        <View style={styles.infoBox}>
+                          <Ionicons
+                            name="location-sharp"
+                            size={20}
+                            color="#002C5E"
+                            style={styles.infoIcon}
+                          />
+                          <View>
+                            <Text style={styles.infoLabel}>{t('home.location')}</Text>
+                            <Text style={styles.infoText}>{item.location}</Text>
+                          </View>
+                        </View>
+
+                        {/* Availability */}
+                        <View style={styles.infoBox}>
+                          <Ionicons
+                            name="people"
+                            size={20}
+                            color="#002C5E"
+                            style={styles.infoIcon}
+                          />
+                          <View>
+                            <Text style={styles.infoLabel}>{t('home.availability')}</Text>
+                            {isStaff || userRole !== "volunteer" ? (
+                              item.participantSlots ? (
+                                <Text style={styles.infoText}>
+                                  {isStaff ? t('home.participant') : ""}{" "}
+                                  {item.takenSlots ?? 0}/{item.participantSlots}
+                                </Text>
+                              ) : (
+                                <Text style={styles.infoText}>
+                                  {isStaff ? t('home.participant') : ""} {t('home.noCap')}
+                                </Text>
+                              )
+                            ) : null}
+                            {isStaff || userRole === "volunteer" ? (
+                              item.volunteerSlots && item.volunteerSlots > 0 ? (
+                                <Text style={styles.infoText}>
+                                  {isStaff ? t('home.volunteer') : ""}{" "}
+                                  {item.volunteerTakenSlots ?? 0}/{item.volunteerSlots}
+                                </Text>
+                              ) : (
+                                <Text style={styles.infoText}>
+                                  {isStaff ? t('home.volunteer') : ""} {t('home.notNeeded')}
+                                </Text>
+                              )
+                            ) : null}
+                          </View>
+                        </View>
+
+                        {/* Register Buttons */}
+                        {!isStaff && (
+                          <View style={styles.cardFooter}>
+                            {currTime > new Date(item.dateDisplay) ? (
+                              <View style={styles.registerClosedBtn}>
+                                <Text style={styles.registerBtnText}>
+                                  {t('home.registrationClosed')}
+                                </Text>
+                              </View>
+                            ) : item.eventStatus === "cancelled" ? (
+                              <View style={styles.registerCancelBtn}>
+                                <Text style={styles.registerBtnText}>
+                                  {t('home.cancelled')}
+                                </Text>
+                              </View>
+                            ) : (
+                              <TouchableOpacity
+                                style={styles.registerBtn}
+                                onPress={() => handleRegister(item)}
+                              >
+                                {(userRole === "volunteer" && item.volunteerSlots <= item.volunteerTakenSlots) ||
+                                  ((userRole === "participant" || isGuest) &&
+                                  item.participantSlots &&
+                                  item.participantSlots <= item.takenSlots) ? (
+                                    <Text style={styles.registerBtnText}>
+                                      {t('home.joinWaitlist')}
+                                    </Text>
+                                  ) : (
+                                    <Text style={styles.registerBtnText}>
+                                      {t('home.registerNow')}
+                                    </Text>
+                                  )}
+                              </TouchableOpacity>
+                            )}
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  ))}
+                </ScrollView>
+              )
             )}
           </View>
         </ThemedView>
@@ -464,7 +695,7 @@ export default function HomeScreen() {
         images={selectedEventImages}
         onClose={() => setGalleryVisible(false)}
       />
-    </ScrollView>
+    </View>
   );
 }
 
@@ -489,6 +720,26 @@ const styles = StyleSheet.create({
     fontWeight: 700,
     color: "#fff",
     lineHeight: 30,
+  },
+  headerTopRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+  },
+  headerToggle: {
+    flexDirection: "row",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    borderRadius: 8,
+    padding: 2,
+  },
+  headerToggleBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  headerToggleBtnActive: {
+    backgroundColor: "#fff",
   },
   body: {
     flex: 1,
@@ -531,9 +782,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 23,
     fontWeight: "bold",
     color: "#002C5E",
+    marginRight: 12,
   },
   badge: {
     backgroundColor: "#002C5E",
@@ -650,7 +902,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   cardTitle: {
-    fontSize: 18,
+    fontSize: 21,
     fontWeight: "700",
     color: "#002C5E",
     marginRight: 10
@@ -720,5 +972,39 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#9CA3AF",
     textAlign: "center",
+  },
+  viewToggle: {
+    flexDirection: "row",
+    marginLeft: 12,
+    backgroundColor: "#F3F4F6",
+    borderRadius: 8,
+    padding: 2,
+  },
+  toggleBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  toggleBtnActive: {
+    backgroundColor: "#002C5E",
+  },
+  listViewContainer: {
+    flex: 1,
+  },
+  listViewContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 30,
+    gap: 12,
+  },
+  cardWrapperVertical: {
+    flexDirection: "row",
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: "white",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
   },
 });
