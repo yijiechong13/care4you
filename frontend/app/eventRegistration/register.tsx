@@ -169,9 +169,23 @@ export default function EventRegistrationScreen() {
         [{ text: "OK", onPress: () => router.back() }],
       );
     } catch (error: any) {
+      // Handle time clash error with clashing event name
+      if (error.message === 'eventRegistration.timeClash' && error.clashingEvent) {
+        Alert.alert(
+          t("eventRegistration.timeClashTitle"),
+          t("eventRegistration.timeClash", { clashingEvent: error.clashingEvent }),
+        );
+        return;
+      }
+
+      // Check if error message is a translation key
+      const errorMessage = error.message?.startsWith('eventRegistration.')
+        ? t(error.message)
+        : (error.message || t("eventRegistration.registrationFailedMessage"));
+
       Alert.alert(
         t("eventRegistration.registrationFailed"),
-        error.message || t("eventRegistration.registrationFailedMessage"),
+        errorMessage,
       );
     }
   };

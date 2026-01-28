@@ -97,13 +97,15 @@ const RegistrationModel = {
     return registration;
   },
 
-  // Check if user already registered for an event
+  // Check if user already registered for an event 
+  // if user withdrawed from event, they can register again
   checkExisting: async (eventId, userId) => {
     const { data, error } = await supabase
       .from("registrations")
       .select("id")
       .eq("event_id", eventId)
       .eq("user_id", userId)
+      .neq("status", "cancelled")
       .single();
 
     if (error && error.code !== "PGRST116") {
@@ -111,7 +113,53 @@ const RegistrationModel = {
       throw new Error(error.message);
     }
 
-    return data; // Returns registration if exists, null if not
+    return data; // Returns registration if exists and not cancelled, null otherwise
+  },
+
+  // Check if user has any active registrations (confirmed/waitlist) that clash with the target event's time
+  checkTimeClash: async (userId, targetEventId) => {
+    // Get the target event's time
+    const { data: targetEvent, error: eventError } = await supabase
+      .from("events")
+      .select("id, title, start_time, end_time")
+      .eq("id", targetEventId)
+      .single();
+
+    if (eventError) throw new Error(eventError.message);
+
+    // Get user's active registrations (confirmed or waitlist) with event details
+    const { data: userRegistrations, error: regError } = await supabase
+      .from("registrations")
+      .select("event_id, status, events(id, title, start_time, end_time)")
+      .eq("user_id", userId)
+      .neq("status", "cancelled") // Includes both "confirmed" and "waitlist"
+      .neq("event_id", targetEventId); // Exclude the target event itself
+
+    if (regError) throw new Error(regError.message);
+
+    const targetStart = new Date(targetEvent.start_time);
+    const targetEnd = new Date(targetEvent.end_time);
+
+    // Find clashing events
+    const clashingEvents = userRegistrations.filter((reg) => {
+      const event = reg.events;
+      if (!event) return false;
+
+      const eventStart = new Date(event.start_time);
+      const eventEnd = new Date(event.end_time);
+
+      // Two events clash if: A starts before B ends AND A ends after B starts
+      return targetStart < eventEnd && targetEnd > eventStart;
+    });
+
+    if (clashingEvents.length > 0) {
+      return {
+        hasClash: true,
+        clashingEvent: clashingEvents[0].events // Return the first clashing event
+      };
+    }
+
+    return { hasClash: false, clashingEvent: null };
   },
 
   // Get all registrations for an event

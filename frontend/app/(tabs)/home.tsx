@@ -317,12 +317,12 @@ export default function HomeScreen() {
                       <View style={styles.headerRow}>
                         <View style={styles.headerTextStack}>
                           <Text style={styles.cardDateTime}>
-                            {item.dateDisplay} • {item.startTime}
+                            {item.dateDisplay} • {item.startTime} - {item.endTime}
                           </Text>
                           <View style={{ flexDirection: "row", alignItems: "center" }}>
                             <Text style={styles.cardTitle}>{item.title}</Text>
                             {item.wheelchairAccessible && (
-                              <Fontisto name="wheelchair" size={15} />
+                              <Fontisto name="wheelchair" size={20} style={{ marginLeft: 6 }} />
                             )}
                           </View>
                         </View>
@@ -438,11 +438,11 @@ export default function HomeScreen() {
                                 item.participantSlots &&
                                 item.participantSlots <= item.takenSlots) ? (
                                   <Text style={styles.registerBtnText}>
-                                    JOIN WAITLIST
+                                    {t('home.joinWaitlist')}
                                   </Text>
                                 ) : (
                                   <Text style={styles.registerBtnText}>
-                                    REGISTER NOW
+                                    {t('home.registerNow')}
                                   </Text>
                                 )}
                             </TouchableOpacity>

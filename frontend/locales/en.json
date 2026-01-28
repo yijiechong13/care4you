@@ -34,6 +34,7 @@
     "noCap": "No cap",
     "notNeeded": "Not needed",
     "registerNow": "REGISTER NOW",
+    "joinWaitlist": "JOIN WAITLIST",
     "registrationClosed": "REGISTRATION CLOSED",
     "cancelled": "CANCELLED"
   },
@@ -75,6 +76,8 @@
     "cancelRegistrationMessage": "Are you sure you want to cancel your registration?",
     "cancelFailed": "Failed to cancel event",
     "cancelRegFailed": "Failed to cancel registration",
+    "cancellationFailedTitle": "Cancellation Failed",
+    "cancellationFailedMessage": "You cannot cancel this event within 48 hours.",
     "cancelAnnouncementTitle": "❌ Event Cancelled: {{title}}",
     "cancelAnnouncementIntro": "We regret to inform you that {{title}}, originally scheduled for {{date}}, has been cancelled.",
     "cancelAnnouncementBody": "We apologize for any inconvenience this may cause. If you have already registered, your slot has been released. We hope to see you at our future events.",
@@ -260,6 +263,10 @@
     "registrationFailedMessage": "Something went wrong.",
     "alreadyRegistered": "Already Registered",
     "alreadyRegisteredMessage": "You have already registered for this event.",
-    "fillEmergency": "Please fill in emergency contact"
+    "fillEmergency": "Please fill in emergency contact",
+    "eventIdRequired": "Event ID is required",
+    "userIdRequired": "User ID is required",
+    "timeClashTitle": "Time Clash",
+    "timeClash": "This event clashes with \"{{clashingEvent}}\" that you have already registered for."
   }
 }

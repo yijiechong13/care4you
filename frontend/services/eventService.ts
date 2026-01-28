@@ -220,7 +220,12 @@ export const submitRegistration = async (registrationData: {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.error || "Failed to submit registration");
+      // Include clashingEvent in error for time clash handling
+      const error: any = new Error(result.error || "Failed to submit registration");
+      if (result.clashingEvent) {
+        error.clashingEvent = result.clashingEvent;
+      }
+      throw error;
     }
 
     return result;

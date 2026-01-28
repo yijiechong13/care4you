@@ -34,6 +34,7 @@
     "noCap": "无限制",
     "notNeeded": "不需要",
     "registerNow": "立即报名",
+    "joinWaitlist": "加入等候名单",
     "registrationClosed": "报名已截止",
     "cancelled": "已取消"
   },
@@ -260,6 +261,10 @@
     "registrationFailedMessage": "出错了，请稍后再试。",
     "alreadyRegistered": "已报名",
     "alreadyRegisteredMessage": "您已报名参加此活动。",
-    "fillEmergency": "请填写紧急联系人"
+    "fillEmergency": "请填写紧急联系人",
+    "eventIdRequired": "活动ID为必填项",
+    "userIdRequired": "用户ID为必填项",
+    "timeClashTitle": "时间冲突",
+    "timeClash": "此活动与您已报名的「{{clashingEvent}}」时间冲突。"
   }
 }

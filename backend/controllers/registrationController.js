@@ -1,6 +1,7 @@
 const { EventModel } = require("../models/eventModel");
 const { RegistrationModel } = require("../models/registrationModel");
 const User = require("../models/userModel");
+const { supabase } = require("../config/supabase");
 
 const createRegistration = async (req, res) => {
   try {
@@ -16,28 +17,41 @@ const createRegistration = async (req, res) => {
 
     // Validate required fields
     if (!eventId) {
-      return res.status(400).json({ error: "Event ID is required" });
+      return res.status(400).json({ error: "eventRegistration.eventIdRequired" });
     }
 
     if (!userId) {
-      return res.status(400).json({ error: "User ID is required" });
+      return res.status(400).json({ error: "eventRegistration.userIdRequired" });
     }
 
     const existing = await RegistrationModel.checkExisting(eventId, userId);
     if (existing) {
       return res
         .status(400)
-        .json({ error: "You have already registered for this event" });
+        .json({ error: "eventRegistration.alreadyRegisteredMessage" });
     }
 
-    const event = EventModel.findByEventId(eventId);
-    const user_type = User.findById(userId).user_type;
+    // Check for time clash with confirmed events
+    const clashResult = await RegistrationModel.checkTimeClash(userId, eventId);
+    if (clashResult.hasClash) {
+      return res.status(409).json({
+        error: "eventRegistration.timeClash",
+        clashingEvent: clashResult.clashingEvent?.title
+      });
+    }
+
+    const event = await EventModel.findByEventId(eventId);
     const isGuest = userId.toString().startsWith("guest_");
-    var isFull = true;
-    if (isGuest || user_type == "participant") {
-      isFull = event.taken_slots && event.taken_slots >= event.participant_slots;
-    } else if (user_type == "volunteer") {
-      isFull = event.volunteer_taken_slots && event.volunteer_taken_slots >= event.volunteer_slots;
+    const user = isGuest ? null : await User.findById(userId);
+    const user_type = user?.user_type?.toLowerCase() || "participant";
+
+    let isFull = false;
+    if (!isGuest && user_type === "volunteer") {
+      // Volunteers: check volunteer slots
+      isFull = event.volunteer_slots && event.volunteer_taken_slots >= event.volunteer_slots;
+    } else {
+      // Participants and guests: check participant slots
+      isFull = event.participant_slots && event.taken_slots >= event.participant_slots;
     }
     const status = isFull ? "waitlist" : "confirmed";
 
@@ -139,9 +153,8 @@ const cancelRegistration = async (req, res) => {
     }
 
     const isGuest = registration.user_id.toString().startsWith("guest_");
-    const cancelledUserType = isGuest 
-        ? "participant" 
-        : (await User.findById(registration.user_id).user_type || "participant").toLowerCase();
+    const cancelledUser = isGuest ? null : await User.findById(registration.user_id);
+    const cancelledUserType = (cancelledUser?.user_type || "participant").toLowerCase();
 
     await RegistrationModel.updateStatus(registrationId, 'cancelled');
 
