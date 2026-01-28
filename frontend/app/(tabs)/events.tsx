@@ -295,7 +295,7 @@ export default function EventsScreen() {
         {filteredEvents.length > 0 ? (
           filteredEvents.map((event) => (
             <EventCard
-              key={event.id}
+              key={event.registrationId || event.id}
               event={event}
               isStaff={isStaff}
               onExport={handleExportCSV}
