@@ -1,3 +1,4 @@
+import { use } from "react";
 import { Alert, Platform } from "react-native";
 
 // CHANGE TO DEPLOYED BACKEND events
@@ -61,7 +62,7 @@ export const fetchEvents = async () => {
         images: images.length > 0 ? images : undefined,
         eventStatus: event.eventStatus,
         wheelchairAccessible: event.wheelchair_accessible,
-        tag: event.tag
+        tag: event.tag,
       };
     });
   } catch (error) {
@@ -156,8 +157,11 @@ export const fetchUserRegistrations = async (userId: string) => {
       let status: "today" | "upcoming" | "waitlist" | "completed" | "cancelled";
       if (registration.status == "waitlist") {
         status = "waitlist";
-      } else if (registration.status == "cancelled" || event.eventStatus == "cancelled") {
-        status = "cancelled"
+      } else if (
+        registration.status == "cancelled" ||
+        event.eventStatus == "cancelled"
+      ) {
+        status = "cancelled";
       } else if (eventDate.getTime() === today.getTime()) {
         status = "today";
       } else if (eventDate < today) {
@@ -186,6 +190,7 @@ export const fetchUserRegistrations = async (userId: string) => {
         selectedResponses:
           selectedResponses.length > 0 ? selectedResponses : undefined,
         registrationId: registration.id,
+        userId: registration.user_id,
         registrationStatus: registration.status,
         eventStatus: event.eventStatus,
       };
@@ -221,7 +226,9 @@ export const submitRegistration = async (registrationData: {
 
     if (!response.ok) {
       // Include clashingEvent in error for time clash handling
-      const error: any = new Error(result.error || "Failed to submit registration");
+      const error: any = new Error(
+        result.error || "Failed to submit registration",
+      );
       if (result.clashingEvent) {
         error.clashingEvent = result.clashingEvent;
       }
@@ -364,19 +371,20 @@ export const cancelEvent = async (eventId: string) => {
 export const cancelRegistration = async (registrationId: string) => {
   try {
     const response = await fetch(
-      `${API_URL.replace("events", "registrations")}/${registrationId}/cancel`, {
+      `${API_URL.replace("events", "registrations")}/${registrationId}/cancel`,
+      {
         method: "PATCH",
-      }
+      },
     );
 
     const data = await response.json();
-    
+
     if (response.status == 403) {
       Alert.alert(
         "Cancellation Failed",
-        data.error || "You cannot cancel this event within 48 hours."
+        data.error || "You cannot cancel this event within 48 hours.",
       );
-      return false
+      return false;
     } else if (!response.ok) {
       throw new Error(data.error || "Failed to cancel registration");
     }
@@ -384,6 +392,6 @@ export const cancelRegistration = async (registrationId: string) => {
     return true;
   } catch (error) {
     console.error("Cancel Registration Failed:", error);
-    throw error
+    throw error;
   }
 };

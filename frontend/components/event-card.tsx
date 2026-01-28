@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Modal,
+  Button,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Event } from "@/types/event";
@@ -21,6 +23,9 @@ import { cancelEvent, cancelRegistration } from "@/services/eventService";
 import { useRouter } from "expo-router";
 import { postAnnouncement } from "@/services/announmentService";
 import { useTranslation } from "react-i18next";
+import QRCode from "react-native-qrcode-svg";
+import { CameraView, useCameraPermissions } from "expo-camera";
+import { markAttendance } from "@/services/attendanceService";
 
 interface EventCardProps {
   event: Event;
@@ -37,11 +42,39 @@ export function EventCard({
   onExport,
   isExporting,
   regId,
-  regStatus
+  regStatus,
 }: EventCardProps) {
   const router = useRouter();
   const { t } = useTranslation();
   const formatTime = (start: string, end: string) => `${start} - ${end}`;
+  const [showQR, setShowQR] = React.useState(false);
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [showScanner, setShowScanner] = React.useState(false); // New state for staff
+  const [scanned, setScanned] = React.useState(false);
+
+  const [permission, requestPermission] = useCameraPermissions();
+
+  const handleOpenScanner = async () => {
+    if (!permission?.granted) {
+      const { granted } = await requestPermission();
+      if (!granted) {
+        Alert.alert(
+          t("common.error"),
+          "Camera permission is required to scan QR codes.",
+        );
+        return;
+      }
+    }
+    setScanned(false);
+    setShowScanner(true);
+  };
+
+  const qrValue = JSON.stringify({
+    uID: event.userId, // Your User/Guest ID
+    eID: event.id, // The specific event
+    rID: regId, // Registration ID
+    ts: Date.now(), // Current timestamp for security
+  });
 
   const formatDate = (date: Date) => {
     const today = new Date();
@@ -112,7 +145,38 @@ export function EventCard({
     } catch (error) {
       Alert.alert(t("common.error"), t("events.cancelRegFailed"));
     }
-  }
+  };
+
+  const handleBarCodeScanned = async ({ data }: { data: string }) => {
+    if (scanned) return; // Prevent double triggers
+    setScanned(true);
+
+    try {
+      const payload = JSON.parse(data);
+
+      // Validation logic
+      if (payload.eID !== event.id) {
+        Alert.alert("Wrong Event", "This QR code is for a different activity.");
+        setScanned(false);
+        return;
+      }
+
+      await markAttendance(payload);
+
+      Alert.alert("Success", "Attendance marked!", [
+        {
+          text: "OK",
+          onPress: () => {
+            setShowScanner(false);
+            setScanned(false);
+          },
+        },
+      ]);
+    } catch (e) {
+      Alert.alert("Error", "Invalid QR code or network error.");
+      setScanned(false);
+    }
+  };
 
   return (
     <View style={styles.card}>
@@ -125,7 +189,6 @@ export function EventCard({
           {t(`events.status.${event.status}`)}
         </Text>
       </View>
-
       {/* Event Header */}
       <View style={styles.header}>
         <View style={styles.titleContainer}>
@@ -137,9 +200,7 @@ export function EventCard({
         </View>
         {event.eventStatus == "cancelled" && (
           <View style={styles.cancelButton}>
-            <Text style={styles.cancelButtonText}>
-              {t("events.cancelled")}
-            </Text>
+            <Text style={styles.cancelButtonText}>{t("events.cancelled")}</Text>
           </View>
         )}
 
@@ -153,21 +214,23 @@ export function EventCard({
 
         {regStatus == "cancelled" && (
           <View style={styles.cancelButton}>
-            <Text style={styles.cancelButtonText}>
-              {t("events.withdraw")}
-            </Text>
+            <Text style={styles.cancelButtonText}>{t("events.withdraw")}</Text>
           </View>
         )}
 
-        {!isStaff && event.eventStatus != "cancelled" && regStatus != "cancelled" && (
-          <TouchableOpacity style={styles.cancelButton} onPress={handleCancelRegistration}>
-            <Text style={styles.cancelButtonText}>
-              {t("events.withdrawAction")}
-            </Text>
-          </TouchableOpacity>
-        )}
+        {!isStaff &&
+          event.eventStatus != "cancelled" &&
+          regStatus != "cancelled" && (
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={handleCancelRegistration}
+            >
+              <Text style={styles.cancelButtonText}>
+                {t("events.withdrawAction")}
+              </Text>
+            </TouchableOpacity>
+          )}
       </View>
-
       {/* Important Notice */}
       {event.reminders && (
         <View style={styles.noticeContainer}>
@@ -175,7 +238,6 @@ export function EventCard({
           <Text style={styles.noticeText}>{event.reminders}</Text>
         </View>
       )}
-
       {/* Registration Counts - Staff View (uses same data as home page) */}
       {isStaff && (
         <View style={styles.registrationContainer}>
@@ -230,7 +292,6 @@ export function EventCard({
           </View>
         </View>
       )}
-
       {/* Event Details */}
       <View style={styles.detailsContainer}>
         <Text style={styles.detailsTitle}>{t("events.eventDetails")}</Text>
@@ -255,6 +316,89 @@ export function EventCard({
           </View>
         ) : null}
       </View>
+      {isStaff ? (
+        // STAFF BUTTON: Only triggers permission when clicked
+        <TouchableOpacity
+          style={[styles.attendanceButton, { backgroundColor: colors.success }]}
+          onPress={handleOpenScanner}
+        >
+          <Ionicons name="camera-outline" size={18} color="white" />
+          <Text style={styles.attendanceButtonText}>Scan Participant QR</Text>
+        </TouchableOpacity>
+      ) : (
+        // USER BUTTON
+        regStatus !== "cancelled" && (
+          <TouchableOpacity
+            style={styles.attendanceButton}
+            onPress={() => setShowQR(true)}
+          >
+            <Ionicons name="qr-code-outline" size={18} color="white" />
+            <Text style={styles.attendanceButtonText}>Take Attendance</Text>
+          </TouchableOpacity>
+        )
+      )}
+      <Modal
+        visible={showQR}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowQR(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{event.title}</Text>
+            <Text style={styles.modalSubtitle}>Show this to the staff</Text>
+
+            <View style={styles.qrContainer}>
+              <QRCode
+                value={qrValue}
+                size={200}
+                color={colors.primary}
+                backgroundColor="white"
+              />
+            </View>
+
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowQR(false)}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        visible={showScanner}
+        animationType="slide"
+        onRequestClose={() => setShowScanner(false)}
+      >
+        <View style={styles.scannerContainer}>
+          {/* Using CameraView instead of BarCodeScanner */}
+          <CameraView
+            onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+            barcodeScannerSettings={{
+              barcodeTypes: ["qr"], // Performance boost: only look for QRs
+            }}
+            style={StyleSheet.absoluteFillObject}
+          />
+
+          <View style={styles.scannerOverlay}>
+            <View style={styles.scannerTopInfo}>
+              <Text style={styles.scannerText}>Event: {event.title}</Text>
+            </View>
+
+            <View style={styles.scanTarget} />
+
+            <TouchableOpacity
+              style={styles.closeScannerButton}
+              onPress={() => setShowScanner(false)}
+            >
+              <Text style={[styles.closeButtonText, { color: colors.primary }]}>
+                {t("common.cancel")}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -455,6 +599,102 @@ const styles = StyleSheet.create({
   },
   totalCount: {
     color: colors.success,
+  },
+  attendanceButton: {
+    flexDirection: "row",
+    backgroundColor: colors.primary, // Or a nice brand green
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: spacing.md,
+  },
+  attendanceButtonText: {
+    color: "white",
+    fontWeight: fontWeight.bold,
+    marginLeft: spacing.sm,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: "white",
+    borderRadius: borderRadius.xl,
+    padding: spacing.xl,
+    alignItems: "center",
+    width: "100%",
+    ...shadow.md,
+  },
+  modalTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+    color: colors.primary,
+  },
+  modalSubtitle: {
+    fontSize: fontSize.sm,
+    color: colors.gray[500],
+    marginBottom: spacing.lg,
+  },
+  qrContainer: {
+    padding: spacing.md,
+    backgroundColor: "white",
+    borderWidth: 1,
+    borderColor: colors.gray[100],
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.xl,
+  },
+  closeButton: {
+    padding: spacing.md,
+    width: "100%",
+    alignItems: "center",
+    backgroundColor: colors.gray[100],
+    borderRadius: borderRadius.md,
+  },
+  closeButtonText: {
+    fontWeight: fontWeight.bold,
+    color: colors.gray[700],
+  },
+  scannerContainer: {
+    flex: 1,
+    backgroundColor: "black",
+  },
+  scannerOverlay: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 100,
+  },
+  scannerText: {
+    color: "white",
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.bold,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    padding: 10,
+    borderRadius: 10,
+  },
+  scanTarget: {
+    width: 250,
+    height: 250,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    backgroundColor: "transparent",
+    borderRadius: 20,
+  },
+  closeScannerButton: {
+    backgroundColor: "white",
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    borderRadius: 30,
+  },
+  scannerTopInfo: {
+    marginTop: 60, // Pushes it down past the phone's "notch" or status bar
+    paddingHorizontal: 20,
+    alignItems: "center",
+    width: "100%",
   },
 });
 

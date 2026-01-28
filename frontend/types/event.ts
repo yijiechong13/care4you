@@ -1,6 +1,6 @@
-export type EventStatus = 'today' | 'upcoming' | 'completed';
+export type EventStatus = "today" | "upcoming" | "completed";
 
-export type FilterTab = 'active' | 'today' | 'upcoming' | 'completed';
+export type FilterTab = "active" | "today" | "upcoming" | "completed";
 
 export interface EventImage {
   id: string;
@@ -27,7 +27,9 @@ export interface Event {
   volunteerTakenSlots?: number;
   imageUrl?: string;
   images?: EventImage[];
-  eventStatus: string
+  eventStatus: string;
+  reminders: string;
+  userId?: string;
 }
 
 export interface EventCardProps {
@@ -35,10 +37,10 @@ export interface EventCardProps {
 }
 
 export const filterTabs = [
-  { key: 'active', labelKey: 'events.filterActive' },
-  { key: 'today', labelKey: 'events.filterToday' },
-  { key: 'upcoming', labelKey: 'events.filterUpcoming' },
-  { key: 'waitlist', labelKey: 'events.filterWaitlist'},
-  { key: 'completed', labelKey: 'events.filterCompleted' },
-  { key: 'cancelled', labelKey: 'events.filterCancelled'},
+  { key: "active", labelKey: "events.filterActive" },
+  { key: "today", labelKey: "events.filterToday" },
+  { key: "upcoming", labelKey: "events.filterUpcoming" },
+  { key: "waitlist", labelKey: "events.filterWaitlist" },
+  { key: "completed", labelKey: "events.filterCompleted" },
+  { key: "cancelled", labelKey: "events.filterCancelled" },
 ] as const;

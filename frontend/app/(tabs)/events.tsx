@@ -58,8 +58,8 @@ export default function EventsScreen() {
 
       if (registrations.length === 0) {
         Alert.alert(
-          t('events.noRegistrations'),
-          t('events.noRegistrationsMessage'),
+          t("events.noRegistrations"),
+          t("events.noRegistrationsMessage"),
         );
         setExportingEventId(null);
         return;
@@ -124,10 +124,7 @@ export default function EventsScreen() {
       }
     } catch (error) {
       console.error("Export error:", error);
-      Alert.alert(
-        t('events.exportFailed'),
-        t('events.exportFailedMessage'),
-      );
+      Alert.alert(t("events.exportFailed"), t("events.exportFailedMessage"));
     } finally {
       setExportingEventId(null);
     }
@@ -174,8 +171,7 @@ export default function EventsScreen() {
           let status: "today" | "upcoming" | "completed" | "cancelled";
           if (event.eventStatus == "cancelled") {
             status = "cancelled";
-          }
-          else if (eventDate.getTime() === today.getTime()) {
+          } else if (eventDate.getTime() === today.getTime()) {
             status = "today";
           } else if (eventDate < today) {
             status = "completed";
@@ -218,10 +214,7 @@ export default function EventsScreen() {
       }
       return event.status === activeFilter;
     })
-    .sort(
-      (event1, event2) =>
-        event1.date.getTime() - event2.date.getTime(),
-    );
+    .sort((event1, event2) => event1.date.getTime() - event2.date.getTime());
 
   const activeEventCount = events.length;
 
@@ -231,13 +224,13 @@ export default function EventsScreen() {
         <View style={styles.header}>
           <View style={styles.headerContent}>
             <Text style={styles.headerTitle}>
-              {isStaff ? t('events.allEvents') : t('events.title')}
+              {isStaff ? t("events.allEvents") : t("events.title")}
             </Text>
           </View>
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>{t('events.loadingEvents')}</Text>
+          <Text style={styles.loadingText}>{t("events.loadingEvents")}</Text>
         </View>
       </View>
     );
@@ -249,20 +242,23 @@ export default function EventsScreen() {
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>
-            {isStaff ? t('events.allEvents') : t('events.title')}
+            {isStaff ? t("events.allEvents") : t("events.title")}
           </Text>
           <View style={styles.eventCountBadge}>
-            <Text style={styles.eventCountText}>{t('events.eventsCount', { count: activeEventCount })}</Text>
+            <Text style={styles.eventCountText}>
+              {t("events.eventsCount", { count: activeEventCount })}
+            </Text>
           </View>
         </View>
       </View>
 
       {/* Filter Tabs */}
-      <ScrollView 
-      horizontal 
-      showsVerticalScrollIndicator={false}
-      style={styles.filterContainer}
-      contentContainerStyle={styles.filterContentContainer}>
+      <ScrollView
+        horizontal
+        showsVerticalScrollIndicator={false}
+        style={styles.filterContainer}
+        contentContainerStyle={styles.filterContentContainer}
+      >
         {filterTabs.map((tab) => (
           <TouchableOpacity
             key={tab.key}
@@ -306,7 +302,7 @@ export default function EventsScreen() {
           ))
         ) : (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>{t('events.noEvents')}</Text>
+            <Text style={styles.emptyText}>{t("events.noEvents")}</Text>
           </View>
         )}
       </ScrollView>
@@ -347,13 +343,13 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.medium,
   },
   filterContainer: {
-    flexGrow: 0
+    flexGrow: 0,
   },
   filterContentContainer: {
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     gap: spacing.sm,
-    alignItems: "center"
+    alignItems: "center",
   },
   filterTab: {
     paddingHorizontal: spacing.lg,
