@@ -37,7 +37,9 @@
     "registerNow": "REGISTER NOW",
     "joinWaitlist": "JOIN WAITLIST",
     "registrationClosed": "REGISTRATION CLOSED",
-    "cancelled": "CANCELLED"
+    "cancelled": "CANCELLED",
+    "today": "Today",
+    "tomorrow": "Tomorrow"
   },
   "events": {
     "title": "My Events",
