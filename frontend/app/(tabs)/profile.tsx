@@ -115,16 +115,27 @@ export default function ProfileScreen() {
         // Only runs if userId exists
         const result = await fetchUserProfile();
         const userEvents = await fetchUserRegistrations(userId);
+        const now = new Date();
+        const thisMonth = now.getMonth();
+        const thisYear = now.getFullYear();
+
+        // Upcoming: future events that are not cancelled
         const upcomingCount = userEvents.filter((event: any) => {
           const eventDate = new Date(event.date);
-          const now = new Date();
-          return eventDate >= now;
+          return eventDate >= now && event.status !== 'cancelled';
         }).length;
-        const totalCount = userEvents.length;
-        const thisMonth = new Date();
+
+        // Total: completed events (date passed + was confirmed, not cancelled)
+        const totalCount = userEvents.filter((event: any) => {
+          return event.status === 'completed';
+        }).length;
+
+        // This Month: completed events in current month
         const monthCount = userEvents.filter((event: any) => {
           const eventDate = new Date(event.date);
-          return eventDate.getMonth() === thisMonth.getMonth();
+          return event.status === 'completed' &&
+                 eventDate.getMonth() === thisMonth &&
+                 eventDate.getFullYear() === thisYear;
         }).length;
 
         if (result.success) {
