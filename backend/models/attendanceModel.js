@@ -4,8 +4,8 @@ const db = require("../db"); // Use your existing db.js connection
 const AttendanceModel = {
   create: async (data) => {
     const query = `
-      INSERT INTO attendance (user_id, event_id, registration_id, check_in_time, device_timestamp)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO attendance (user_id, event_id, registration_id, check_in_time)
+      VALUES ($1, $2, $3, $4)
       RETURNING *;
     `;
     const values = [
@@ -13,7 +13,6 @@ const AttendanceModel = {
       data.eventId,
       data.registrationId,
       data.checkInTime,
-      data.deviceTimestamp,
     ];
     const result = await db.query(query, values);
     return result.rows[0];

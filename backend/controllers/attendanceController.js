@@ -26,7 +26,6 @@ const checkInParticipant = async (req, res) => {
       eventId: eID,
       registrationId: rID,
       checkInTime: new Date(),
-      deviceTimestamp: new Date(ts),
     });
 
     // 4. Update Registration status to 'attended'
