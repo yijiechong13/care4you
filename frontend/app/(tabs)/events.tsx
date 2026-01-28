@@ -31,7 +31,7 @@ import { useTranslation } from "react-i18next";
 
 export default function EventsScreen() {
   const { t } = useTranslation();
-  const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
+  const [activeFilter, setActiveFilter] = useState<FilterTab>("active");
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isStaff, setIsStaff] = useState(false);
@@ -212,7 +212,10 @@ export default function EventsScreen() {
   //filtering for each tab
   const filteredEvents = events
     .filter((event) => {
-      if (activeFilter === "all") return true;
+      // "Active" shows only today, upcoming, and waitlist (excludes completed and cancelled)
+      if (activeFilter === "active") {
+        return event.status !== "cancelled" && event.status !== "completed";
+      }
       return event.status === activeFilter;
     })
     .sort(

@@ -1,6 +1,6 @@
 export type EventStatus = 'today' | 'upcoming' | 'completed';
 
-export type FilterTab = 'all' | 'today' | 'upcoming' | 'completed';
+export type FilterTab = 'active' | 'today' | 'upcoming' | 'completed';
 
 export interface EventImage {
   id: string;
@@ -35,7 +35,7 @@ export interface EventCardProps {
 }
 
 export const filterTabs = [
-  { key: 'all', labelKey: 'events.filterAll' },
+  { key: 'active', labelKey: 'events.filterActive' },
   { key: 'today', labelKey: 'events.filterToday' },
   { key: 'upcoming', labelKey: 'events.filterUpcoming' },
   { key: 'waitlist', labelKey: 'events.filterWaitlist'},

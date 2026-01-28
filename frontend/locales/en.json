@@ -44,7 +44,7 @@
     "eventsCount": "{{count}} Events",
     "loadingEvents": "Loading events...",
     "noEvents": "No events found",
-    "filterAll": "All",
+    "filterActive": "Active",
     "filterToday": "Today",
     "filterUpcoming": "Upcoming",
     "filterWaitlist": "Waitlist",

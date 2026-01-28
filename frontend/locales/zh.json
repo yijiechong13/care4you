@@ -44,7 +44,7 @@
     "eventsCount": "{{count}} 个活动",
     "loadingEvents": "加载活动中...",
     "noEvents": "没有找到活动",
-    "filterAll": "全部",
+    "filterActive": "进行中",
     "filterToday": "今天",
     "filterWaitlist": "等候中",
     "filterUpcoming": "即将到来",

@@ -230,7 +230,6 @@ export const submitRegistration = async (registrationData: {
 
     return result;
   } catch (error) {
-    console.error("Registration Error:", error);
     throw error;
   }
 };
