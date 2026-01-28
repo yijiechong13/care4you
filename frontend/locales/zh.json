@@ -37,7 +37,9 @@
     "registerNow": "立即报名",
     "joinWaitlist": "加入等候名单",
     "registrationClosed": "报名已截止",
-    "cancelled": "已取消"
+    "cancelled": "已取消",
+    "today": "今天",
+    "tomorrow": "明天"
   },
   "events": {
     "title": "我的活动",

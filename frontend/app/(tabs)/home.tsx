@@ -241,7 +241,25 @@ export default function HomeScreen() {
 
         return eventEndTime > now;
       })
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      .sort((a, b) => {
+        const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
+        if (dateDiff !== 0) return dateDiff;
+
+        // Same date: sort by startTime
+        const parseTime = (t: string) => {
+          const parts = t.match(/(\d+):(\d+)\s*(AM|PM)?/i);
+          if (!parts) return 0;
+          let h = parseInt(parts[1], 10);
+          const m = parseInt(parts[2], 10);
+          const ap = parts[3];
+          if (ap) {
+            if (ap.toUpperCase() === 'PM' && h !== 12) h += 12;
+            if (ap.toUpperCase() === 'AM' && h === 12) h = 0;
+          }
+          return h * 60 + m;
+        };
+        return parseTime(a.startTime) - parseTime(b.startTime);
+      });
   }, [events]);
 
   return (
@@ -276,7 +294,7 @@ export default function HomeScreen() {
             </View>
           </View>
         </ThemedView>
-        <ThemedView style={styles.body}>
+        <ScrollView style={styles.body} contentContainerStyle={{ flexGrow: 1 }}>
           {viewMode === 'calendar' && (
           <View style={styles.calendarWrapper}>
             <Calendar
@@ -526,7 +544,7 @@ export default function HomeScreen() {
               )
             )}
 
-            {/* List View - shows all upcoming events */}
+            {/* List View - shows all upcoming events grouped by date */}
             {viewMode === 'list' && (
               upcomingEvents.length === 0 ? (
                 <View style={styles.noEventSection}>
@@ -541,14 +559,56 @@ export default function HomeScreen() {
                   showsVerticalScrollIndicator={true}
                   nestedScrollEnabled={true}
                 >
-                  {upcomingEvents.map((item) => (
-                    <View key={item.id} style={styles.cardWrapperVertical}>
-                      <View style={styles.blueLine} />
-                      <View style={styles.cardContent}>
+                  {(() => {
+                    let lastDateKey = '';
+                    return upcomingEvents.map((item) => {
+                      const dateKey = formatDate(new Date(item.date));
+                      const showHeader = dateKey !== lastDateKey;
+                      lastDateKey = dateKey;
+
+                      const dateObj = new Date(item.date);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const tomorrow = new Date(today);
+                      tomorrow.setDate(tomorrow.getDate() + 1);
+                      const eventDateOnly = new Date(dateObj);
+                      eventDateOnly.setHours(0, 0, 0, 0);
+
+                      let dateLabel = '';
+                      if (eventDateOnly.getTime() === today.getTime()) {
+                        dateLabel = t('home.today');
+                      } else if (eventDateOnly.getTime() === tomorrow.getTime()) {
+                        dateLabel = t('home.tomorrow');
+                      } else {
+                        const day = dateObj.getDate();
+                        const month = dateObj.toLocaleDateString('en-US', { month: 'short' });
+                        const weekday = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+                        dateLabel = `${weekday}, ${day} ${month}`;
+                      }
+
+                      return (
+                        <React.Fragment key={item.id}>
+                          {showHeader && (
+                            <View style={styles.dateHeader}>
+                              <View style={styles.dateChip}>
+                                <Ionicons name="calendar-outline" size={18} color="#002C5E" style={{ marginRight: 8 }} />
+                                <Text style={styles.dateHeaderText}>{dateLabel}</Text>
+                              </View>
+                              <View/>
+                            </View>
+                          )}
+                          <View style={styles.timelineRow}>
+                            {/* Timeline gutter */}
+                            <View style={styles.timelineGutter}>
+                              <View style={styles.timelineDot} />
+                              <View style={styles.timelineLine} />
+                            </View>
+                            {/* Card */}
+                            <View style={styles.timelineCard}>
                         <View style={styles.headerRow}>
                           <View style={styles.headerTextStack}>
                             <Text style={styles.cardDateTime}>
-                              {item.dateDisplay} • {item.startTime} - {item.endTime}
+                              {item.startTime} - {item.endTime}
                             </Text>
                             <View style={{ flexDirection: "row", alignItems: "center" }}>
                               <Text style={styles.cardTitle}>{item.title}</Text>
@@ -681,12 +741,15 @@ export default function HomeScreen() {
                         )}
                       </View>
                     </View>
-                  ))}
+                  </React.Fragment>
+                      );
+                    });
+                  })()}
                 </ScrollView>
               )
             )}
           </View>
-        </ThemedView>
+        </ScrollView>
       </ThemedView>
 
       {/* Image Gallery Modal */}
@@ -992,9 +1055,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listViewContent: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingBottom: 30,
-    gap: 12,
   },
   cardWrapperVertical: {
     flexDirection: "row",
@@ -1006,5 +1068,57 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 4,
+  },
+  dateHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  dateChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#EEF2F7",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 24,
+  },
+  dateHeaderText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#002C5E",
+  },
+  timelineRow: {
+    flexDirection: "row",
+    marginBottom: 16,
+  },
+  timelineGutter: {
+    width: 16,
+    alignItems: "center",
+    marginRight: 10,
+  },
+  timelineDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#002C5E",
+    zIndex: 1,
+  },
+  timelineLine: {
+    flex: 1,
+    width: 2,
+    backgroundColor: "#D1D5DB",
+  },
+  timelineCard: {
+    flex: 1,
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    padding: 15,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 2,
   },
 });
