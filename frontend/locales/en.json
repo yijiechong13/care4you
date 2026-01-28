@@ -27,6 +27,7 @@
     "staff": "STAFF",
     "create": "+ CREATE",
     "noEvents": "No event happening today!",
+    "noUpcomingEvents": "No upcoming events",
     "location": "LOCATION",
     "availability": "AVAILABILITY",
     "participant": "Participant:",

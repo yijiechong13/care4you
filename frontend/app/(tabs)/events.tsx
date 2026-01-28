@@ -223,7 +223,9 @@ export default function EventsScreen() {
         event1.date.getTime() - event2.date.getTime(),
     );
 
-  const activeEventCount = events.length;
+  const activeEventCount = events.filter(
+    (event) => event.status === 'completed' || event.status === 'upcoming' || event.status === 'today' || event.status === 'waitlist'
+  ).length;
 
   if (loading) {
     return (
