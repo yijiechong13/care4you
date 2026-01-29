@@ -207,6 +207,44 @@ export function EventCard({
           {t(`events.status.${event.status}`)}
         </Text>
       </View>
+      {/* Cancel / Withdraw — top-right corner */}
+      {event.eventStatus == "cancelled" && (
+        <View style={styles.statusBadge}>
+          <Ionicons name="close-circle" size={14} color={colors.gray[400]} />
+          <Text style={styles.statusBadgeText}>{t("events.cancelled")}</Text>
+        </View>
+      )}
+
+      {isStaff && event.eventStatus != "cancelled" && (
+        <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+          <Ionicons name="close-circle-outline" size={15} color="#DC2626" />
+          <Text style={styles.cancelButtonText}>
+            {t("events.cancelAction")}
+          </Text>
+        </TouchableOpacity>
+      )}
+
+      {regStatus == "cancelled" && (
+        <View style={styles.statusBadge}>
+          <Ionicons name="close-circle" size={14} color={colors.gray[400]} />
+          <Text style={styles.statusBadgeText}>{t("events.withdraw")}</Text>
+        </View>
+      )}
+
+      {!isStaff &&
+        event.eventStatus != "cancelled" &&
+        regStatus != "cancelled" && (
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={handleCancelRegistration}
+          >
+            <Ionicons name="log-out-outline" size={15} color="#DC2626" />
+            <Text style={styles.cancelButtonText}>
+              {t("events.withdrawAction")}
+            </Text>
+          </TouchableOpacity>
+        )}
+
       {/* Event Header */}
       <View style={styles.header}>
         <View style={styles.titleContainer}>
@@ -216,38 +254,6 @@ export function EventCard({
             {formatTime(event.startTime, event.endTime)}
           </Text>
         </View>
-        {event.eventStatus == "cancelled" && (
-          <View style={styles.cancelButton}>
-            <Text style={styles.cancelButtonText}>{t("events.cancelled")}</Text>
-          </View>
-        )}
-
-        {isStaff && event.eventStatus != "cancelled" && (
-          <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
-            <Text style={styles.cancelButtonText}>
-              {t("events.cancelAction")}
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        {regStatus == "cancelled" && (
-          <View style={styles.cancelButton}>
-            <Text style={styles.cancelButtonText}>{t("events.withdraw")}</Text>
-          </View>
-        )}
-
-        {!isStaff &&
-          event.eventStatus != "cancelled" &&
-          regStatus != "cancelled" && (
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={handleCancelRegistration}
-            >
-              <Text style={styles.cancelButtonText}>
-                {t("events.withdrawAction")}
-              </Text>
-            </TouchableOpacity>
-          )}
       </View>
       {/* Important Notice */}
       {event.reminders && (
@@ -337,11 +343,11 @@ export function EventCard({
       {isStaff ? (
         // STAFF BUTTON: Only triggers permission when clicked
         <TouchableOpacity
-          style={[styles.attendanceButton, { backgroundColor: colors.success }]}
+          style={styles.staffAttendanceButton}
           onPress={handleOpenScanner}
         >
-          <Ionicons name="camera-outline" size={18} color="white" />
-          <Text style={styles.attendanceButtonText}>Scan Participant QR</Text>
+          <Ionicons name="camera-outline" size={18} color="#16A34A" />
+          <Text style={styles.staffAttendanceButtonText}>{t("events.scanParticipantQR")}</Text>
         </TouchableOpacity>
       ) : (
         // USER BUTTON
@@ -350,8 +356,8 @@ export function EventCard({
             style={styles.attendanceButton}
             onPress={() => setShowQR(true)}
           >
-            <Ionicons name="qr-code-outline" size={18} color="white" />
-            <Text style={styles.attendanceButtonText}>Take Attendance</Text>
+            <Ionicons name="qr-code-outline" size={18} color={colors.primary} />
+            <Text style={styles.attendanceButtonText}>{t("events.takeAttendance")}</Text>
           </TouchableOpacity>
         )
       )}
@@ -466,15 +472,42 @@ const styles = StyleSheet.create({
     color: colors.gray[500],
   },
   cancelButton: {
-    borderRadius: 20,
-    backgroundColor: "red",
-    paddingHorizontal: 15,
-    paddingVertical: 5,
+    position: "absolute",
+    top: spacing.lg,
+    right: spacing.lg,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderRadius: borderRadius.md,
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FECACA",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    zIndex: 1,
   },
   cancelButtonText: {
-    fontSize: 12,
-    color: "white",
-    fontWeight: "600",
+    fontSize: fontSize.xs,
+    color: "#DC2626",
+    fontWeight: fontWeight.semibold,
+  },
+  statusBadge: {
+    position: "absolute",
+    top: spacing.lg,
+    right: spacing.lg,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.gray[100],
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    zIndex: 1,
+  },
+  statusBadgeText: {
+    fontSize: fontSize.xs,
+    color: colors.gray[500],
+    fontWeight: fontWeight.semibold,
   },
   noticeContainer: {
     backgroundColor: colors.warningLight,
@@ -620,17 +653,37 @@ const styles = StyleSheet.create({
   },
   attendanceButton: {
     flexDirection: "row",
-    backgroundColor: colors.primary, // Or a nice brand green
+    backgroundColor: "#EFF6FF",
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
     padding: spacing.md,
     borderRadius: borderRadius.md,
     justifyContent: "center",
     alignItems: "center",
     marginTop: spacing.md,
+    gap: spacing.sm,
   },
   attendanceButtonText: {
-    color: "white",
-    fontWeight: fontWeight.bold,
-    marginLeft: spacing.sm,
+    color: colors.primary,
+    fontWeight: fontWeight.semibold,
+    fontSize: fontSize.md,
+  },
+  staffAttendanceButton: {
+    flexDirection: "row",
+    backgroundColor: "#F0FDF4",
+    borderWidth: 1,
+    borderColor: "#BBF7D0",
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: spacing.md,
+    gap: spacing.sm,
+  },
+  staffAttendanceButtonText: {
+    color: "#16A34A",
+    fontWeight: fontWeight.semibold,
+    fontSize: fontSize.md,
   },
   modalOverlay: {
     flex: 1,

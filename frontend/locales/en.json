@@ -62,9 +62,11 @@
       "cancelled": "CANCELLED"
     },
     "cancelled": "Cancelled",
-    "cancelAction": "X Cancel",
+    "cancelAction": "Cancel",
     "withdraw": "Withdrawn",
     "withdrawAction": "Withdraw",
+    "scanParticipantQR": "Scan Participant QR",
+    "takeAttendance": "Take Attendance",
     "importantNotice": "IMPORTANT NOTICE",
     "signUps": "SIGN-UPS",
     "export": "Export",

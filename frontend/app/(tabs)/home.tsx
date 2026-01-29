@@ -518,13 +518,13 @@ export default function HomeScreen() {
                         <View style={styles.cardFooter}>
                           {currTime > new Date(item.dateDisplay) ? (
                             <View style={styles.registerClosedBtn}>
-                              <Text style={styles.registerBtnText}>
+                              <Text style={styles.registerClosedBtnText}>
                                 {t('home.registrationClosed')}
                               </Text>
                             </View>
                           ) : item.eventStatus == "cancelled" ? (
                             <View style={styles.registerCancelBtn}>
-                              <Text style={styles.registerBtnText}>
+                              <Text style={styles.registerCancelBtnText}>
                                 {t('home.cancelled')}
                               </Text>
                             </View>
@@ -720,13 +720,13 @@ export default function HomeScreen() {
                           <View style={styles.cardFooter}>
                             {currTime > new Date(item.dateDisplay) ? (
                               <View style={styles.registerClosedBtn}>
-                                <Text style={styles.registerBtnText}>
+                                <Text style={styles.registerClosedBtnText}>
                                   {t('home.registrationClosed')}
                                 </Text>
                               </View>
                             ) : item.eventStatus === "cancelled" ? (
                               <View style={styles.registerCancelBtn}>
-                                <Text style={styles.registerBtnText}>
+                                <Text style={styles.registerCancelBtnText}>
                                   {t('home.cancelled')}
                                 </Text>
                               </View>
@@ -1016,24 +1016,42 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 8,
+    marginTop: 6,
   },
   registerBtnText: {
-    color: "white",
+    color: "#FFFFFF",
     fontWeight: "600",
     fontSize: 12,
     letterSpacing: 0.3,
   },
   registerClosedBtn: {
-    backgroundColor: "#494c4f",
+    backgroundColor: "#F3F4F6",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginTop: 4,
+  },
+  registerClosedBtnText: {
+    color: "#6B7280",
+    fontWeight: "600",
+    fontSize: 12,
+    letterSpacing: 0.3,
+  },
+  registerCancelBtn: {
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FECACA",
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
   },
-  registerCancelBtn: {
-    backgroundColor: "#ff3030",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+  registerCancelBtnText: {
+    color: "#DC2626",
+    fontWeight: "600",
+    fontSize: 12,
+    letterSpacing: 0.3,
   },
   noEventSection: {
     flex: 1,

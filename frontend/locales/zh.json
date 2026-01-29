@@ -62,9 +62,11 @@
       "cancelled": "已取消"
     },
     "cancelled": "已取消",
-    "cancelAction": "X 取消",
+    "cancelAction": "取消",
     "withdraw": "已推出",
     "withdrawAction": "退出",
+    "scanParticipantQR": "扫描参与者二维码",
+    "takeAttendance": "签到",
     "importantNotice": "重要通知",
     "signUps": "报名人数",
     "export": "导出",
