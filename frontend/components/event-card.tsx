@@ -25,8 +25,12 @@ import { postAnnouncement } from "@/services/announmentService";
 import { useTranslation } from "react-i18next";
 import QRCode from "react-native-qrcode-svg";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { markAttendance } from "@/services/attendanceService";
+import {
+  fetchEventAttendance,
+  markAttendance,
+} from "@/services/attendanceService";
 import { useTranslatedContent } from "@/hooks/useTranslatedContent";
+import { supabase } from "@/lib/supabase";
 
 interface EventCardProps {
   event: Event;
@@ -35,6 +39,7 @@ interface EventCardProps {
   isExporting?: boolean;
   regId: string;
   regStatus: string;
+  onStatusChange?: () => void;
 }
 
 export function EventCard({
@@ -49,20 +54,80 @@ export function EventCard({
   const { t, i18n } = useTranslation();
   const formatTime = (start: string, end: string) => `${start} - ${end}`;
   const [showQR, setShowQR] = React.useState(false);
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [showScanner, setShowScanner] = React.useState(false); // New state for staff
   const [scanned, setScanned] = React.useState(false);
-
+  const [currentStatus, setCurrentStatus] = useState(regStatus);
+  const [localAttended, setLocalAttended] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
+  const [isSignUpsExpanded, setIsSignUpsExpanded] = useState(false);
+  const [isAttendanceExpanded, setIsAttendanceExpanded] = useState(false);
+  const [attendanceData, setAttendanceData] = useState<any[]>([]);
+  const [loadingAttendance, setLoadingAttendance] = useState(false);
+
+  // Function to fetch and count attendance
+  const loadAttendanceStats = async () => {
+    if (isAttendanceExpanded) return; // Don't fetch if closing
+
+    setLoadingAttendance(true);
+    try {
+      const data = await fetchEventAttendance(event.id);
+      setAttendanceData(data || []);
+    } catch (error) {
+      console.error("Failed to load attendance for stats:", error);
+    } finally {
+      setLoadingAttendance(false);
+    }
+  };
+
+  // Derived counts (currently counting all for both, per your request)
+  const attendedCount = attendanceData.length;
+  const volunteerAttendedCount = attendanceData.length; // Same number for now
+
+  useEffect(() => {
+    setCurrentStatus(regStatus);
+  }, [regStatus]);
+
+  useEffect(() => {
+    if (!showQR || !regId || regStatus === "attended") return;
+
+    // 1. Create a real-time subscription to THIS specific registration
+    const subscription = supabase
+      .channel(`attendance-${regId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "registrations",
+          filter: `id=eq.${regId}`,
+        },
+        (payload) => {
+          if (payload.new.status === "attended") {
+            // 2. Immediate UI Update
+            setLocalAttended(true);
+            setShowQR(false);
+
+            // 3. Close modal after success message
+            setTimeout(() => setShowQR(false), 2000);
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, [showQR, regId]);
 
   // Translate dynamic content (venue kept in English)
   const qaTexts = useMemo(
-    () => (event.selectedResponses || []).flatMap((r) => [r.question, r.answer]),
-    [event.selectedResponses]
+    () =>
+      (event.selectedResponses || []).flatMap((r) => [r.question, r.answer]),
+    [event.selectedResponses],
   );
   const textsToTranslate = useMemo(
-    () => [event.title || '', event.reminders || '', ...qaTexts],
-    [event.title, event.reminders, qaTexts]
+    () => [event.title || "", event.reminders || "", ...qaTexts],
+    [event.title, event.reminders, qaTexts],
   );
   const translated = useTranslatedContent(textsToTranslate);
   const translatedTitle = translated[0] || event.title;
@@ -242,9 +307,20 @@ export function EventCard({
         </View>
       )}
 
+      {/* NEW: Attended Badge */}
+      {!isStaff && regStatus === "attended" && (
+        <View style={[styles.statusBadge, { backgroundColor: "#DCFCE7" }]}>
+          <Ionicons name="checkmark-circle" size={14} color="#16A34A" />
+          <Text style={[styles.statusBadgeText, { color: "#16A34A" }]}>
+            {t("events.attended")}
+          </Text>
+        </View>
+      )}
+
       {!isStaff &&
-        event.eventStatus != "cancelled" &&
-        regStatus != "cancelled" && (
+        event.eventStatus !== "cancelled" &&
+        regStatus !== "cancelled" &&
+        regStatus !== "attended" && ( // Added this check
           <TouchableOpacity
             style={styles.cancelButton}
             onPress={handleCancelRegistration}
@@ -275,57 +351,172 @@ export function EventCard({
       )}
       {/* Registration Counts - Staff View (uses same data as home page) */}
       {isStaff && (
-        <View style={styles.registrationContainer}>
-          <View style={styles.signUpHeader}>
-            <Text style={styles.signUpTitle}>{t("events.signUps")}</Text>
-            {onExport && (
-              <TouchableOpacity
-                style={styles.exportButton}
-                onPress={() => onExport(event.id, event.title)}
-                disabled={isExporting}
-              >
-                {isExporting ? (
-                  <ActivityIndicator size="small" color={colors.primary} />
-                ) : (
-                  <>
-                    <Ionicons
-                      name="download-outline"
-                      size={16}
-                      color={colors.primary}
-                    />
-                    <Text style={styles.exportButtonText}>
-                      {t("events.export")}
+        <>
+          {/* 1. Sign-Ups Collapsible */}
+          <View style={styles.collapsibleContainer}>
+            <TouchableOpacity
+              style={styles.collapsibleHeader}
+              onPress={() => setIsSignUpsExpanded(!isSignUpsExpanded)}
+            >
+              <View style={styles.headerLeft}>
+                <Ionicons
+                  name="people-outline"
+                  size={18}
+                  color={colors.primary}
+                />
+                <Text style={styles.collapsibleTitle}>
+                  {t("events.signUps")}
+                </Text>
+              </View>
+              <Ionicons
+                name={isSignUpsExpanded ? "chevron-up" : "chevron-down"}
+                size={18}
+                color={colors.gray[400]}
+              />
+            </TouchableOpacity>
+
+            {isSignUpsExpanded && (
+              <View style={styles.collapsibleContent}>
+                <View style={styles.exportRow}>
+                  <Text style={styles.countLabel}>
+                    {t("events.manageRegistrations")}
+                  </Text>
+                  {onExport && (
+                    <TouchableOpacity
+                      style={styles.exportButton}
+                      onPress={() => onExport(event.id, event.title)}
+                      disabled={isExporting}
+                    >
+                      {isExporting ? (
+                        <ActivityIndicator
+                          size="small"
+                          color={colors.primary}
+                        />
+                      ) : (
+                        <>
+                          <Ionicons
+                            name="download-outline"
+                            size={14}
+                            color={colors.primary}
+                          />
+                          <Text style={styles.exportButtonText}>
+                            {t("events.export")}
+                          </Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                <View style={styles.countsRow}>
+                  <View style={styles.countItem}>
+                    <Text style={styles.countNumber}>
+                      {event.takenSlots ?? 0}
+                      {event.participantSlots != null && (
+                        <Text style={styles.countCap}>
+                          {" "}
+                          / {event.participantSlots}
+                        </Text>
+                      )}
                     </Text>
-                  </>
-                )}
-              </TouchableOpacity>
+                    <Text style={styles.countLabel}>
+                      {t("events.participants")}
+                    </Text>
+                  </View>
+                  <View style={styles.countDivider} />
+                  <View style={styles.countItem}>
+                    <Text style={styles.countNumber}>
+                      {event.volunteerTakenSlots ?? 0}
+                      {event.volunteerSlots != null && (
+                        <Text style={styles.countCap}>
+                          {" "}
+                          / {event.volunteerSlots}
+                        </Text>
+                      )}
+                    </Text>
+                    <Text style={styles.countLabel}>
+                      {t("events.volunteers")}
+                    </Text>
+                  </View>
+                </View>
+              </View>
             )}
           </View>
-          <View style={styles.countsRow}>
-            <View style={styles.countItem}>
-              <Text style={styles.countNumber}>
-                {event.takenSlots ?? 0}
-                {event.participantSlots != null && (
-                  <Text style={styles.countCap}>
-                    {" "}
-                    / {event.participantSlots}
-                  </Text>
+
+          {/* 2. Attendance Management Collapsible */}
+          {/* ATTENDANCE SECTION (Green Theme) */}
+          <View style={[styles.collapsibleContainer, styles.attendanceBorder]}>
+            <TouchableOpacity
+              style={styles.collapsibleHeader}
+              onPress={() => {
+                if (!isAttendanceExpanded) loadAttendanceStats();
+                setIsAttendanceExpanded(!isAttendanceExpanded);
+              }}
+            >
+              <View style={styles.headerLeft}>
+                <Ionicons
+                  name="checkmark-done-circle-outline"
+                  size={18}
+                  color="#16A34A"
+                />
+                <Text style={[styles.collapsibleTitle, { color: "#16A34A" }]}>
+                  {t("events.attendance")}
+                </Text>
+              </View>
+              <Ionicons
+                name={isAttendanceExpanded ? "chevron-up" : "chevron-down"}
+                size={18}
+                color="#16A34A"
+              />
+            </TouchableOpacity>
+
+            {isAttendanceExpanded && (
+              <View style={styles.collapsibleContent}>
+                {loadingAttendance ? (
+                  <ActivityIndicator
+                    size="small"
+                    color="#16A34A"
+                    style={{ marginVertical: 20 }}
+                  />
+                ) : (
+                  <>
+                    <View style={styles.countsRow}>
+                      <View style={styles.countItem}>
+                        <Text
+                          style={[styles.countNumber, { color: "#16A34A" }]}
+                        >
+                          {attendedCount}
+                          <Text style={styles.countCap}>
+                            {" "}
+                            / {event.takenSlots}
+                          </Text>
+                        </Text>
+                        <Text style={styles.countLabel}>
+                          {t("events.present")}
+                        </Text>
+                      </View>
+                      <View style={styles.countDivider} />
+                      <View style={styles.countItem}>
+                        <Text
+                          style={[styles.countNumber, { color: "#16A34A" }]}
+                        >
+                          {volunteerAttendedCount}
+                          <Text style={styles.countCap}>
+                            {" "}
+                            / {event.volunteerTakenSlots}
+                          </Text>
+                        </Text>
+                        <Text style={styles.countLabel}>
+                          {t("events.volsPresent")}
+                        </Text>
+                      </View>
+                    </View>
+                  </>
                 )}
-              </Text>
-              <Text style={styles.countLabel}>{t("events.participants")}</Text>
-            </View>
-            <View style={styles.countDivider} />
-            <View style={styles.countItem}>
-              <Text style={styles.countNumber}>
-                {event.volunteerTakenSlots ?? 0}
-                {event.volunteerSlots != null && event.volunteerSlots > 0 && (
-                  <Text style={styles.countCap}> / {event.volunteerSlots}</Text>
-                )}
-              </Text>
-              <Text style={styles.countLabel}>{t("events.volunteers")}</Text>
-            </View>
+              </View>
+            )}
           </View>
-        </View>
+        </>
       )}
       {/* Event Details */}
       <View style={styles.detailsContainer}>
@@ -358,46 +549,60 @@ export function EventCard({
           onPress={handleOpenScanner}
         >
           <Ionicons name="camera-outline" size={18} color="#16A34A" />
-          <Text style={styles.staffAttendanceButtonText}>{t("events.scanParticipantQR")}</Text>
+          <Text style={styles.staffAttendanceButtonText}>
+            {t("events.scanParticipantQR")}
+          </Text>
         </TouchableOpacity>
       ) : (
-        // USER BUTTON
+        // USER BUTTON&&
+        regStatus !== "attended" &&
         regStatus !== "cancelled" && (
           <TouchableOpacity
             style={styles.attendanceButton}
             onPress={() => setShowQR(true)}
           >
             <Ionicons name="qr-code-outline" size={18} color={colors.primary} />
-            <Text style={styles.attendanceButtonText}>{t("events.takeAttendance")}</Text>
+            <Text style={styles.attendanceButtonText}>
+              {t("events.takeAttendance")}
+            </Text>
           </TouchableOpacity>
         )
       )}
-      <Modal
-        visible={showQR}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowQR(false)}
-      >
+      <Modal visible={showQR} transparent={true} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{translatedTitle}</Text>
-            <Text style={styles.modalSubtitle}>Show this to the staff</Text>
-
-            <View style={styles.qrContainer}>
-              <QRCode
-                value={qrValue}
-                size={200}
-                color={colors.primary}
-                backgroundColor="white"
-              />
-            </View>
-
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setShowQR(false)}
-            >
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
+            {/* SUCCESS VIEW: Show this if database says attended OR local state flipped */}
+            {regStatus === "attended" || localAttended ? (
+              <View style={{ alignItems: "center", padding: 20 }}>
+                <Ionicons name="checkmark-circle" size={80} color="#16A34A" />
+                <Text
+                  style={[
+                    styles.modalTitle,
+                    { color: "#16A34A", marginTop: 15 },
+                  ]}
+                >
+                  Attendance Taken!
+                </Text>
+                <Text style={styles.modalSubtitle}>
+                  You're all set for the event.
+                </Text>
+              </View>
+            ) : (
+              /* QR VIEW: Show this while waiting */
+              <>
+                <Text style={styles.modalTitle}>{translatedTitle}</Text>
+                <Text style={styles.modalSubtitle}>Show this to the staff</Text>
+                <View style={styles.qrContainer}>
+                  <QRCode value={qrValue} size={200} color={colors.primary} />
+                </View>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => setShowQR(false)}
+                >
+                  <Text style={styles.closeButtonText}>Close</Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </View>
       </Modal>
@@ -778,6 +983,98 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
   },
+  successContainer: {
+    alignItems: "center",
+    paddingVertical: spacing.xl,
+  },
+  successTitle: {
+    fontSize: fontSize.xl,
+    fontWeight: fontWeight.bold,
+    color: "#16A34A",
+    marginTop: spacing.md,
+  },
+  successSubtitle: {
+    fontSize: fontSize.md,
+    color: colors.gray[500],
+    textAlign: "center",
+    marginTop: spacing.sm,
+  },
+  collapsibleContainer: {
+    backgroundColor: colors.gray[100],
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.gray[100],
+    marginBottom: spacing.sm,
+    overflow: "hidden",
+  },
+  attendanceBorder: {
+    borderColor: "#BBF7D0",
+    backgroundColor: "#F0FDF4", // Light green background for attendance
+  },
+  collapsibleHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: spacing.md,
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  collapsibleTitle: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.bold,
+    color: colors.primary,
+  },
+  collapsibleContent: {
+    padding: spacing.md,
+    paddingTop: 0,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(0,0,0,0.05)",
+  },
+  exportRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: spacing.md,
+    marginTop: spacing.sm,
+  },
+  attendanceHelpText: {
+    fontSize: fontSize.xs,
+    color: "#15803D",
+    marginBottom: spacing.md,
+    marginTop: spacing.xs,
+  },
+  innerActionRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  innerLabel: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.semibold,
+    color: colors.gray[400],
+  },
+  staffAttendanceButtonSmall: {
+    flexDirection: "row",
+    backgroundColor: "white",
+    borderWidth: 1,
+    borderColor: "#BBF7D0",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: borderRadius.sm,
+    alignItems: "center",
+    gap: 4,
+  },
+  staffAttendanceButtonTextSmall: {
+    color: "#16A34A",
+    fontWeight: fontWeight.bold,
+    fontSize: fontSize.xs,
+  },
+  // Keep your existing countsRow, countItem, etc. styles
 });
 
 const statusColors = {

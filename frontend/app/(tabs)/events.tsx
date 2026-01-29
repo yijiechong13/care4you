@@ -7,6 +7,8 @@ import {
   View,
   ActivityIndicator,
   Alert,
+  TextInput,
+  Modal,
 } from "react-native";
 import { EventCard } from "@/components/event-card";
 import { Event, FilterTab, filterTabs } from "@/types/event";
@@ -27,6 +29,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { useFocusEffect } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 
 export default function EventsScreen() {
@@ -36,6 +39,11 @@ export default function EventsScreen() {
   const [loading, setLoading] = useState(true);
   const [isStaff, setIsStaff] = useState(false);
   const [exportingEventId, setExportingEventId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
+  const [isWheelchairOnly, setIsWheelchairOnly] = useState(false);
+
+  const hasActiveFilters = isWheelchairOnly;
 
   useEffect(() => {
     checkUserAndLoadEvents();
@@ -208,16 +216,29 @@ export default function EventsScreen() {
   //filtering for each tab
   const filteredEvents = events
     .filter((event) => {
-      // "Active" shows only today, upcoming, and waitlist (excludes completed and cancelled)
+      // Search
+      const matchesSearch =
+        event.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        event.venue?.toLowerCase().includes(searchQuery.toLowerCase());
+      if (!matchesSearch) return false;
+
+      // Accessibility
+      if (isWheelchairOnly && !event.wheelchairAccessible) return false;
+
+      // Tab Status
       if (activeFilter === "active") {
         return event.status !== "cancelled" && event.status !== "completed";
       }
       return event.status === activeFilter;
     })
-    .sort((event1, event2) => event1.date.getTime() - event2.date.getTime());
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
 
   const activeEventCount = events.filter(
-    (event) => event.status === 'completed' || event.status === 'upcoming' || event.status === 'today' || event.status === 'waitlist'
+    (event) =>
+      event.status === "completed" ||
+      event.status === "upcoming" ||
+      event.status === "today" ||
+      event.status === "waitlist",
   ).length;
 
   if (loading) {
@@ -254,10 +275,47 @@ export default function EventsScreen() {
         </View>
       </View>
 
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBarRow}>
+          <View style={styles.searchBar}>
+            <Ionicons
+              name="search"
+              size={18}
+              color={colors.gray[400]}
+              style={styles.searchIcon}
+            />
+            <TextInput
+              style={styles.searchInput}
+              placeholder={t("events.searchPlaceholder") || "Search events..."}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholderTextColor={colors.gray[400]}
+            />
+          </View>
+
+          <TouchableOpacity
+            style={[
+              styles.filterIconButton,
+              hasActiveFilters && styles.filterIconButtonActive,
+            ]}
+            onPress={() => setIsFilterModalVisible(true)}
+          >
+            <Ionicons
+              name={hasActiveFilters ? "filter" : "filter-outline"}
+              size={22}
+              color={hasActiveFilters ? colors.white : colors.primary}
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+
       {/* Filter Tabs */}
       <ScrollView
         horizontal
-        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={true} // MUST be horizontal
+        persistentScrollbar={true} // Keeps the bar visible on Android
+        indicatorStyle="black" // "black", "white", or "default" for iOS
         style={styles.filterContainer}
         contentContainerStyle={styles.filterContentContainer}
       >
@@ -300,6 +358,7 @@ export default function EventsScreen() {
               isExporting={exportingEventId === event.id}
               regId={isStaff ? null : event.registrationId}
               regStatus={isStaff ? null : event.registrationStatus}
+              onStatusChange={checkUserAndLoadEvents}
             />
           ))
         ) : (
@@ -308,6 +367,70 @@ export default function EventsScreen() {
           </View>
         )}
       </ScrollView>
+      <Modal
+        visible={isFilterModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsFilterModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.filterMenu}>
+            <View style={styles.filterHeader}>
+              <Text style={styles.filterTitle}>
+                {t("events.filterOptions") || "Filters"}
+              </Text>
+              <TouchableOpacity onPress={() => setIsFilterModalVisible(false)}>
+                <Ionicons name="close" size={24} color={colors.gray[700]} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.filterSection}>
+              <Text style={styles.filterLabel}>
+                {t("events.accessibility") || "Accessibility"}
+              </Text>
+              <TouchableOpacity
+                style={styles.checkboxRow}
+                onPress={() => setIsWheelchairOnly(!isWheelchairOnly)}
+              >
+                <View
+                  style={[
+                    styles.checkbox,
+                    isWheelchairOnly && styles.checkboxChecked,
+                  ]}
+                >
+                  {isWheelchairOnly && (
+                    <Ionicons name="checkmark" size={16} color="white" />
+                  )}
+                </View>
+                <Text style={styles.checkboxLabel}>
+                  {t("events.wheelchairAccess") || "Wheelchair Accessible"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={styles.applyButton}
+              onPress={() => setIsFilterModalVisible(false)}
+            >
+              <Text style={styles.applyButtonText}>
+                {t("common.apply") || "Apply Filters"}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => {
+                setIsWheelchairOnly(false);
+                setIsFilterModalVisible(false);
+              }}
+              style={styles.resetButton}
+            >
+              <Text style={styles.resetButtonText}>
+                {t("common.reset") || "Reset All"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -346,9 +469,11 @@ const styles = StyleSheet.create({
   },
   filterContainer: {
     flexGrow: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.gray[200], // Acts as the track for the scrollbar
   },
   filterContentContainer: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.lg, // Forces the last item to be cut off
     paddingVertical: spacing.md,
     gap: spacing.sm,
     alignItems: "center",
@@ -397,5 +522,121 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     fontSize: fontSize.md,
     color: colors.gray[500],
+  },
+  searchContainer: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    backgroundColor: colors.background, // Or colors.primary if you want it merged
+  },
+
+  searchIcon: {
+    marginRight: spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: fontSize.md,
+    color: colors.gray[700],
+  },
+  searchBarRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  searchBar: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.md,
+    height: 48,
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+  },
+  filterIconButton: {
+    width: 48,
+    height: 48,
+    backgroundColor: "#F3F4F6", // Light gray background
+    borderRadius: borderRadius.lg,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  filterIconButtonActive: {
+    backgroundColor: colors.primary,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end", // Opens from bottom
+  },
+  filterMenu: {
+    backgroundColor: colors.white,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    padding: spacing.xl,
+    paddingBottom: 40,
+  },
+  filterHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: spacing.xl,
+  },
+  filterTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+    color: colors.gray[700],
+  },
+  filterSection: {
+    marginBottom: spacing.xl,
+  },
+  filterLabel: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    color: colors.gray[500],
+    textTransform: "uppercase",
+    marginBottom: spacing.md,
+  },
+  checkboxRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: spacing.sm,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    marginRight: spacing.md,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  checkboxChecked: {
+    backgroundColor: colors.primary,
+  },
+  checkboxLabel: {
+    fontSize: fontSize.md,
+    color: colors.gray[700],
+  },
+  applyButton: {
+    backgroundColor: colors.primary,
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    alignItems: "center",
+    marginTop: spacing.sm,
+  },
+  applyButtonText: {
+    color: colors.white,
+    fontWeight: fontWeight.bold,
+    fontSize: fontSize.md,
+  },
+  resetButton: {
+    padding: spacing.md,
+    alignItems: "center",
+  },
+  resetButtonText: {
+    color: colors.gray[500],
+    fontSize: fontSize.sm,
   },
 });
