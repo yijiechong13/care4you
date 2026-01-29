@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   StyleSheet,
   Text,
@@ -26,6 +26,7 @@ import { useTranslation } from "react-i18next";
 import QRCode from "react-native-qrcode-svg";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { markAttendance } from "@/services/attendanceService";
+import { useTranslatedContent } from "@/hooks/useTranslatedContent";
 
 interface EventCardProps {
   event: Event;
@@ -53,6 +54,16 @@ export function EventCard({
   const [scanned, setScanned] = React.useState(false);
 
   const [permission, requestPermission] = useCameraPermissions();
+
+  // Translate dynamic content
+  const textsToTranslate = useMemo(
+    () => [event.title || '', event.venue || '', event.reminders || ''],
+    [event.title, event.venue, event.reminders]
+  );
+  const translated = useTranslatedContent(textsToTranslate);
+  const translatedTitle = translated[0] || event.title;
+  const translatedVenue = translated[1] || event.venue;
+  const translatedReminders = translated[2] || event.reminders;
 
   const handleOpenScanner = async () => {
     if (!permission?.granted) {
@@ -192,7 +203,7 @@ export function EventCard({
       {/* Event Header */}
       <View style={styles.header}>
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>{event.title}</Text>
+          <Text style={styles.title}>{translatedTitle}</Text>
           <Text style={styles.dateTime}>
             {formatDate(event.date)} •{" "}
             {formatTime(event.startTime, event.endTime)}
@@ -235,7 +246,7 @@ export function EventCard({
       {event.reminders && (
         <View style={styles.noticeContainer}>
           <Text style={styles.noticeTitle}>{t("events.importantNotice")}</Text>
-          <Text style={styles.noticeText}>{event.reminders}</Text>
+          <Text style={styles.noticeText}>{translatedReminders}</Text>
         </View>
       )}
       {/* Registration Counts - Staff View (uses same data as home page) */}
@@ -300,7 +311,7 @@ export function EventCard({
           <Text style={styles.detailIcon}>📍</Text>
           <View>
             <Text style={styles.detailLabel}>{t("events.venue")}</Text>
-            <Text style={styles.detailValue}>{event.venue}</Text>
+            <Text style={styles.detailValue}>{translatedVenue}</Text>
           </View>
         </View>
 
@@ -345,7 +356,7 @@ export function EventCard({
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{event.title}</Text>
+            <Text style={styles.modalTitle}>{translatedTitle}</Text>
             <Text style={styles.modalSubtitle}>Show this to the staff</Text>
 
             <View style={styles.qrContainer}>
@@ -383,7 +394,7 @@ export function EventCard({
 
           <View style={styles.scannerOverlay}>
             <View style={styles.scannerTopInfo}>
-              <Text style={styles.scannerText}>Event: {event.title}</Text>
+              <Text style={styles.scannerText}>Event: {translatedTitle}</Text>
             </View>
 
             <View style={styles.scanTarget} />

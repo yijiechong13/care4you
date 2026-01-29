@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { EventCard } from '@/components/event-card';
 import { Event, FilterTab, filterTabs } from '@/types/event';
@@ -9,6 +9,7 @@ import { fetchAnnouncements } from '@/services/announmentService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useTranslatedContent } from '@/hooks/useTranslatedContent';
 
 export default function EventsScreen() {
   const router = useRouter();
@@ -61,6 +62,12 @@ export default function EventsScreen() {
     setLoading(false);
   };
 
+  // Translate dynamic content (titles + messages)
+  const announcementTitles = useMemo(() => announcements.map(a => a.title || ''), [announcements]);
+  const announcementMessages = useMemo(() => announcements.map(a => a.message || ''), [announcements]);
+  const translatedTitles = useTranslatedContent(announcementTitles);
+  const translatedMessages = useTranslatedContent(announcementMessages);
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -108,13 +115,13 @@ export default function EventsScreen() {
             <View key={item.id} style={[styles.cardContainer, index === announcements.length - 1 && styles.lastCard]}>
 
               {/* Title */}
-              <Text style={styles.cardTitle}>{item.title}</Text>
+              <Text style={styles.cardTitle}>{translatedTitles[index] ?? item.title}</Text>
 
               {/* Divider */}
               <View style={styles.divider} />
 
               {/* Message Body */}
-              <Text style={styles.cardMessage}>{item.message}</Text>
+              <Text style={styles.cardMessage}>{translatedMessages[index] ?? item.message}</Text>
 
               {/* Date at Bottom Right */}
               {item.date && (

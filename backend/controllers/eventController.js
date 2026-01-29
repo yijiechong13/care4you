@@ -1,9 +1,38 @@
 const { EventModel } = require('../models/eventModel');
+const { translateFields } = require('../services/translationService');
 
 const getEvents = async (req, res) => {
   try {
     const events = await EventModel.findAll();
-    res.status(200).json(events);
+    const lang = (req.query.lang || "en").toLowerCase();
+
+    if (lang === "en") {
+      return res.status(200).json(events);
+    }
+
+    const translatedEvents = await Promise.all(
+      events.map(async (event) => {
+        const translatedFields = await translateFields(
+          {
+            title: event.title,
+            location: event.location,
+            reminders: event.reminders,
+            tag: event.tag,
+          },
+          lang,
+        );
+
+        return {
+          ...event,
+          title: translatedFields.title ?? event.title,
+          location: translatedFields.location ?? event.location,
+          reminders: translatedFields.reminders ?? event.reminders,
+          tag: translatedFields.tag ?? event.tag,
+        };
+      }),
+    );
+
+    res.status(200).json(translatedEvents);
   } catch (error) {
     console.error("❌ Controller Error:", error);
     res.status(500).json({ error: error.message });

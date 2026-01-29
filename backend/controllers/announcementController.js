@@ -1,9 +1,31 @@
 const { AnnouncementModel } = require('../models/announcementModel');
+const { translateFields } = require('../services/translationService');
 
 const getAnnouncements = async (req, res) => {
   try {
     const data = await AnnouncementModel.findAll();
-    res.status(200).json(data);
+    const lang = (req.query.lang || "en").toLowerCase();
+
+    if (lang === "en") {
+      return res.status(200).json(data);
+    }
+
+    const translated = await Promise.all(
+      data.map(async (item) => {
+        const translatedFields = await translateFields(
+          { title: item.title, message: item.message },
+          lang,
+        );
+
+        return {
+          ...item,
+          title: translatedFields.title ?? item.title,
+          message: translatedFields.message ?? item.message,
+        };
+      }),
+    );
+
+    res.status(200).json(translated);
   } catch (error) {
     console.error("❌ Controller Error:", error.message);
     res.status(500).json({ error: error.message });

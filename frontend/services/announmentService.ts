@@ -1,10 +1,13 @@
-import { Platform } from "react-native";
+import { getCurrentLanguage } from "@/lib/i18n";
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export const fetchAnnouncements = async () => {
   try {
-    const response = await fetch(`${BASE_URL}/announcements`);
+    const lang = getCurrentLanguage() || "en";
+    const response = await fetch(
+      `${BASE_URL}/announcements?lang=${encodeURIComponent(lang)}`,
+    );
     
     if (!response.ok) {
       throw new Error(`Server error: ${response.status}`);
