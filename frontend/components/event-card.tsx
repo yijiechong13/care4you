@@ -56,13 +56,24 @@ export function EventCard({
   const [permission, requestPermission] = useCameraPermissions();
 
   // Translate dynamic content (venue kept in English)
+  const qaTexts = useMemo(
+    () => (event.selectedResponses || []).flatMap((r) => [r.question, r.answer]),
+    [event.selectedResponses]
+  );
   const textsToTranslate = useMemo(
-    () => [event.title || '', event.reminders || ''],
-    [event.title, event.reminders]
+    () => [event.title || '', event.reminders || '', ...qaTexts],
+    [event.title, event.reminders, qaTexts]
   );
   const translated = useTranslatedContent(textsToTranslate);
   const translatedTitle = translated[0] || event.title;
   const translatedReminders = translated[1] || event.reminders;
+  const translatedResponses = useMemo(() => {
+    if (!event.selectedResponses?.length) return [];
+    return event.selectedResponses.map((item, index) => ({
+      question: translated[2 + index * 2] || item.question,
+      answer: translated[2 + index * 2 + 1] || item.answer,
+    }));
+  }, [event.selectedResponses, translated]);
 
   const handleOpenScanner = async () => {
     if (!permission?.granted) {
@@ -328,10 +339,10 @@ export function EventCard({
           </View>
         </View>
 
-        {event.selectedResponses?.length ? (
+        {translatedResponses.length ? (
           <View style={styles.qaContainer}>
             <Text style={styles.qaTitle}>{t("events.yourResponses")}</Text>
-            {event.selectedResponses.map((item, index) => (
+            {translatedResponses.map((item, index) => (
               <View key={`${item.question}-${index}`} style={styles.qaRow}>
                 <Text style={styles.qaQuestion}>{item.question}</Text>
                 <Text style={styles.qaAnswer}>{item.answer}</Text>
