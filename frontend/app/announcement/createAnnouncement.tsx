@@ -34,7 +34,7 @@ export default function CreateAnnouncementScreen() {
 
     try {
       await postAnnouncement(title, message.trim());
-      Alert.alert(t('common.success'), t('announcements.announcementPosted'), [
+      Alert.alert(t('common.success'), t('createAnnouncement.announcementPosted'), [
         { text: t('common.ok'), onPress: () => router.navigate("/(tabs)/announcement") }
       ]);
     } catch (error) {

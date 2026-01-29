@@ -212,6 +212,52 @@ export default function ProfileScreen() {
             </Text>
           </TouchableOpacity>
         </View>
+
+        {/* Language Section for Guests */}
+        <View style={styles.guestLanguageSection}>
+          <Text style={styles.sectionTitle}>{t('profile.language')}</Text>
+          <View style={styles.languageCard}>
+            <TouchableOpacity
+              style={[
+                styles.languageOption,
+                language === 'en' && styles.languageOptionActive,
+              ]}
+              onPress={() => setLanguage('en')}
+            >
+              <Text
+                style={[
+                  styles.languageText,
+                  language === 'en' && styles.languageTextActive,
+                ]}
+              >
+                {t('profile.english')}
+              </Text>
+              {language === 'en' && (
+                <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
+              )}
+            </TouchableOpacity>
+            <View style={styles.languageDivider} />
+            <TouchableOpacity
+              style={[
+                styles.languageOption,
+                language === 'zh' && styles.languageOptionActive,
+              ]}
+              onPress={() => setLanguage('zh')}
+            >
+              <Text
+                style={[
+                  styles.languageText,
+                  language === 'zh' && styles.languageTextActive,
+                ]}
+              >
+                {t('profile.chinese')}
+              </Text>
+              {language === 'zh' && (
+                <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
     );
   }
@@ -711,6 +757,9 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
+  },
+  guestLanguageSection: {
+    marginTop: spacing.xxl,
   },
   languageCard: {
     backgroundColor: colors.white,

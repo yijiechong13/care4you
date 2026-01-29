@@ -159,7 +159,7 @@ export default function SpecificInfoScreen() {
         await postAnnouncement(
           "New Event: " + basicInfo.title,
           announcementMsg
-        );
+        );   
 
         Alert.alert(t('common.success'), t('eventCreation.eventPublished'), [
             { text: t('common.ok'), onPress: () => router.navigate('/(tabs)/events') }

@@ -12,10 +12,10 @@ const AnnouncementModel = {
   },
 
   // Create a new announcement
-  create: async (title, message) => {
+  create: async (title, message, location) => {
     const { data, error } = await supabase
       .from('announcements')
-      .insert([{ title, message }])
+      .insert([{ title, message, location }])
       .select()
       .single();
 

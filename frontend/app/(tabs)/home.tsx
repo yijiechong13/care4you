@@ -22,6 +22,7 @@ import { Fontisto, Ionicons } from "@expo/vector-icons";
 import { fetchEvents } from "@/services/eventService";
 import { supabase } from "@/lib/supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useTranslatedContent } from "@/hooks/useTranslatedContent";
 
 const { width, height } = Dimensions.get("window");
 const EVENT_TYPE_ICONS: Record<string, any> = {
@@ -51,6 +52,17 @@ export default function HomeScreen() {
   const [selectedEventImages, setSelectedEventImages] = useState<EventImage[]>(
     [],
   );
+  // Translate dynamic content (titles only, location kept in English)
+  const eventTitles = useMemo(() => events.map(e => e.title || ''), [events]);
+  const translatedTitles = useTranslatedContent(eventTitles);
+  const translatedMap = useMemo(() => {
+    const map = new Map<string, { title: string }>();
+    events.forEach((e, i) => {
+      map.set(e.id, { title: translatedTitles[i] });
+    });
+    return map;
+  }, [events, translatedTitles]);
+
   const EVENT_CARD_WIDTH = width * 0.85;
   const SPACING = 0.15;
   const SNAP_INTERVAL = EVENT_CARD_WIDTH + SPACING;
@@ -408,16 +420,16 @@ export default function HomeScreen() {
                             {item.dateDisplay} • {item.startTime} - {item.endTime}
                           </Text>
                           <View style={{ flexDirection: "row", alignItems: "center" }}>
-                            <Text style={styles.cardTitle}>{item.title}</Text>
+                            <Text style={styles.cardTitle}>{translatedMap.get(item.id)?.title ?? item.title}</Text>
                             {item.wheelchairAccessible && (
                               <Fontisto name="wheelchair" size={18} style={{ marginLeft: 6 }} />
                             )}
                           </View>
                         </View>
-                        <Image 
-                          source={EVENT_TYPE_ICONS[item.tag]} 
-                          style={styles.typeIcon} 
-                          resizeMode="contain" 
+                        <Image
+                          source={EVENT_TYPE_ICONS[item.tag]}
+                          style={styles.typeIcon}
+                          resizeMode="contain"
                         />
                       </View>
 
@@ -611,7 +623,7 @@ export default function HomeScreen() {
                               {item.startTime} - {item.endTime}
                             </Text>
                             <View style={{ flexDirection: "row", alignItems: "center" }}>
-                              <Text style={styles.cardTitle}>{item.title}</Text>
+                              <Text style={styles.cardTitle}>{translatedMap.get(item.id)?.title ?? item.title}</Text>
                               {item.wheelchairAccessible && (
                                 <Fontisto name="wheelchair" size={18} style={{ marginLeft: 6 }} />
                               )}

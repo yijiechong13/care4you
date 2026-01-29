@@ -1,9 +1,38 @@
 const { EventModel } = require('../models/eventModel');
+const { translateFields } = require('../services/translationService');
 
 const getEvents = async (req, res) => {
   try {
     const events = await EventModel.findAll();
-    res.status(200).json(events);
+    const lang = (req.query.lang || "en").toLowerCase();
+
+    if (lang === "en") {
+      return res.status(200).json(events);
+    }
+
+    const translatedEvents = await Promise.all(
+      events.map(async (event) => {
+        const translatedFields = await translateFields(
+          {
+            title: event.title,
+            reminders: event.reminders,
+            tag: event.tag,
+            location: event.location,
+          },
+          lang,
+        );
+
+        return {
+          ...event,
+          title: translatedFields.title ?? event.title,
+          reminders: translatedFields.reminders ?? event.reminders,
+          tag: translatedFields.tag ?? event.tag,
+          location: translatedFields.location ?? event.location,
+        };
+      }),
+    );
+
+    res.status(200).json(translatedEvents);
   } catch (error) {
     console.error("❌ Controller Error:", error);
     res.status(500).json({ error: error.message });
@@ -31,7 +60,41 @@ const getEventQuestions = async (req, res) => {
   try {
     const { eventId } = req.params;
     const questions = await EventModel.getQuestionsWithOptions(eventId);
-    res.status(200).json(questions);
+    const lang = (req.query.lang || "en").toLowerCase();
+
+    if (lang === "en") {
+      return res.status(200).json(questions);
+    }
+
+    const translatedQuestions = await Promise.all(
+      questions.map(async (question) => {
+        const translatedQuestion = await translateFields(
+          { questionText: question.questionText },
+          lang,
+        );
+
+        const translatedOptions = await Promise.all(
+          (question.options || []).map(async (option) => {
+            const translatedOption = await translateFields(
+              { optionText: option.optionText },
+              lang,
+            );
+            return {
+              ...option,
+              optionText: translatedOption.optionText ?? option.optionText,
+            };
+          }),
+        );
+
+        return {
+          ...question,
+          questionText: translatedQuestion.questionText ?? question.questionText,
+          options: translatedOptions,
+        };
+      }),
+    );
+
+    res.status(200).json(translatedQuestions);
   } catch (error) {
     console.error("❌ Controller Error:", error.message);
     res.status(500).json({ error: error.message });

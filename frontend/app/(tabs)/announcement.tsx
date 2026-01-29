@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { EventCard } from '@/components/event-card';
 import { Event, FilterTab, filterTabs } from '@/types/event';
@@ -61,6 +61,7 @@ export default function EventsScreen() {
     setLoading(false);
   };
 
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -115,6 +116,11 @@ export default function EventsScreen() {
 
               {/* Message Body */}
               <Text style={styles.cardMessage}>{item.message}</Text>
+
+              {/* Location (kept in English) */}
+              {item.location && (
+                <Text style={styles.cardLocation}>📍 {item.location}</Text>
+              )}
 
               {/* Date at Bottom Right */}
               {item.date && (
@@ -205,6 +211,11 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: '#4B5563',
     lineHeight: 24,
+    marginBottom: spacing.sm,
+  },
+  cardLocation: {
+    fontSize: fontSize.sm,
+    color: '#6B7280',
     marginBottom: spacing.lg,
   },
   dateContainer: {

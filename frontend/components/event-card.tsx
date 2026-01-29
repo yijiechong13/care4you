@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   StyleSheet,
   Text,
@@ -26,6 +26,7 @@ import { useTranslation } from "react-i18next";
 import QRCode from "react-native-qrcode-svg";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { markAttendance } from "@/services/attendanceService";
+import { useTranslatedContent } from "@/hooks/useTranslatedContent";
 
 interface EventCardProps {
   event: Event;
@@ -45,7 +46,7 @@ export function EventCard({
   regStatus,
 }: EventCardProps) {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const formatTime = (start: string, end: string) => `${start} - ${end}`;
   const [showQR, setShowQR] = React.useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -53,6 +54,15 @@ export function EventCard({
   const [scanned, setScanned] = React.useState(false);
 
   const [permission, requestPermission] = useCameraPermissions();
+
+  // Translate dynamic content (venue kept in English)
+  const textsToTranslate = useMemo(
+    () => [event.title || '', event.reminders || ''],
+    [event.title, event.reminders]
+  );
+  const translated = useTranslatedContent(textsToTranslate);
+  const translatedTitle = translated[0] || event.title;
+  const translatedReminders = translated[1] || event.reminders;
 
   const handleOpenScanner = async () => {
     if (!permission?.granted) {
@@ -102,16 +112,24 @@ export function EventCard({
               await cancelEvent(event.id);
 
               const announcementMsg =
-                t("events.cancelAnnouncementIntro", {
+                i18n.t("events.cancelAnnouncementIntro", {
                   title: event.title,
-                  date: event.date.toDateString(),
+                  date: event.date.toLocaleDateString("en-GB", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  }),
+                  lng: "en",
                 }) +
                 "\n\n" +
-                t("events.cancelAnnouncementBody") +
+                i18n.t("events.cancelAnnouncementBody", { lng: "en" }) +
                 "\n\n" +
-                t("events.cancelAnnouncementThanks");
+                i18n.t("events.cancelAnnouncementThanks", { lng: "en" });
               await postAnnouncement(
-                t("events.cancelAnnouncementTitle", { title: event.title }),
+                i18n.t("events.cancelAnnouncementTitle", {
+                  title: event.title,
+                  lng: "en",
+                }),
                 announcementMsg,
               );
               router.replace("/(tabs)/home");
@@ -192,7 +210,7 @@ export function EventCard({
       {/* Event Header */}
       <View style={styles.header}>
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>{event.title}</Text>
+          <Text style={styles.title}>{translatedTitle}</Text>
           <Text style={styles.dateTime}>
             {formatDate(event.date)} •{" "}
             {formatTime(event.startTime, event.endTime)}
@@ -235,7 +253,7 @@ export function EventCard({
       {event.reminders && (
         <View style={styles.noticeContainer}>
           <Text style={styles.noticeTitle}>{t("events.importantNotice")}</Text>
-          <Text style={styles.noticeText}>{event.reminders}</Text>
+          <Text style={styles.noticeText}>{translatedReminders}</Text>
         </View>
       )}
       {/* Registration Counts - Staff View (uses same data as home page) */}
@@ -345,7 +363,7 @@ export function EventCard({
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{event.title}</Text>
+            <Text style={styles.modalTitle}>{translatedTitle}</Text>
             <Text style={styles.modalSubtitle}>Show this to the staff</Text>
 
             <View style={styles.qrContainer}>
@@ -383,7 +401,7 @@ export function EventCard({
 
           <View style={styles.scannerOverlay}>
             <View style={styles.scannerTopInfo}>
-              <Text style={styles.scannerText}>Event: {event.title}</Text>
+              <Text style={styles.scannerText}>Event: {translatedTitle}</Text>
             </View>
 
             <View style={styles.scanTarget} />

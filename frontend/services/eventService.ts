@@ -1,5 +1,5 @@
-import { use } from "react";
 import { Alert, Platform } from "react-native";
+import { getCurrentLanguage } from "@/lib/i18n";
 
 // CHANGE TO DEPLOYED BACKEND events
 const API_URL = process.env.EXPO_PUBLIC_API_URL + "/events";
@@ -8,7 +8,10 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL + "/events";
 
 export const fetchEvents = async () => {
   try {
-    const response = await fetch(API_URL);
+    const lang = getCurrentLanguage() || "en";
+    const response = await fetch(
+      `${API_URL}?lang=${encodeURIComponent(lang)}`,
+    );
     if (!response.ok) {
       throw new Error(`Server error: ${response.status}`);
     }
@@ -104,7 +107,10 @@ export const publishEvent = async (eventData: any, questions: any[]) => {
 // Fetch questions for an event (for registration form)
 export const fetchEventQuestions = async (eventId: string) => {
   try {
-    const response = await fetch(`${API_URL}/${eventId}/questions`);
+    const lang = getCurrentLanguage() || "en";
+    const response = await fetch(
+      `${API_URL}/${eventId}/questions?lang=${encodeURIComponent(lang)}`,
+    );
 
     if (!response.ok) {
       throw new Error(`Server error: ${response.status}`);
