@@ -1,10 +1,15 @@
 const { AnnouncementModel } = require('../models/announcementModel');
+const { RegistrationModel } = require('../models/registrationModel');
 const { translateFields } = require('../services/translationService');
 
 const getAnnouncements = async (req, res) => {
   try {
-    const data = await AnnouncementModel.findAll();
-    const lang = (req.query.lang || "en").toLowerCase();
+    const { userId, lang } = req.query;
+    const data = await AnnouncementModel.findAnnouncement(userId);
+
+    if (!userId || userId === "undefined" || userId === "null") {
+      return res.status(200).json([]);
+    }
 
     if (lang === "en") {
       return res.status(200).json(data);
@@ -32,28 +37,83 @@ const getAnnouncements = async (req, res) => {
   }
 };
 
-const createAnnouncement = async (req, res) => {
+const createGlobalAnnouncement = async (req, res) => {
   try {
     const { title, message, location } = req.body;
 
-    if (!title || !title.trim()) {
-      return res.status(400).json({ error: "Title is required" });
+    const { data: users, error } = await supabase.from('users').select('id');
+    
+    if (error) throw error;
+    if (!users || users.length === 0) {
+      return res.status(200).json({ message: "No users found to notify." });
     }
 
-    // Handle empty message - convert empty string to empty string or null based on DB schema
-    const messageValue = message && message.trim() ? message.trim() : "";
+    const allUserIds = users.map(u => u.id);
 
-    const newAnnouncement = await AnnouncementModel.create(title.trim(), messageValue, location || null);
+    await AnnouncementModel.createAnnouncement(title, message, allUserIds, null);
 
-    res.status(201).json({
-      message: "Announcement posted successfully",
-      data: newAnnouncement
+    res.status(201).json({ 
+      message: `Global announcement sent to ${allUserIds.length} users.` 
     });
-
   } catch (error) {
     console.error("❌ Controller Error:", error.message);
     res.status(500).json({ error: error.message });
   }
 };
 
-module.exports = { getAnnouncements, createAnnouncement };
+const createEventAnnouncement = async (req, res) => {
+  const { eventId, title, message } = req.body;
+
+  if (!eventId || !title || !message) {
+    return res.status(400).json({ error: "Missing required fields." });
+  }
+
+  try {
+    const registrations = await RegistrationModel.findByEventId(eventId);
+    
+    // Confirmed status AND Real Users (exclude 'guest_')
+    const validUserIds = registrations
+      .filter(reg => 
+        reg.status === 'confirmed' && 
+        !reg.user_id.toString().startsWith("guest_")
+      )
+      .map(reg => reg.user_id);
+
+    if (validUserIds.length === 0) {
+      return res.status(200).json({ message: "No confirmed app users found for this event." });
+    }
+
+    await AnnouncementModel.createAnnouncement(title, message, validUserIds, eventId);
+
+    res.status(201).json({ 
+      message: `Event announcement sent to ${validUserIds.length} participants.` 
+    });
+  } catch (error) {
+    console.error("❌ Event Blast Error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const createSpecificUserAnnouncement = async (req, res) => {
+  const { userId, title, message, eventId } = req.body;
+
+  try {
+    await AnnouncementModel.createAnnouncement(title, message, [userId], eventId);
+    
+    res.status(201).json({ message: "Notification sent to user." });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const markRead = async (req, res) => {
+  const { announcementId, userId } = req.body;
+  try {
+    await AnnouncementModel.markAsRead(announcementId, userId);
+    res.status(200).json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = { getAnnouncements, createGlobalAnnouncement, createEventAnnouncement, createSpecificUserAnnouncement, markRead };

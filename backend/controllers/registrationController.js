@@ -2,6 +2,7 @@ const { EventModel } = require("../models/eventModel");
 const { RegistrationModel } = require("../models/registrationModel");
 const User = require("../models/userModel");
 const { supabase } = require("../config/supabase");
+const { AnnouncementModel } = require("../models/announcementModel");
 
 const createRegistration = async (req, res) => {
   try {
@@ -168,6 +169,16 @@ const cancelRegistration = async (req, res) => {
         // --- SCENARIO A: Replacement Found ---
         // Promote them to confirmed
         await RegistrationModel.updateStatus(nextInLine.id, 'confirmed');
+
+
+        const event = await EventModel.findByEventId(registration.event_id);
+        await AnnouncementModel.createAnnouncement(
+          "You're In! 🎉", 
+          `Good news! A slot opened up for ${event.title || "an event"} and you have been promoted from the waitlist.`,
+          [nextInLine.user_id], // Pass as array of 1
+          registration.event_id
+        );
+
         console.log(`🚀 Auto-promoted user ${nextInLine.user_id} from waitlist`);
       } else {
         // --- SCENARIO B: No Waitlist ---
