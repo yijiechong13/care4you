@@ -34,12 +34,25 @@ Reduce friction at the point of action
   - Users can browse and register for activities without creating an account
   - Ideal for elderly users and first-time users
 
-- 📅 Simple Monthly View
+- 📅 Calendar & List View
+  - Browse activities in a monthly calendar view or a scrollable list view
   - Clear, accessible overview of upcoming activities
 
 - 🔄 Automatic Account Conversion
   - When a guest signs up or logs in, all previously registered activities are seamlessly transferred
   - No re-registration, no confusion
+
+- 🔔 Waitlist with Auto-Promotion
+  - When an event is full, users are placed on a waitlist automatically
+  - If a confirmed participant pulls out, the next person on the waitlist is promoted into the event — no action needed from the user
+
+- 🌐 LLM-Powered Translation
+  - All event details created by staff are automatically translated using an LLM
+  - Users can toggle between English and Chinese to view events in their preferred language
+
+- 📢 Announcements
+  - Receive real-time updates and notices from staff directly in the app
+  - Stay informed on event changes, slot openings, and community news
 
 Impact:<br>
 Lower drop-off rates, higher participation, and a more inclusive experience for elderly users.
@@ -56,18 +69,30 @@ Reduce manual work and data fragmentation
 
 - 📤 CSV Export
   - One-click export of clean, structured registration data
-
   - Eliminates manual merging from multiple sign-up channels
 
 - ⏱️ Real-Time Insights
   - Track participant and volunteer slots accurately
 
+- 📱 QR Code Attendance Tracking
+  - Generate time-stamped QR codes for each event
+  - Scan to check in participants on the spot — replaces manual pen-and-paper attendance
+  - Attendance counts are tracked separately for participants and volunteers
+
+- 📢 Targeted Announcement Channels
+  - Choose to broadcast announcements to everyone or only to people registered in a specific event
+  - One post reaches the right audience — no more repeating messages across multiple channels
+
+- 🌐 Automatic Event Translation
+  - Staff create events once in one language; the system uses an LLM to translate all details automatically
+  - Translation results are cached for performance
+
 Impact:<br>
 Less administrative overhead, cleaner data, and more time spent on community impact instead of paperwork.
 
-🧠 Why This Matters
+### 🧠 Why This Matters
 
-Instead of forcing users to adapt to the system, Care4Fun adapts to user behaviour, while still giving staff clean, actionable data.
+Instead of forcing users to adapt to the system, Care4You adapts to user behaviour, while still giving staff clean, actionable data.
 
 ---
 
