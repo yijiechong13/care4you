@@ -6,10 +6,12 @@ const { translateFields } = require('../services/translationService');
 const getAnnouncements = async (req, res) => {
   try {
     const { userId, lang } = req.query;
-    const data = await AnnouncementModel.findAnnouncement(userId);
+    const data = await AnnouncementModel.findGlobalAnnouncement();
 
-    if (!userId || userId === "undefined" || userId === "null") {
-      return res.status(200).json([]);
+    if (userId) {
+      const userAnnouncement = await AnnouncementModel.findAnnouncementByRecipient(userId);
+      data = data.concat(userAnnouncement);
+      data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
 
     if (lang === "en") {
