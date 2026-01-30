@@ -86,18 +86,21 @@ export default function ProfileScreen() {
     stats: { upcoming: 0, registered: 0, total: 0 },
   };
 
-  const handleLogout = () => {
-    Alert.alert(t('profile.logOut'), t('profile.logOutConfirm'), [
-      { text: t('common.cancel'), style: "cancel" },
-      {
-        text: t('profile.logOut'),
-        style: "destructive",
-        onPress: async () => {
-          await AsyncStorage.removeItem("userId"); //removing userId from device, old registered events gone
-          router.replace("/login");
-        },
-      },
-    ]);
+  const handleLogout = async () => {
+    // Alert.alert(t('profile.logOut'), t('profile.logOutConfirm'), [
+    //   { text: t('common.cancel'), style: "cancel" },
+    //   {
+    //     text: t('profile.logOut'),
+    //     style: "destructive",
+    //     onPress: async () => {
+    //       await AsyncStorage.removeItem("userId"); //removing userId from device, old registered events gone
+    //       router.replace("/login");
+    //     },
+    //   },
+    // ]);
+
+    await AsyncStorage.removeItem("userId"); //removing userId from device, old registered events gone
+    router.replace("/login");
   };
 
   // Inside ProfileScreen component

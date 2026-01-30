@@ -237,27 +237,30 @@ export function EventCard({
     }
   };
 
-  const handleCancelRegistration = () => {
-    try {
-      Alert.alert(
-        t("events.cancelRegistrationTitle"),
-        t("events.cancelRegistrationMessage"),
-        [
-          { text: t("common.exit"), style: "cancel" },
-          {
-            text: t("common.cancel"),
-            style: "destructive",
-            onPress: async () => {
-              await cancelRegistration(regId);
+  const handleCancelRegistration = async () => {
+    // try {
+    //   Alert.alert(
+    //     t("events.cancelRegistrationTitle"),
+    //     t("events.cancelRegistrationMessage"),
+    //     [
+    //       { text: t("common.exit"), style: "cancel" },
+    //       {
+    //         text: t("common.cancel"),
+    //         style: "destructive",
+    //         onPress: async () => {
+    //           await cancelRegistration(regId);
 
-              router.replace("/(tabs)/home");
-            },
-          },
-        ],
-      );
-    } catch (error) {
-      Alert.alert(t("common.error"), t("events.cancelRegFailed"));
-    }
+    //           router.replace("/(tabs)/home");
+    //         },
+    //       },
+    //     ],
+    //   );
+    // } catch (error) {
+    //   Alert.alert(t("common.error"), t("events.cancelRegFailed"));
+    // }
+
+    await cancelRegistration(regId);
+    router.replace("/(tabs)/home");
   };
 
   const handleBarCodeScanned = async ({ data }: { data: string }) => {

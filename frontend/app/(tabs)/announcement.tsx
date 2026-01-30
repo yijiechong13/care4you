@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, RefreshControl } from 'react-native';
 import { EventCard } from '@/components/event-card';
 import { Event, FilterTab, filterTabs } from '@/types/event';
 import { borderRadius, colors, fontSize, fontWeight, spacing } from '@/constants/theme';
@@ -13,22 +13,34 @@ import { useTranslation } from 'react-i18next';
 export default function EventsScreen() {
   const router = useRouter();
   const { t } = useTranslation();
-  const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
   const [announcements, setAnnouncements] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [user, setUser] = useState<any>();
   const [isStaff, setIsStaff] = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      getUser();
-      getAnnouncements()
-    }, [])
-  );
+  useEffect(() => {
+    initialLoad();
+  }, []);
+
+  const initialLoad = async () => {
+    setIsLoading(true);
+    const userData = await getUser(); 
+    await getAnnouncements(userData);
+    setIsLoading(false);
+  };
+
+  const onRefresh = useCallback(async () => {
+      setRefreshing(true);
+      await getAnnouncements(user);
+      setRefreshing(false);
+    }, []);
 
   const getUser = async () => {
     try {
       const userId = await AsyncStorage.getItem("userId");
       if (!userId) {
+        setUser(null);
         setIsStaff(false);
         return;
       }
@@ -40,6 +52,7 @@ export default function EventsScreen() {
         .single();
 
       if (!userError && userData) {
+        setUser(userData);
         setIsStaff(userData.user_type?.toLowerCase() === "staff");
       } else {
         setIsStaff(false);
@@ -50,33 +63,22 @@ export default function EventsScreen() {
     }
   };
 
-  const getAnnouncements = async () => {
+  const getAnnouncements = async (currentUser: any) => {
     try {
-      setLoading(true);
-      const data = await fetchAnnouncements();
-      setAnnouncements(data);
+      const isUserStaff = currentUser?.isStaff ?? isStaff;
+      const currentUserId = currentUser?.id ?? user?.id;
+
+      let data;
+      if (isUserStaff) {
+        data = await fetchAnnouncements();
+      } else {
+        data = await fetchAnnouncements(currentUserId);
+      }
+      setAnnouncements(data || []);
     } catch (error) {
-      console.log("Failed to fetch announcements");
+      console.log("Failed to fetch announcements", error);
     }
-    setLoading(false);
   };
-
-
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>{t('announcements.title')}</Text>
-          </View>
-        </View>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>{t('announcements.loadingAnnouncements')}</Text>
-        </View>
-      </View>
-    );
-  }
 
   const handleCreateAnnouncement = () => {
     router.push("../announcement/createAnnouncement");
@@ -103,6 +105,14 @@ export default function EventsScreen() {
         showsVerticalScrollIndicator={true}
         alwaysBounceVertical={true}
         scrollEnabled={true}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]} // Android spinner color
+            tintColor={colors.primary} // iOS spinner color
+          />
+        }
       >
         {announcements.length > 0 ? (
           announcements.map((item, index) => (
