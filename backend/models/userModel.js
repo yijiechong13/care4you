@@ -1,5 +1,5 @@
 const db = require("../db"); // Use your existing db.js connection
-const supabase = require("../config/supabase");
+const { supabase } = require("../config/supabase");
 
 const User = {
   // Logic for adding a new user
