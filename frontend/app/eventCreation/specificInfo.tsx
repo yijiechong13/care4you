@@ -15,7 +15,7 @@ import * as ImagePicker from "expo-image-picker";
 import { publishEvent } from "@/services/eventService";
 import { postAnnouncement } from "@/services/announmentService";
 import { useTranslation } from "react-i18next";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 
 interface EventImageUpload {
   uri: string;
@@ -138,13 +138,14 @@ export default function SpecificInfoScreen() {
       imagesWithBase64 = await Promise.all(
         images.map(async (img) => {
           const base64 = await FileSystem.readAsStringAsync(img.uri, {
-            encoding: "base64", // Pass literal string 'base64'
+            encoding: "base64",
           });
           return {
-            url: img.uri, // Keep original URI for UI
+            url: img.uri,
             isPrimary: img.isPrimary,
-            displayOrder: 0, // Or use index
-            base64: base64, // Add the data for the backend
+            displayOrder: 0,
+            base64: base64,
+            fileType: "image/jpg",
           };
         }),
       );

@@ -90,14 +90,19 @@ export const publishEvent = async (eventData: any, questions: any[]) => {
       },
       body: JSON.stringify(payload),
     });
+    const textResponse = await response.text();
+    try {
+      const result = JSON.parse(textResponse); // Try to parse it
 
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || "Failed to publish event");
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to publish event");
+      }
+      return result;
+    } catch (e) {
+      // If parsing fails, log the HTML so we can see the real error
+      console.error("❌ Backend returned HTML instead of JSON:", textResponse);
+      throw new Error("Server Error: Check console logs for details");
     }
-
-    return result;
   } catch (error) {
     console.error("Service Error:", error);
     throw error;
