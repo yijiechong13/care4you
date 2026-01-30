@@ -45,32 +45,32 @@ const User = {
     const result = await db.query(query, [email]);
     const user = result.rows[0];
 
-    if (user && guestId && guestId.toString().startsWith("guest_")) {
-      try {
-        const migrateQuery = `
-        UPDATE registrations 
-        SET user_id = $1 
-        WHERE user_id = $2
-      `;
-        // We force user.id to string because the column is now TEXT/VARCHAR
-        await db.query(migrateQuery, [user.id.toString(), guestId.toString()]);
-        console.log(`✅ Migrated login guest data for user ${user.id}`);
+    // if (user && guestId && guestId.toString().startsWith("guest_")) {
+    //   try {
+    //     const migrateQuery = `
+    //     UPDATE registrations 
+    //     SET user_id = $1 
+    //     WHERE user_id = $2
+    //   `;
+    //     // We force user.id to string because the column is now TEXT/VARCHAR
+    //     await db.query(migrateQuery, [user.id.toString(), guestId.toString()]);
+    //     console.log(`✅ Migrated login guest data for user ${user.id}`);
 
-        const migrateAttQuery = `
-        UPDATE attendance 
-        SET user_id = $1 
-        WHERE user_id = $2
-      `;
-        // Convert newUser.id to string to match the VARCHAR/TEXT column type
-        await db.query(migrateAttQuery, [
-          user.id.toString(),
-          guestId.toString(),
-        ]);
-        console.log(`✅ Migrated attendance from ${guestId} to ${newUser.id}`);
-      } catch (updateErr) {
-        console.error("❌ Migration Error:", updateErr.message); // This will tell you exactly what SQL error happened
-      }
-    }
+    //     const migrateAttQuery = `
+    //     UPDATE attendance 
+    //     SET user_id = $1 
+    //     WHERE user_id = $2
+    //   `;
+    //     // Convert newUser.id to string to match the VARCHAR/TEXT column type
+    //     await db.query(migrateAttQuery, [
+    //       user.id.toString(),
+    //       guestId.toString(),
+    //     ]);
+    //     console.log(`✅ Migrated attendance from ${guestId} to ${newUser.id}`);
+    //   } catch (updateErr) {
+    //     console.error("❌ Migration Error:", updateErr.message); // This will tell you exactly what SQL error happened
+    //   }
+    // }
 
     return user;
   },
