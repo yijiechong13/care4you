@@ -113,7 +113,8 @@
     "noRegistrations": "No Registrations",
     "noRegistrationsMessage": "There are no registrations to export for this event.",
     "exportFailed": "Export Failed",
-    "exportFailedMessage": "Unable to export registrations. Please try again."
+    "exportFailedMessage": "Unable to export registrations. Please try again.",
+    "noResults": "No results found"
   },
   "announcements": {
     "title": "Announcements",

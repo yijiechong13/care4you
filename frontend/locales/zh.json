@@ -111,7 +111,8 @@
     "noRegistrations": "没有报名",
     "noRegistrationsMessage": "这个活动还没有人报名。",
     "exportFailed": "导出失败",
-    "exportFailedMessage": "无法导出报名信息，请重试。"
+    "exportFailedMessage": "无法导出报名信息，请重试。",
+    "noResults": "没有找到任何活动"
   },
   "announcements": {
     "title": "公告",
