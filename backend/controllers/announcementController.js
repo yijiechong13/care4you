@@ -1,5 +1,6 @@
 const { AnnouncementModel } = require('../models/announcementModel');
 const { RegistrationModel } = require('../models/registrationModel');
+const User = require('../models/userModel');
 const { translateFields } = require('../services/translationService');
 
 const getAnnouncements = async (req, res) => {
@@ -41,7 +42,7 @@ const createGlobalAnnouncement = async (req, res) => {
   try {
     const { title, message, location } = req.body;
 
-    const { data: users, error } = await supabase.from('users').select('id');
+    const { data: users, error } = await User.fetchIds();
     
     if (error) throw error;
     if (!users || users.length === 0) {

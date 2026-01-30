@@ -1,4 +1,5 @@
 const db = require("../db"); // Use your existing db.js connection
+const supabase = require("../config/supabase");
 
 const User = {
   // Logic for adding a new user
@@ -93,6 +94,23 @@ const User = {
     `;
     const result = await db.query(queryText, [id]);
     return result.rows[0];
+  },
+
+  fetchIds: async () => {
+    console.log("🔍 Backend: Attempting to fetch users' ID from Supabase...");
+
+    const { data, error } = await supabase
+      .from('users')
+      .select("*")
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error("❌ Backend: Supabase Error:", error.message);
+      throw new Error(error.message);
+    }
+
+    console.log("✅ Backend: Supabase returned:", data.length, "rows");
+    return data;
   },
 };
 
