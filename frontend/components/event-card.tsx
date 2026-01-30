@@ -103,7 +103,7 @@ export function EventCard({
     };
   }, [showQR, regId]);
 
-  // Translate dynamic content (venue kept in English)
+  // Translate dynamic content
   const qaTexts = useMemo(
     () =>
       (event.selectedResponses || []).flatMap((r) => [r.question, r.answer]),
@@ -116,6 +116,9 @@ export function EventCard({
   const translated = useTranslatedContent(textsToTranslate);
   const translatedTitle = translated[0] || event.title;
   const translatedReminders = translated[1] || event.reminders;
+  const [translatedVenue] = useTranslatedContent([event.venue || ""], {
+    forceTranslate: i18n.language === "zh",
+  });
   const translatedResponses = useMemo(() => {
     if (!event.selectedResponses?.length) return [];
     return event.selectedResponses.map((item, index) => ({
@@ -495,7 +498,7 @@ export function EventCard({
           <Text style={styles.detailIcon}>📍</Text>
           <View>
             <Text style={styles.detailLabel}>{t("events.venue")}</Text>
-            <Text style={styles.detailValue}>{event.venue}</Text>
+            <Text style={styles.detailValue}>{translatedVenue}</Text>
           </View>
         </View>
 

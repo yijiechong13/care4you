@@ -2,7 +2,8 @@ const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export const translateTexts = async (
   texts: string[],
-  targetLang: string
+  targetLang: string,
+  options?: { forceTranslate?: boolean },
 ): Promise<string[]> => {
   try {
     // Filter out empty strings but keep track of positions
@@ -12,7 +13,11 @@ export const translateTexts = async (
     const response = await fetch(`${BASE_URL}/translate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ texts, targetLang }),
+      body: JSON.stringify({
+        texts,
+        targetLang,
+        forceTranslate: options?.forceTranslate ?? false,
+      }),
     });
 
     if (!response.ok) {
