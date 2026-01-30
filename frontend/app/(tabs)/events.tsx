@@ -91,7 +91,6 @@ export default function EventsScreen() {
         "Special Requirements",
         "Responses",
         "Registered On",
-        "Attendance",
       ];
       const csvRows = [headers.join(",")];
 
@@ -106,7 +105,6 @@ export default function EventsScreen() {
           `"${(reg.specialRequirements || "").replace(/"/g, '""')}"`,
           `"${(reg.responses || "").replace(/"/g, '""')}"`,
           `"${(reg.registeredAt || "").replace(/"/g, '""')}"`,
-          "", // Empty attendance column for staff to fill
         ];
         csvRows.push(row.join(","));
       });

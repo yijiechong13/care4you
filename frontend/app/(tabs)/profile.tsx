@@ -86,6 +86,13 @@ export default function ProfileScreen() {
     stats: { upcoming: 0, registered: 0, total: 0 },
   };
 
+  const handleSignUp = () => {
+    router.push({
+      pathname: "/signup",
+      params: { role: "participant" },
+    });
+  };
+
   const handleLogout = async () => {
     // Alert.alert(t('profile.logOut'), t('profile.logOutConfirm'), [
     //   { text: t('common.cancel'), style: "cancel" },
@@ -201,7 +208,7 @@ export default function ProfileScreen() {
 
           <TouchableOpacity
             style={styles.primaryActionBtn}
-            onPress={() => router.push("/onboarding")}
+            onPress={handleSignUp}
           >
             <Text style={styles.primaryActionText}>{t('profile.createAccount')}</Text>
           </TouchableOpacity>

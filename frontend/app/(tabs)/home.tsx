@@ -562,7 +562,7 @@ export default function HomeScreen() {
                               <Text style={styles.infoLabel}>
                                 {t("home.availability")}
                               </Text>
-                              {isStaff || userRole == "participant" ? (
+                              {isStaff || userRole != "volunteer" ? (
                                 item.participantSlots ? (
                                   <Text style={styles.infoText}>
                                     {isStaff ? t("home.participant") : ""}{" "}
