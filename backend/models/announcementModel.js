@@ -19,32 +19,30 @@ const AnnouncementModel = {
   },
 
   findAnnouncementByRecipient: async (userId) => {
-    const { data, error } = await supabase
-      .from('announcements')
-      .select(`
-        id,
-        title,
-        message,
-        related_event_id,
-        created_at,
-        announcement_recipients!inner (
-          is_read,
-          user_id
-        )
-      `)
-      .eq('announcement_recipients.user_id', userId)
-      .order('created_at', { ascending: false });
+    const { data: recipient_ids, error: recipient_error } = await supabase
+      .from("announcement_recipients")
+      .select("announcement_id")
+      .eq("user_id", userId);
+    
+    if (!recipient_ids || recipient_ids.length === 0) {
+      return [];
+    }
 
-    if (error) throw new Error(error.message);
+    const announcement_ids = recipient_ids.map(row => row.announcement_id);
+    
+    const { data: announcements, error: announcementError } = await supabase
+      .from("announcements")
+      .select("*")
+      .in("id", announcement_ids)
+      .order("created_at", { ascending: false });
 
     // Flatten the structure for the frontend
-    return data.map(item => ({
+    return announcements.map(item => ({
       id: item.id,
       title: item.title,
       message: item.message,
       relatedEventId: item.related_event_id,
-      createdAt: item.created_at,
-      isRead: item.announcement_recipients[0]?.is_read || false
+      createdAt: item.created_at
     }));
   },
  

@@ -24,10 +24,10 @@ export default function AnnouncementScreen() {
   }, []);
 
   useFocusEffect(
-      useCallback(() => {
-        getAnnouncements(user);
-      }, []),
-    );
+    useCallback(() => {
+      getAnnouncements(user);
+    }, [user]),
+  );
 
   const initialLoad = async () => {
     setIsLoading(true);
@@ -75,6 +75,7 @@ export default function AnnouncementScreen() {
       const currentUserId = currentUser?.id ?? user?.id;
 
       const data = await fetchAnnouncements(currentUserId);
+      console.log(data);
       setAnnouncements(data || []);
     } catch (error) {
       console.log("Failed to fetch announcements", error);
