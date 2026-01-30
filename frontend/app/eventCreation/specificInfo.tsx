@@ -141,7 +141,7 @@ export default function SpecificInfoScreen() {
             encoding: "base64", // Pass literal string 'base64'
           });
           return {
-            uri: img.uri, // Keep original URI for UI
+            url: img.uri, // Keep original URI for UI
             isPrimary: img.isPrimary,
             displayOrder: 0, // Or use index
             base64: base64, // Add the data for the backend

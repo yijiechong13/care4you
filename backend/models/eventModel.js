@@ -146,7 +146,7 @@ const EventModel = {
           wheelchair_accessible: eventData.wheelchairAccessible,
           tag: eventData.tag,
           reminders: eventData.reminders,
-          image_url: eventData.imageUrl,
+          image_url: eventData.images.url,
         },
       ])
       .select()
@@ -159,7 +159,7 @@ const EventModel = {
     if (eventData.images && eventData.images.length > 0) {
       const imagesPayload = eventData.images.map((img, index) => ({
         event_id: eventId,
-        image_url: img.uri,
+        image_url: img.url,
         display_order: img.displayOrder ?? index,
         is_primary: img.isPrimary ?? index === 0,
         caption: img.caption || null,

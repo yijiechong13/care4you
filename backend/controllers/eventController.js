@@ -59,7 +59,7 @@ const createEvent = async (req, res) => {
             // The Model expects 'uri', so we overwrite 'uri' with the publicUrl
             return {
               ...img,
-              uri: publicUrl,
+              url: publicUrl,
               base64: undefined, // Clear huge string from memory
             };
           }
