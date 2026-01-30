@@ -44,7 +44,7 @@ const AttendanceModel = {
         attendeeType === "volunteer" ? "volunteer_att" : "participant_att";
 
       const updateEventQuery = `
-      UPDATE event 
+      UPDATE events 
       SET ${columnToUpdate} = ${columnToUpdate} + 1 
       WHERE id = $1;
     `;
