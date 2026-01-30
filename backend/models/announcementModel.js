@@ -5,7 +5,7 @@ const AnnouncementModel = {
     const { data, error } = await supabase
       .from('announcements')
       .select("*")
-      .eq('related_event_id', null)
+      .is('related_event_id', null)
       .order('created_at', { ascending: false });
     
     if (error) throw new Error(error.message);
