@@ -10,7 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
-export default function EventsScreen() {
+export default function AnnouncementScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const [announcements, setAnnouncements] = useState<any[]>([]);
@@ -22,6 +22,12 @@ export default function EventsScreen() {
   useEffect(() => {
     initialLoad();
   }, []);
+
+  useFocusEffect(
+      useCallback(() => {
+        getAnnouncements(user);
+      }, []),
+    );
 
   const initialLoad = async () => {
     setIsLoading(true);
@@ -68,12 +74,7 @@ export default function EventsScreen() {
       const isUserStaff = currentUser?.isStaff ?? isStaff;
       const currentUserId = currentUser?.id ?? user?.id;
 
-      let data;
-      if (isUserStaff) {
-        data = await fetchAnnouncements();
-      } else {
-        data = await fetchAnnouncements(currentUserId);
-      }
+      const data = await fetchAnnouncements(currentUserId);
       setAnnouncements(data || []);
     } catch (error) {
       console.log("Failed to fetch announcements", error);
