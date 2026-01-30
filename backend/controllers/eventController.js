@@ -1,36 +1,31 @@
 const { EventModel } = require('../models/eventModel');
-const { translateFields } = require('../services/translationService');
+const { translateFieldsWithCache, translateTextsWithCache } = require('../services/translationCacheService');
 
 const getEvents = async (req, res) => {
   try {
     const events = await EventModel.findAll();
     const lang = (req.query.lang || "en").toLowerCase();
 
-    if (lang === "en") {
-      return res.status(200).json(events);
-    }
+    const titles = events.map((event) => event.title || "");
+    const reminders = events.map((event) => event.reminders || "");
+    const tags = events.map((event) => event.tag || "");
+    const locations = events.map((event) => event.location || "");
 
-    const translatedEvents = await Promise.all(
-      events.map(async (event) => {
-        const translatedFields = await translateFields(
-          {
-            title: event.title,
-            reminders: event.reminders,
-            tag: event.tag,
-            location: event.location,
-          },
-          lang,
-        );
+    const [translatedTitles, translatedReminders, translatedTags, translatedLocations] =
+      await Promise.all([
+        translateTextsWithCache(titles, lang),
+        translateTextsWithCache(reminders, lang),
+        translateTextsWithCache(tags, lang),
+        translateTextsWithCache(locations, lang, { forceTranslate: lang === "zh" }),
+      ]);
 
-        return {
-          ...event,
-          title: translatedFields.title ?? event.title,
-          reminders: translatedFields.reminders ?? event.reminders,
-          tag: translatedFields.tag ?? event.tag,
-          location: translatedFields.location ?? event.location,
-        };
-      }),
-    );
+    const translatedEvents = events.map((event, index) => ({
+      ...event,
+      title: translatedTitles[index] || event.title,
+      reminders: translatedReminders[index] || event.reminders,
+      tag: translatedTags[index] || event.tag,
+      location: translatedLocations[index] || event.location,
+    }));
 
     res.status(200).json(translatedEvents);
   } catch (error) {
@@ -44,6 +39,37 @@ const createEvent = async (req, res) => {
     const { questions, ...eventData } = req.body;
 
     const eventId = await EventModel.createWithQuestions(eventData, questions);
+
+    try {
+      const baseFields = {
+        title: eventData.title,
+        reminders: eventData.reminders,
+        tag: eventData.tag,
+      };
+
+      await translateFieldsWithCache(baseFields, "en");
+      await translateFieldsWithCache(baseFields, "zh");
+      await translateTextsWithCache([eventData.location || ""], "en");
+      await translateTextsWithCache([eventData.location || ""], "zh", {
+        forceTranslate: true,
+      });
+
+      const questionTexts = [];
+      const optionTexts = [];
+      (questions || []).forEach((question) => {
+        if (question?.title) questionTexts.push(question.title);
+        (question?.options || []).forEach((option) => {
+          if (option) optionTexts.push(option);
+        });
+      });
+
+      await translateTextsWithCache(questionTexts, "en");
+      await translateTextsWithCache(questionTexts, "zh", { forceTranslate: true });
+      await translateTextsWithCache(optionTexts, "en");
+      await translateTextsWithCache(optionTexts, "zh", { forceTranslate: true });
+    } catch (translationError) {
+      console.error("❌ Translation Cache Error:", translationError.message);
+    }
 
     res.status(201).json({ 
       message: "Event published successfully", 
@@ -62,39 +88,33 @@ const getEventQuestions = async (req, res) => {
     const questions = await EventModel.getQuestionsWithOptions(eventId);
     const lang = (req.query.lang || "en").toLowerCase();
 
-    if (lang === "en") {
-      return res.status(200).json(questions);
-    }
-
-    const translatedQuestions = await Promise.all(
-      questions.map(async (question) => {
-        const translatedQuestion = await translateFields(
-          { questionText: question.questionText },
-          lang,
-        );
-
-        const translatedOptions = await Promise.all(
-          (question.options || []).map(async (option) => {
-            const translatedOption = await translateFields(
-              { optionText: option.optionText },
-              lang,
-            );
-            return {
-              ...option,
-              optionText: translatedOption.optionText ?? option.optionText,
-            };
-          }),
-        );
-
-        return {
-          ...question,
-          questionText: translatedQuestion.questionText ?? question.questionText,
-          options: translatedOptions,
-        };
-      }),
+    const questionTexts = questions.map((question) => question.questionText || "");
+    const optionTexts = questions.flatMap((question) =>
+      (question.options || []).map((option) => option.optionText || ""),
     );
 
-    res.status(200).json(translatedQuestions);
+    const forceTranslate = lang === "zh";
+    const [translatedQuestions, translatedOptions] = await Promise.all([
+      translateTextsWithCache(questionTexts, lang, { forceTranslate }),
+      translateTextsWithCache(optionTexts, lang, { forceTranslate }),
+    ]);
+
+    let optionIndex = 0;
+    const hydrated = questions.map((question, qIndex) => {
+      const options = (question.options || []).map((option) => {
+        const translatedOption = translatedOptions[optionIndex] || option.optionText;
+        optionIndex += 1;
+        return { ...option, optionText: translatedOption };
+      });
+
+      return {
+        ...question,
+        questionText: translatedQuestions[qIndex] || question.questionText,
+        options,
+      };
+    });
+
+    res.status(200).json(hydrated);
   } catch (error) {
     console.error("❌ Controller Error:", error.message);
     res.status(500).json({ error: error.message });
