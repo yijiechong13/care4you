@@ -45,7 +45,7 @@ const createGlobalAnnouncement = async (req, res) => {
   try {
     const { title, message, location } = req.body;
 
-    const users = await User.fetchIds();
+    const users = await User.fetchUsers();
     
     if (!users || users.length === 0) {
       return res.status(200).json({ message: "No users found to notify." });
@@ -75,12 +75,16 @@ const createEventAnnouncement = async (req, res) => {
     const registrations = await RegistrationModel.findByEventId(eventId);
     
     // Confirmed status AND Real Users (exclude 'guest_')
-    const validUserIds = registrations
+    const participants = registrations
       .filter(reg => 
         reg.status === 'confirmed' && 
         !reg.user_id.toString().startsWith("guest_")
       )
       .map(reg => reg.user_id);
+    const staff = (await User.fetchUsers())
+      .filter(user => user.user_type == "staff")
+      .map(staff => staff.id);
+    const validUserIds = [...new Set([...participants, ...staff])];;
 
     if (validUserIds.length === 0) {
       return res.status(200).json({ message: "No confirmed app users found for this event." });
