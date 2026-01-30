@@ -47,7 +47,6 @@ const createGlobalAnnouncement = async (req, res) => {
 
     const users = await User.fetchIds();
     
-    if (error) throw error;
     if (!users || users.length === 0) {
       return res.status(200).json({ message: "No users found to notify." });
     }
