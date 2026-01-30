@@ -30,6 +30,8 @@ export interface Event {
   eventStatus: string;
   reminders: string;
   userId?: string;
+  participant_att?: number;
+  volunteer_att?: number;
 }
 
 export interface EventCardProps {

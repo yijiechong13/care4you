@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
-  Button,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Event } from "@/types/event";
@@ -64,24 +63,11 @@ export function EventCard({
   const [attendanceData, setAttendanceData] = useState<any[]>([]);
   const [loadingAttendance, setLoadingAttendance] = useState(false);
 
-  // Function to fetch and count attendance
-  const loadAttendanceStats = async () => {
-    if (isAttendanceExpanded) return; // Don't fetch if closing
+  const attendedCount = event.participant_att ?? 0;
+  const totalParticipantsSignedUp = event.takenSlots ?? 0;
 
-    setLoadingAttendance(true);
-    try {
-      const data = await fetchEventAttendance(event.id);
-      setAttendanceData(data || []);
-    } catch (error) {
-      console.error("Failed to load attendance for stats:", error);
-    } finally {
-      setLoadingAttendance(false);
-    }
-  };
-
-  // Derived counts (currently counting all for both, per your request)
-  const attendedCount = attendanceData.length;
-  const volunteerAttendedCount = attendanceData.length; // Same number for now
+  const volunteerAttendedCount = event.volunteer_att ?? 0;
+  const totalVolunteersSignedUp = event.volunteerTakenSlots ?? 0;
 
   useEffect(() => {
     setCurrentStatus(regStatus);
@@ -444,14 +430,10 @@ export function EventCard({
           </View>
 
           {/* 2. Attendance Management Collapsible */}
-          {/* ATTENDANCE SECTION (Green Theme) */}
           <View style={[styles.collapsibleContainer, styles.attendanceBorder]}>
             <TouchableOpacity
               style={styles.collapsibleHeader}
-              onPress={() => {
-                if (!isAttendanceExpanded) loadAttendanceStats();
-                setIsAttendanceExpanded(!isAttendanceExpanded);
-              }}
+              onPress={() => setIsAttendanceExpanded(!isAttendanceExpanded)}
             >
               <View style={styles.headerLeft}>
                 <Ionicons
@@ -472,52 +454,41 @@ export function EventCard({
 
             {isAttendanceExpanded && (
               <View style={styles.collapsibleContent}>
-                {loadingAttendance ? (
-                  <ActivityIndicator
-                    size="small"
-                    color="#16A34A"
-                    style={{ marginVertical: 20 }}
-                  />
-                ) : (
-                  <>
-                    <View style={styles.countsRow}>
-                      <View style={styles.countItem}>
-                        <Text
-                          style={[styles.countNumber, { color: "#16A34A" }]}
-                        >
-                          {attendedCount}
-                          <Text style={styles.countCap}>
-                            {" "}
-                            / {event.takenSlots}
-                          </Text>
-                        </Text>
-                        <Text style={styles.countLabel}>
-                          {t("events.present")}
-                        </Text>
-                      </View>
-                      <View style={styles.countDivider} />
-                      <View style={styles.countItem}>
-                        <Text
-                          style={[styles.countNumber, { color: "#16A34A" }]}
-                        >
-                          {volunteerAttendedCount}
-                          <Text style={styles.countCap}>
-                            {" "}
-                            / {event.volunteerTakenSlots}
-                          </Text>
-                        </Text>
-                        <Text style={styles.countLabel}>
-                          {t("events.volsPresent")}
-                        </Text>
-                      </View>
-                    </View>
-                  </>
-                )}
+                <View style={styles.countsRow}>
+                  {/* Participants Column */}
+                  <View style={styles.countItem}>
+                    <Text style={[styles.countNumber, { color: "#16A34A" }]}>
+                      {attendedCount}
+                      <Text style={styles.countCap}>
+                        {" "}
+                        / {totalParticipantsSignedUp}
+                      </Text>
+                    </Text>
+                    <Text style={styles.countLabel}>{t("events.present")}</Text>
+                  </View>
+
+                  <View style={styles.countDivider} />
+
+                  {/* Volunteers Column */}
+                  <View style={styles.countItem}>
+                    <Text style={[styles.countNumber, { color: "#16A34A" }]}>
+                      {volunteerAttendedCount}
+                      <Text style={styles.countCap}>
+                        {" "}
+                        / {totalVolunteersSignedUp}
+                      </Text>
+                    </Text>
+                    <Text style={styles.countLabel}>
+                      {t("events.volsPresent")}
+                    </Text>
+                  </View>
+                </View>
               </View>
             )}
           </View>
         </>
       )}
+
       {/* Event Details */}
       <View style={styles.detailsContainer}>
         <Text style={styles.detailsTitle}>{t("events.eventDetails")}</Text>
