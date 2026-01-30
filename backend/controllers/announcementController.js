@@ -43,7 +43,7 @@ const getAnnouncements = async (req, res) => {
 
 const createGlobalAnnouncement = async (req, res) => {
   try {
-    const { title, message, location } = req.body;
+    const { title, message } = req.body;
 
     const users = await User.fetchUsers();
     
@@ -56,7 +56,7 @@ const createGlobalAnnouncement = async (req, res) => {
     await AnnouncementModel.createAnnouncement(title, message, allUserIds, null);
 
     res.status(201).json({ 
-      message: `Global announcement sent to ${allUserIds.length} users.` 
+      message: `Global announcement sent to all users.` 
     });
   } catch (error) {
     console.error("❌ Controller Error:", error.message);
@@ -84,7 +84,7 @@ const createEventAnnouncement = async (req, res) => {
     const staff = (await User.fetchUsers())
       .filter(user => user.user_type == "staff")
       .map(staff => staff.id);
-    const validUserIds = [...new Set([...participants, ...staff])];;
+    const validUserIds = [...new Set([...participants, ...staff])];
 
     if (validUserIds.length === 0) {
       return res.status(200).json({ message: "No confirmed app users found for this event." });

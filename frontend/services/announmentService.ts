@@ -40,14 +40,14 @@ export const fetchAnnouncements = async (userId?: string) => {
   }
 };
 
-export const postAnnouncement = async (title: string, message: string, location?: string) => {
+export const postAnnouncement = async (title: string, message: string) => {
   try {
     const response = await fetch(`${BASE_URL}/announcements/global`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ title, message, location }),
+      body: JSON.stringify({ title, message }),
     });
 
     const result = await response.json();
