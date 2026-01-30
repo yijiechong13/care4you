@@ -48,6 +48,7 @@ export function EventCard({
   isExporting,
   regId,
   regStatus,
+  onStatusChange,
 }: EventCardProps) {
   const router = useRouter();
   const { t, i18n } = useTranslation();
@@ -60,23 +61,48 @@ export function EventCard({
   const [permission, requestPermission] = useCameraPermissions();
   const [isSignUpsExpanded, setIsSignUpsExpanded] = useState(false);
   const [isAttendanceExpanded, setIsAttendanceExpanded] = useState(false);
-  const [attendanceData, setAttendanceData] = useState<any[]>([]);
-  const [loadingAttendance, setLoadingAttendance] = useState(false);
 
-  const attendedCount = event.participant_att ?? 0;
-  const totalParticipantsSignedUp = event.takenSlots ?? 0;
+  const attendedCount = event.participantAtt || 0;
+  const totalParticipantsSignedUp = event.takenSlots || 0;
 
-  const volunteerAttendedCount = event.volunteer_att ?? 0;
-  const totalVolunteersSignedUp = event.volunteerTakenSlots ?? 0;
+  const volunteerAttendedCount = event.volunteerAtt || 0;
+  const totalVolunteersSignedUp = event.volunteerTakenSlots || 0;
+
+  useEffect(() => {
+    // Only the staff view needs real-time stats updates
+    if (!isStaff || !event.id) return;
+
+    const channel = supabase
+      .channel(`live-stats-${event.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "events", // Must match your Supabase table name exactly
+          filter: `id=eq.${event.id}`,
+        },
+        (payload) => {
+          console.log("Live attendance update detected!", payload.new);
+          // This triggers the parent's checkUserAndLoadEvents function
+          if (onStatusChange) onStatusChange();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [event.id, isStaff, onStatusChange]); // Include onStatusChange in dependencies
 
   useEffect(() => {
     setCurrentStatus(regStatus);
   }, [regStatus]);
 
   useEffect(() => {
+    // Only listen if the QR is showing and the user isn't already marked attended
     if (!showQR || !regId || regStatus === "attended") return;
 
-    // 1. Create a real-time subscription to THIS specific registration
     const subscription = supabase
       .channel(`attendance-${regId}`)
       .on(
@@ -89,12 +115,16 @@ export function EventCard({
         },
         (payload) => {
           if (payload.new.status === "attended") {
-            // 2. Immediate UI Update
+            // 1. Mark as attended locally for immediate UI feedback
             setLocalAttended(true);
-            setShowQR(false);
 
-            // 3. Close modal after success message
-            setTimeout(() => setShowQR(false), 2000);
+            // 2. REFRESH PARENT: This updates the list to show the green badge
+            if (onStatusChange) onStatusChange();
+
+            // 3. WAIT & CLOSE: Give the user 1.5 seconds to see the success checkmark
+            setTimeout(() => {
+              setShowQR(false);
+            }, 1500);
           }
         },
       )
@@ -103,7 +133,7 @@ export function EventCard({
     return () => {
       supabase.removeChannel(subscription);
     };
-  }, [showQR, regId]);
+  }, [showQR, regId, regStatus, onStatusChange]); // Added missing dependencie
 
   // Translate dynamic content
   const qaTexts = useMemo(
@@ -231,13 +261,12 @@ export function EventCard({
   };
 
   const handleBarCodeScanned = async ({ data }: { data: string }) => {
-    if (scanned) return; // Prevent double triggers
+    if (scanned) return;
     setScanned(true);
 
     try {
       const payload = JSON.parse(data);
 
-      // Validation logic
       if (payload.eID !== event.id) {
         Alert.alert("Wrong Event", "This QR code is for a different activity.");
         setScanned(false);

@@ -22,6 +22,18 @@ const User = {
       // Convert newUser.id to string to match the VARCHAR/TEXT column type
       await db.query(migrateQuery, [newUser.id.toString(), guestId.toString()]);
       console.log(`✅ Migrated registrations from ${guestId} to ${newUser.id}`);
+
+      const migrateAttQuery = `
+        UPDATE attendance 
+        SET user_id = $1 
+        WHERE user_id = $2
+      `;
+      // Convert newUser.id to string to match the VARCHAR/TEXT column type
+      await db.query(migrateAttQuery, [
+        newUser.id.toString(),
+        guestId.toString(),
+      ]);
+      console.log(`✅ Migrated attendance from ${guestId} to ${newUser.id}`);
     }
     return newUser;
   },
@@ -42,6 +54,18 @@ const User = {
         // We force user.id to string because the column is now TEXT/VARCHAR
         await db.query(migrateQuery, [user.id.toString(), guestId.toString()]);
         console.log(`✅ Migrated login guest data for user ${user.id}`);
+
+        const migrateAttQuery = `
+        UPDATE attendance 
+        SET user_id = $1 
+        WHERE user_id = $2
+      `;
+        // Convert newUser.id to string to match the VARCHAR/TEXT column type
+        await db.query(migrateAttQuery, [
+          newUser.id.toString(),
+          guestId.toString(),
+        ]);
+        console.log(`✅ Migrated attendance from ${guestId} to ${newUser.id}`);
       } catch (updateErr) {
         console.error("❌ Migration Error:", updateErr.message); // This will tell you exactly what SQL error happened
       }
