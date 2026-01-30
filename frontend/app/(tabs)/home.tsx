@@ -562,7 +562,7 @@ export default function HomeScreen() {
                               <Text style={styles.infoLabel}>
                                 {t("home.availability")}
                               </Text>
-                              {isStaff || userRole !== "volunteer" ? (
+                              {isStaff || userRole == "participant" ? (
                                 item.participantSlots ? (
                                   <Text style={styles.infoText}>
                                     {isStaff ? t("home.participant") : ""}{" "}
@@ -578,7 +578,7 @@ export default function HomeScreen() {
                               ) : null}
                               {isStaff || userRole === "volunteer" ? (
                                 item.volunteerSlots &&
-                                item.volunteerSlots > 0 ? (
+                                item.volunteerSlots ? (
                                   <Text style={styles.infoText}>
                                     {isStaff ? t("home.volunteer") : ""}{" "}
                                     {item.volunteerTakenSlots ?? 0}/
@@ -597,7 +597,8 @@ export default function HomeScreen() {
                           {/* Register Buttons */}
                           {!isStaff && (
                             <View style={styles.cardFooter}>
-                              {currTime > new Date(item.dateDisplay) ? (
+                              {currTime > new Date(item.dateDisplay) || 
+                              (userRole == "volunteer" && !item.volunteerSlots) ? (
                                 <View style={styles.registerClosedBtn}>
                                   <Text style={styles.registerClosedBtnText}>
                                     {t("home.registrationClosed")}

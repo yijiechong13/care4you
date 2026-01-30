@@ -176,20 +176,27 @@ export default function SpecificInfoScreen() {
         cleanedQuestions,
       );
 
-      const announcementMsg =
-        "We're excited to announce a new event!\n\n" +
-        "🎟️ " +
-        basicInfo.title +
-        "\n" +
-        "📅 " +
-        basicInfo.startTime.split(" ")[0] +
-        "\n" +
-        "📍 " +
-        basicInfo.location +
-        "\n\n" +
-        "Join us for a great time together! Spots are limited, so register early in the Events tab.\n\n" +
-        "See you there!";
-      await postAnnouncement("New Event: " + basicInfo.title, announcementMsg);
+      try {
+        const announcementMsg =
+          "We're excited to announce a new event!\n\n" +
+          "🎟️ " +
+          basicInfo.title +
+          "\n" +
+          "📅 " +
+          basicInfo.startTime.split(" ")[0] +
+          "\n" +
+          "📍 " +
+          basicInfo.location +
+          "\n\n" +
+          "Join us for a great time together! Spots are limited, so register early in the Events tab.\n\n" +
+          "See you there!";
+        await postAnnouncement(
+          "New Event: " + basicInfo.title,
+          announcementMsg,
+        );
+      } catch (error) {
+        Alert.alert(t("common.error"), t("createAnnouncement.failedToPost"));
+      }
 
       Alert.alert(t("common.success"), t("eventCreation.eventPublished"), [
         {

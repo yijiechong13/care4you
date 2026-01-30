@@ -96,7 +96,7 @@ const User = {
     return result.rows[0];
   },
 
-  fetchIds: async () => {
+  fetchUsers: async () => {
     console.log("🔍 Backend: Attempting to fetch users' ID from Supabase...");
 
     const { data, error } = await supabase

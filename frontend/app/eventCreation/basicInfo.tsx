@@ -95,7 +95,7 @@ export default function CreateEventScreen() {
     }
 
     const finalParticipants = noCap ? null : (participants ? parseInt(participants) : null);
-    const finalVolunteers = noNeed ? 0 : (volunteers ? parseInt(volunteers) : 0);
+    const finalVolunteers = noNeed ? null : (volunteers ? parseInt(volunteers) : null);
 
     router.push({
       pathname: '/eventCreation/specificInfo',
