@@ -276,7 +276,6 @@ const RegistrationModel = {
         specialRequirements: reg.special_requirements || "",
         responses,
         registeredAt: new Date(reg.created_at).toLocaleDateString(),
-        attendance: "", // Empty for staff to fill in
       };
     });
   },
