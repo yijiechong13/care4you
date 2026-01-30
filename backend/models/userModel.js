@@ -63,7 +63,7 @@ const User = {
       `;
         // Convert newUser.id to string to match the VARCHAR/TEXT column type
         await db.query(migrateAttQuery, [
-          newUser.id.toString(),
+          user.id.toString(),
           guestId.toString(),
         ]);
         console.log(`✅ Migrated attendance from ${guestId} to ${newUser.id}`);
@@ -100,9 +100,9 @@ const User = {
     console.log("🔍 Backend: Attempting to fetch users' ID from Supabase...");
 
     const { data, error } = await supabase
-      .from('users')
+      .from("users")
       .select("*")
-      .order('created_at', { ascending: true });
+      .order("created_at", { ascending: true });
 
     if (error) {
       console.error("❌ Backend: Supabase Error:", error.message);
