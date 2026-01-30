@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -7,14 +7,15 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
-  Alert
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
-import { publishEvent } from '@/services/eventService';
-import { postAnnouncement } from '@/services/announmentService';
-import { useTranslation } from 'react-i18next';
+  Alert,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
+import { publishEvent } from "@/services/eventService";
+import { postAnnouncement } from "@/services/announmentService";
+import { useTranslation } from "react-i18next";
+import * as FileSystem from "expo-file-system/legacy";
 
 interface EventImageUpload {
   uri: string;
@@ -24,18 +25,23 @@ interface EventImageUpload {
 export default function SpecificInfoScreen() {
   const router = useRouter();
   const { t } = useTranslation();
-  const [reminders, setReminders] = useState('');
+  const [reminders, setReminders] = useState("");
   const [images, setImages] = useState<EventImageUpload[]>([]);
   const [questions, setQuestions] = useState([
-    { id: 1, title: '', options: [''] } // Start with 1 empty question
+    { id: 1, title: "", options: [""] }, // Start with 1 empty question
   ]);
   const params = useLocalSearchParams();
-  const basicInfo = params.basicInfo ? JSON.parse(params.basicInfo as string) : {};
+  const basicInfo = params.basicInfo
+    ? JSON.parse(params.basicInfo as string)
+    : {};
 
   // 1. Image Picker - supports multiple images
   const pickImage = async () => {
     if (images.length >= 5) {
-      Alert.alert(t('eventCreation.limitReached'), t('eventCreation.limitReachedMessage'));
+      Alert.alert(
+        t("eventCreation.limitReached"),
+        t("eventCreation.limitReachedMessage"),
+      );
       return;
     }
 
@@ -48,10 +54,12 @@ export default function SpecificInfoScreen() {
     });
 
     if (!result.canceled) {
-      const newImages: EventImageUpload[] = result.assets.map((asset, index) => ({
-        uri: asset.uri,
-        isPrimary: images.length === 0 && index === 0, // First image is primary if no existing
-      }));
+      const newImages: EventImageUpload[] = result.assets.map(
+        (asset, index) => ({
+          uri: asset.uri,
+          isPrimary: images.length === 0 && index === 0, // First image is primary if no existing
+        }),
+      );
       setImages([...images, ...newImages]);
     }
   };
@@ -81,7 +89,7 @@ export default function SpecificInfoScreen() {
   // 2. Question Logic
   const addQuestion = () => {
     const newId = questions.length + 1;
-    setQuestions([...questions, { id: newId, title: '', options: [''] }]);
+    setQuestions([...questions, { id: newId, title: "", options: [""] }]);
   };
 
   const removeQuestion = (index: number) => {
@@ -99,7 +107,7 @@ export default function SpecificInfoScreen() {
   // 3. Option Logic
   const addOption = (qIndex: number) => {
     const newQuestions = [...questions];
-    newQuestions[qIndex].options.push(''); // Add empty option
+    newQuestions[qIndex].options.push(""); // Add empty option
     setQuestions(newQuestions);
   };
 
@@ -118,16 +126,36 @@ export default function SpecificInfoScreen() {
   // 4. Final Submit
   const handlePublish = async () => {
     const cleanedQuestions = questions
-    .map(q => ({
+      .map((q) => ({
         ...q,
         title: q.title.trim(),
-        options: q.options.map(opt => opt.trim())
-                            .filter(opt => opt !== "")
-    }))
-    .filter(q => q.title !== "" && q.options.length > 0);
+        options: q.options.map((opt) => opt.trim()).filter((opt) => opt !== ""),
+      }))
+      .filter((q) => q.title !== "" && q.options.length > 0);
+
+    let imagesWithBase64 = [];
+    try {
+      imagesWithBase64 = await Promise.all(
+        images.map(async (img) => {
+          const base64 = await FileSystem.readAsStringAsync(img.uri, {
+            encoding: "base64",
+          });
+          return {
+            url: img.uri,
+            isPrimary: img.isPrimary,
+            displayOrder: 0,
+            base64: base64,
+            fileType: "image/jpg",
+          };
+        }),
+      );
+    } catch (err) {
+      Alert.alert("Error", "Failed to process images.");
+      return;
+    }
 
     // Get primary image URL for backward compatibility
-    const primaryImage = images.find(img => img.isPrimary) || images[0];
+    const primaryImage = images.find((img) => img.isPrimary) || images[0];
 
     console.log("--- Event Data ---");
     console.log("Reminders:", reminders);
@@ -135,67 +163,86 @@ export default function SpecificInfoScreen() {
     console.log("MCQ Questions:", JSON.stringify(cleanedQuestions, null, 2));
 
     try {
-        await publishEvent(
-            {
-                ...basicInfo,
-                reminders,
-                imageUrl: primaryImage?.uri || null,
-                // Pass all images for future multi-image support
-                images: images.map((img, index) => ({
-                  uri: img.uri,
-                  isPrimary: img.isPrimary,
-                  displayOrder: index,
-                }))
-            },
-            cleanedQuestions
-        );
+      await publishEvent(
+        {
+          ...basicInfo,
+          reminders,
+          imageUrl: primaryImage?.uri || null,
+          // Send our new array that includes the Base64 data
+          images: imagesWithBase64.map((img, index) => ({
+            ...img,
+            displayOrder: index,
+          })),
+        },
+        cleanedQuestions,
+      );
 
-        try {
-          const announcementMsg = "We're excited to announce a new event!\n\n" +
-          "🎟️ " + basicInfo.title + "\n" +
-          "📅 " + basicInfo.startTime.split(" ")[0] + "\n" +
-          "📍 " + basicInfo.location + "\n\n" +
+      try {
+        const announcementMsg =
+          "We're excited to announce a new event!\n\n" +
+          "🎟️ " +
+          basicInfo.title +
+          "\n" +
+          "📅 " +
+          basicInfo.startTime.split(" ")[0] +
+          "\n" +
+          "📍 " +
+          basicInfo.location +
+          "\n\n" +
           "Join us for a great time together! Spots are limited, so register early in the Events tab.\n\n" +
           "See you there!";
-          await postAnnouncement(
-            "New Event: " + basicInfo.title,
-            announcementMsg
-          );
-        } catch (error) {
-          Alert.alert(t('common.error'), t('createAnnouncement.failedToPost'));
-        }
+        await postAnnouncement(
+          "New Event: " + basicInfo.title,
+          announcementMsg,
+        );
+      } catch (error) {
+        Alert.alert(t("common.error"), t("createAnnouncement.failedToPost"));
+      }
 
-        Alert.alert(t('common.success'), t('eventCreation.eventPublished'), [
-            { text: t('common.ok'), onPress: () => router.navigate('/(tabs)/events') }
-        ]);
+      Alert.alert(t("common.success"), t("eventCreation.eventPublished"), [
+        {
+          text: t("common.ok"),
+          onPress: () => router.navigate("/(tabs)/events"),
+        },
+      ]);
     } catch (error) {
-        Alert.alert(t('common.error'), t('eventCreation.failedToPublish'));
+      Alert.alert(t("common.error"), t("eventCreation.failedToPublish"));
     }
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 50 }}>
-      
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: 50 }}
+    >
       {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
           <Ionicons name="arrow-back" size={24} color="#002C5E" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('eventCreation.additionalDetails')}</Text>
-        <Text style={styles.headerSubtitle}>{t('eventCreation.customizeForm')}</Text>
+        <Text style={styles.headerTitle}>
+          {t("eventCreation.additionalDetails")}
+        </Text>
+        <Text style={styles.headerSubtitle}>
+          {t("eventCreation.customizeForm")}
+        </Text>
       </View>
       <View style={styles.divider} />
 
       <View style={styles.formContainer}>
-
         {/* SECTION 1 */}
-        <Text style={styles.sectionHeader}>{t('eventCreation.eventInfo')}</Text>
+        <Text style={styles.sectionHeader}>{t("eventCreation.eventInfo")}</Text>
 
         {/* Reminders */}
-        <Text style={styles.label}>{t('eventCreation.importantReminders')}</Text>
+        <Text style={styles.label}>
+          {t("eventCreation.importantReminders")}
+        </Text>
         <TextInput
           style={[styles.input, styles.textArea]}
-          placeholder={t('eventCreation.remindersPlaceholder')}
+          placeholder={t("eventCreation.remindersPlaceholder")}
           multiline={true}
           numberOfLines={4}
           textAlignVertical="top"
@@ -204,12 +251,19 @@ export default function SpecificInfoScreen() {
         />
 
         {/* Photo Upload - Multiple Images */}
-        <Text style={styles.label}>{t('eventCreation.eventPhotos')}</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imagesScrollView}>
+        <Text style={styles.label}>{t("eventCreation.eventPhotos")}</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.imagesScrollView}
+        >
           <View style={styles.imagesRow}>
             {images.map((img, index) => (
               <View key={index} style={styles.imageWrapper}>
-                <Image source={{ uri: img.uri }} style={styles.uploadedImageThumb} />
+                <Image
+                  source={{ uri: img.uri }}
+                  style={styles.uploadedImageThumb}
+                />
                 <TouchableOpacity
                   style={styles.removeImageBtn}
                   onPress={() => removeImage(index)}
@@ -217,11 +271,21 @@ export default function SpecificInfoScreen() {
                   <Ionicons name="close-circle" size={24} color="#EF4444" />
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.primaryBadge, img.isPrimary && styles.primaryBadgeActive]}
+                  style={[
+                    styles.primaryBadge,
+                    img.isPrimary && styles.primaryBadgeActive,
+                  ]}
                   onPress={() => setPrimaryImage(index)}
                 >
-                  <Text style={[styles.primaryBadgeText, img.isPrimary && styles.primaryBadgeTextActive]}>
-                    {img.isPrimary ? `★ ${t('eventCreation.primary')}` : t('eventCreation.setPrimary')}
+                  <Text
+                    style={[
+                      styles.primaryBadgeText,
+                      img.isPrimary && styles.primaryBadgeTextActive,
+                    ]}
+                  >
+                    {img.isPrimary
+                      ? `★ ${t("eventCreation.primary")}`
+                      : t("eventCreation.setPrimary")}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -229,37 +293,39 @@ export default function SpecificInfoScreen() {
             {images.length < 5 && (
               <TouchableOpacity style={styles.addImageBtn} onPress={pickImage}>
                 <Ionicons name="add" size={32} color="#666" />
-                <Text style={styles.addImageText}>{t('eventCreation.addPhoto')}</Text>
+                <Text style={styles.addImageText}>
+                  {t("eventCreation.addPhoto")}
+                </Text>
               </TouchableOpacity>
             )}
           </View>
         </ScrollView>
 
-
         {/* SECTION 2: MCQ BUILDER */}
         <View style={styles.mcqHeaderContainer}>
-            <Text style={styles.sectionHeader}>{t('eventCreation.registrationQuestions')}</Text>
+          <Text style={styles.sectionHeader}>
+            {t("eventCreation.registrationQuestions")}
+          </Text>
         </View>
 
         {questions.map((q, qIndex) => (
           <View key={q.id} style={styles.questionCard}>
-            
             {/* Question Title Header */}
             <View style={styles.questionHeader}>
-                <Text style={styles.questionLabel}>
-                  {t('eventCreation.question')} {qIndex + 1}
-                </Text>
-                {questions.length > 1 && (
-                    <TouchableOpacity onPress={() => removeQuestion(qIndex)}>
-                        <Ionicons name="trash-outline" size={20} color="#EF4444" />
-                    </TouchableOpacity>
-                )}
+              <Text style={styles.questionLabel}>
+                {t("eventCreation.question")} {qIndex + 1}
+              </Text>
+              {questions.length > 1 && (
+                <TouchableOpacity onPress={() => removeQuestion(qIndex)}>
+                  <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                </TouchableOpacity>
+              )}
             </View>
 
             {/* Question Input */}
             <TextInput
               style={styles.input}
-              placeholder={t('eventCreation.questionPlaceholder')}
+              placeholder={t("eventCreation.questionPlaceholder")}
               value={q.title}
               onChangeText={(text) => updateQuestionTitle(text, qIndex)}
             />
@@ -270,12 +336,14 @@ export default function SpecificInfoScreen() {
                 <Ionicons name="radio-button-off" size={20} color="#9CA3AF" />
                 <TextInput
                   style={styles.optionInput}
-                  placeholder={`${t('eventCreation.option')} ${oIndex + 1}`}
+                  placeholder={`${t("eventCreation.option")} ${oIndex + 1}`}
                   value={option}
                   onChangeText={(text) => updateOption(text, qIndex, oIndex)}
                 />
                 {q.options.length > 1 && (
-                  <TouchableOpacity onPress={() => removeOption(qIndex, oIndex)}>
+                  <TouchableOpacity
+                    onPress={() => removeOption(qIndex, oIndex)}
+                  >
                     <Ionicons name="close-circle" size={20} color="#9CA3AF" />
                   </TouchableOpacity>
                 )}
@@ -283,23 +351,31 @@ export default function SpecificInfoScreen() {
             ))}
 
             {/* Add Option Button */}
-            <TouchableOpacity style={styles.addOptionBtn} onPress={() => addOption(qIndex)}>
-              <Text style={styles.addOptionText}>{t('eventCreation.addOption')}</Text>
+            <TouchableOpacity
+              style={styles.addOptionBtn}
+              onPress={() => addOption(qIndex)}
+            >
+              <Text style={styles.addOptionText}>
+                {t("eventCreation.addOption")}
+              </Text>
             </TouchableOpacity>
           </View>
         ))}
 
         {/* Add Question Button */}
         <TouchableOpacity style={styles.addQuestionBtn} onPress={addQuestion}>
-            <Ionicons name="add-circle-outline" size={20} color="#002C5E" />
-            <Text style={styles.addQuestionText}>{t('eventCreation.addAnotherQuestion')}</Text>
+          <Ionicons name="add-circle-outline" size={20} color="#002C5E" />
+          <Text style={styles.addQuestionText}>
+            {t("eventCreation.addAnotherQuestion")}
+          </Text>
         </TouchableOpacity>
 
         {/* PUBLISH BUTTON */}
         <TouchableOpacity style={styles.publishBtn} onPress={handlePublish}>
-          <Text style={styles.publishBtnText}>{t('eventCreation.publishEvent')}</Text>
+          <Text style={styles.publishBtnText}>
+            {t("eventCreation.publishEvent")}
+          </Text>
         </TouchableOpacity>
-
       </View>
     </ScrollView>
   );
@@ -308,7 +384,7 @@ export default function SpecificInfoScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     paddingTop: 60,
   },
   header: {
@@ -320,17 +396,17 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#002C5E',
+    fontWeight: "bold",
+    color: "#002C5E",
     marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
   },
   divider: {
     height: 1,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: "#E5E7EB",
     marginVertical: 15,
   },
   formContainer: {
@@ -338,27 +414,27 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     fontSize: 12,
-    fontWeight: 'bold',
-    color: '#9CA3AF',
+    fontWeight: "bold",
+    color: "#9CA3AF",
     marginBottom: 15,
     marginTop: 10,
     letterSpacing: 1,
   },
   label: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#111827',
+    fontWeight: "700",
+    color: "#111827",
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: "#D1D5DB",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
-    color: '#1F2937',
-    backgroundColor: '#fff',
+    color: "#1F2937",
+    backgroundColor: "#fff",
     marginBottom: 20,
   },
   textArea: {
@@ -368,38 +444,38 @@ const styles = StyleSheet.create({
   uploadBox: {
     height: 150,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderStyle: 'dashed',
+    borderColor: "#D1D5DB",
+    borderStyle: "dashed",
     borderRadius: 8,
-    backgroundColor: '#F9FAFB',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#F9FAFB",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 30,
-    overflow: 'hidden'
+    overflow: "hidden",
   },
   uploadPlaceholder: {
-    alignItems: 'center',
-    gap: 8
+    alignItems: "center",
+    gap: 8,
   },
   uploadText: {
-    color: '#6B7280',
-    fontSize: 14
+    color: "#6B7280",
+    fontSize: 14,
   },
   uploadedImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover'
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
   imagesScrollView: {
     marginBottom: 30,
   },
   imagesRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
     paddingVertical: 8,
   },
   imageWrapper: {
-    position: 'relative',
+    position: "relative",
     width: 120,
     height: 140,
   },
@@ -407,13 +483,13 @@ const styles = StyleSheet.create({
     width: 120,
     height: 90,
     borderRadius: 8,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: "#F3F4F6",
   },
   removeImageBtn: {
-    position: 'absolute',
+    position: "absolute",
     top: -8,
     right: -8,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
   },
   primaryBadge: {
@@ -421,113 +497,113 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: 4,
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
+    backgroundColor: "#F3F4F6",
+    alignItems: "center",
   },
   primaryBadgeActive: {
-    backgroundColor: '#002C5E',
+    backgroundColor: "#002C5E",
   },
   primaryBadgeText: {
     fontSize: 10,
-    fontWeight: '600',
-    color: '#6B7280',
+    fontWeight: "600",
+    color: "#6B7280",
   },
   primaryBadgeTextActive: {
-    color: '#fff',
+    color: "#fff",
   },
   addImageBtn: {
     width: 120,
     height: 90,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderStyle: 'dashed',
+    borderColor: "#D1D5DB",
+    borderStyle: "dashed",
     borderRadius: 8,
-    backgroundColor: '#F9FAFB',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#F9FAFB",
+    justifyContent: "center",
+    alignItems: "center",
   },
   addImageText: {
-    color: '#6B7280',
+    color: "#6B7280",
     fontSize: 12,
     marginTop: 4,
   },
 
   // MCQ STYLES
   mcqHeaderContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   questionCard: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: "#F3F4F6",
     borderRadius: 12,
     padding: 15,
     marginBottom: 20,
   },
   questionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
   },
   questionLabel: {
     fontSize: 12,
-    fontWeight: 'bold',
-    color: '#6B7280'
+    fontWeight: "bold",
+    color: "#6B7280",
   },
   optionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 10,
-    gap: 10
+    gap: 10,
   },
   optionInput: {
     flex: 1,
     borderBottomWidth: 1,
-    borderBottomColor: '#D1D5DB',
+    borderBottomColor: "#D1D5DB",
     paddingVertical: 4,
     fontSize: 14,
-    color: '#374151'
+    color: "#374151",
   },
   addOptionBtn: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     marginTop: 5,
     paddingVertical: 5,
   },
   addOptionText: {
     fontSize: 14,
-    color: '#002C5E',
-    fontWeight: '600'
+    color: "#002C5E",
+    fontWeight: "600",
   },
 
   // BOTTOM BUTTONS
   addQuestionBtn: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 15,
     borderWidth: 1,
-    borderColor: '#002C5E',
+    borderColor: "#002C5E",
     borderRadius: 8,
-    borderStyle: 'dashed',
+    borderStyle: "dashed",
     gap: 8,
-    marginBottom: 10
+    marginBottom: 10,
   },
   addQuestionText: {
-    color: '#002C5E',
-    fontWeight: 'bold',
-    fontSize: 14
+    color: "#002C5E",
+    fontWeight: "bold",
+    fontSize: 14,
   },
   publishBtn: {
-    backgroundColor: '#002C5E',
+    backgroundColor: "#002C5E",
     paddingVertical: 15,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 20,
     marginBottom: 40,
   },
   publishBtnText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
