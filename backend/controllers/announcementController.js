@@ -45,7 +45,7 @@ const createGlobalAnnouncement = async (req, res) => {
   try {
     const { title, message, location } = req.body;
 
-    const { data: users, error } = await User.fetchIds();
+    const users = await User.fetchIds();
     
     if (error) throw error;
     if (!users || users.length === 0) {
