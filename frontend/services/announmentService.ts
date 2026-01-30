@@ -1,7 +1,7 @@
 import { getCurrentLanguage } from "@/lib/i18n";
 
-// const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
-const BASE_URL = "http://localhost:8080/api";
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+// const BASE_URL = "http://localhost:8080/api";
 
 export const fetchAnnouncements = async (userId?: string) => {
   try {
