@@ -1,7 +1,24 @@
 const { supabase } = require('../config/supabase');
 
 const AnnouncementModel = {
-  findAnnouncement: async (userId) => {
+  findGlobalAnnouncement: async () => {
+    const { data, error } = await supabase
+      .from('announcements')
+      .select("*")
+      .eq('related_event_id', null)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw new Error(error.message);
+
+    return data.map(item => ({
+      id: item.id,
+      title: item.title,
+      message: item.message,
+      createdAt: item.created_at,
+    }));
+  },
+
+  findAnnouncementByRecipient: async (userId) => {
     const { data, error } = await supabase
       .from('announcements')
       .select(`
