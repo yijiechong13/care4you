@@ -1,9 +1,11 @@
 import {
   Dimensions,
   FlatList,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -26,11 +28,11 @@ import { useTranslatedContent } from "@/hooks/useTranslatedContent";
 
 const { width, height } = Dimensions.get("window");
 const EVENT_TYPE_ICONS: Record<string, any> = {
-  'Activities at MTC Office': require('@/assets/images/office.png'),
-  'Outings': require('@/assets/images/outing.png'),
-  'Nature Walks': require('@/assets/images/walk.png'),
-  'Gym and Dance': require('@/assets/images/gym.png'),
-  'Reading': require('@/assets/images/read.png'),
+  "Activities at MTC Office": require("@/assets/images/office.png"),
+  Outings: require("@/assets/images/outing.png"),
+  "Nature Walks": require("@/assets/images/walk.png"),
+  "Gym and Dance": require("@/assets/images/gym.png"),
+  Reading: require("@/assets/images/read.png"),
 };
 
 export default function HomeScreen() {
@@ -46,14 +48,14 @@ export default function HomeScreen() {
   const [selectedDay, setSelectedDay] = useState<string>(formatDate(currTime));
   const [events, setEvents] = useState<any[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<any[]>([]);
-  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
+  const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
   const [loading, setLoading] = useState(false);
   const [galleryVisible, setGalleryVisible] = useState(false);
   const [selectedEventImages, setSelectedEventImages] = useState<EventImage[]>(
     [],
   );
   // Translate dynamic content (titles only, location kept in English)
-  const eventTitles = useMemo(() => events.map(e => e.title || ''), [events]);
+  const eventTitles = useMemo(() => events.map((e) => e.title || ""), [events]);
   const translatedTitles = useTranslatedContent(eventTitles);
   const translatedMap = useMemo(() => {
     const map = new Map<string, { title: string }>();
@@ -66,6 +68,11 @@ export default function HomeScreen() {
   const EVENT_CARD_WIDTH = width * 0.85;
   const SPACING = 0.15;
   const SNAP_INTERVAL = EVENT_CARD_WIDTH + SPACING;
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
+  const [isWheelchairOnly, setIsWheelchairOnly] = useState(false);
+  const hasActiveFilters = isWheelchairOnly;
 
   const handleCreateEvent = () => {
     router.push("../eventCreation/basicInfo");
@@ -222,57 +229,61 @@ export default function HomeScreen() {
 
     return events
       .filter((event) => {
-        if (event.eventStatus === 'cancelled') return false;
-
+        // 1. Existing Time/Status Filters
+        if (event.eventStatus === "cancelled") return false;
         const eventDate = new Date(event.date);
         const eventDateOnly = new Date(eventDate);
         eventDateOnly.setHours(0, 0, 0, 0);
 
-        // Future dates: always show
-        if (eventDateOnly > today) return true;
-
-        // Past dates: hide
         if (eventDateOnly < today) return false;
-
-        // Today: check if end time has passed
-        // Parse endTime (format: "HH:MM" or "H:MM AM/PM")
-        const endTimeParts = event.endTime.match(/(\d+):(\d+)\s*(AM|PM)?/i);
-        if (!endTimeParts) return true; // Can't parse, show it
-
-        let hours = parseInt(endTimeParts[1], 10);
-        const minutes = parseInt(endTimeParts[2], 10);
-        const ampm = endTimeParts[3];
-
-        if (ampm) {
-          if (ampm.toUpperCase() === 'PM' && hours !== 12) hours += 12;
-          if (ampm.toUpperCase() === 'AM' && hours === 12) hours = 0;
+        if (eventDateOnly.getTime() === today.getTime()) {
+          const endTimeParts = event.endTime.match(/(\d+):(\d+)\s*(AM|PM)?/i);
+          if (endTimeParts) {
+            let hours = parseInt(endTimeParts[1], 10);
+            const minutes = parseInt(endTimeParts[2], 10);
+            const ampm = endTimeParts[3];
+            if (ampm) {
+              if (ampm.toUpperCase() === "PM" && hours !== 12) hours += 12;
+              if (ampm.toUpperCase() === "AM" && hours === 12) hours = 0;
+            }
+            const eventEndTime = new Date(eventDate);
+            eventEndTime.setHours(hours, minutes, 0, 0);
+            if (eventEndTime <= now) return false;
+          }
         }
 
-        const eventEndTime = new Date(eventDate);
-        eventEndTime.setHours(hours, minutes, 0, 0);
+        // 2. Search Logic
+        const translatedTitle =
+          translatedMap.get(event.id)?.title || event.title;
+        const matchesSearch =
+          translatedTitle?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          event.location?.toLowerCase().includes(searchQuery.toLowerCase());
 
-        return eventEndTime > now;
+        if (!matchesSearch) return false;
+
+        // 3. Accessibility Filter
+        if (isWheelchairOnly && !event.wheelchairAccessible) return false;
+
+        return true;
       })
       .sort((a, b) => {
-        const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
+        // ... existing sort logic
+        const dateDiff =
+          new Date(a.date).getTime() - new Date(b.date).getTime();
         if (dateDiff !== 0) return dateDiff;
-
-        // Same date: sort by startTime
         const parseTime = (t: string) => {
           const parts = t.match(/(\d+):(\d+)\s*(AM|PM)?/i);
           if (!parts) return 0;
           let h = parseInt(parts[1], 10);
           const m = parseInt(parts[2], 10);
           const ap = parts[3];
-          if (ap) {
-            if (ap.toUpperCase() === 'PM' && h !== 12) h += 12;
-            if (ap.toUpperCase() === 'AM' && h === 12) h = 0;
-          }
+          if (ap && ap.toUpperCase() === "PM" && h !== 12) h += 12;
+          if (ap && ap.toUpperCase() === "AM" && h === 12) h = 0;
           return h * 60 + m;
         };
         return parseTime(a.startTime) - parseTime(b.startTime);
       });
-  }, [events]);
+  }, [events, searchQuery, isWheelchairOnly, translatedMap]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -280,490 +291,677 @@ export default function HomeScreen() {
         <ThemedView style={styles.headerColour}>
           <View style={styles.headerTopRow}>
             <Text style={styles.helloText}>
-              {t('home.hello', { name: user ? user.name : t('common.guest') })}
+              {t("home.hello", { name: user ? user.name : t("common.guest") })}
             </Text>
             <View style={styles.headerToggle}>
               <TouchableOpacity
-                style={[styles.headerToggleBtn, viewMode === 'calendar' && styles.headerToggleBtnActive]}
-                onPress={() => setViewMode('calendar')}
+                style={[
+                  styles.headerToggleBtn,
+                  viewMode === "calendar" && styles.headerToggleBtnActive,
+                ]}
+                onPress={() => setViewMode("calendar")}
               >
                 <Ionicons
                   name="calendar-outline"
                   size={18}
-                  color={viewMode === 'calendar' ? '#002C5E' : '#fff'}
+                  color={viewMode === "calendar" ? "#002C5E" : "#fff"}
                 />
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.headerToggleBtn, viewMode === 'list' && styles.headerToggleBtnActive]}
-                onPress={() => setViewMode('list')}
+                style={[
+                  styles.headerToggleBtn,
+                  viewMode === "list" && styles.headerToggleBtnActive,
+                ]}
+                onPress={() => setViewMode("list")}
               >
                 <Ionicons
                   name="list-outline"
                   size={18}
-                  color={viewMode === 'list' ? '#002C5E' : '#fff'}
+                  color={viewMode === "list" ? "#002C5E" : "#fff"}
                 />
               </TouchableOpacity>
             </View>
           </View>
         </ThemedView>
         <ScrollView style={styles.body} contentContainerStyle={{ flexGrow: 1 }}>
-          {viewMode === 'calendar' && (
-          <View style={styles.calendarWrapper}>
-            <Calendar
-              markingType="custom"
-              onDayPress={(day) => {
-                setSelectedDay(day.dateString);
-              }}
-              markedDates={markedDates}
-              enableSwipeMonths={true}
-              style={{ borderRadius: 10 }}
-              theme={{
-                backgroundColor: "#000000",
-                calendarBackground: "#ffffff",
-                textSectionTitleColor: "#b6c1cd",
-                selectedDayBackgroundColor: themeColour,
-                selectedDayTextColor: "#ffffff",
-                todayTextColor: "#6558f0",
-                dayTextColor: "black",
-                textDisabledColor: "lightgray",
-                arrowColor: themeColour,
-                textMonthFontSize: 18,
-                textMonthFontWeight: "bold",
-                textDayHeaderFontSize: 12,
-                textDayHeaderFontWeight: "600",
-                textDayFontSize: 14,
-                textDayFontWeight: "500",
-                arrowWidth: 30,
-                dotColor: themeColour,
-                selectedDotColor: "white",
-                // @ts-ignore
-                "stylesheet.calendar.header": {
-                  header: {
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    borderBottomWidth: 1,
-                    borderBottomColor: "#adafb3",
-                    paddingBottom: 4,
-                    marginBottom: 4,
-                    marginHorizontal: 10,
-                  },
-                },
-                "stylesheet.day.basic": {
-                  base: {
-                    width: 28,
-                    height: 28,
-                    alignItems: "center",
-                    justifyContent: "center",
-                  },
-                },
-              }}
-            />
-          </View>
-          )}
-
-          {viewMode === 'calendar' && <View style={styles.line} />}
-
-          <View style={styles.bottomContainer}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>{t('home.events')}</Text>
-
-              {isStaff ? (
-                <View style={styles.staffButton}>
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{t('home.staff')}</Text>
+          <View style={styles.bodyTopPadding}>
+            {viewMode === "list" && (
+              <View style={styles.searchContainer}>
+                <View style={styles.searchBarRow}>
+                  <View style={styles.searchBar}>
+                    <Ionicons
+                      name="search"
+                      size={18}
+                      color="#9CA3AF"
+                      style={styles.searchIcon}
+                    />
+                    <TextInput
+                      style={styles.searchInput}
+                      placeholder={
+                        t("events.searchPlaceholder") || "Search events..."
+                      }
+                      value={searchQuery}
+                      onChangeText={setSearchQuery}
+                      placeholderTextColor="#9CA3AF"
+                    />
                   </View>
                   <TouchableOpacity
-                    style={styles.createBtn}
-                    onPress={handleCreateEvent}
+                    style={[
+                      styles.filterIconButton,
+                      hasActiveFilters && styles.filterIconButtonActive,
+                    ]}
+                    onPress={() => setIsFilterModalVisible(true)}
                   >
-                    <Text style={styles.createBtnText}>{t('home.create')}</Text>
+                    <Ionicons
+                      name={hasActiveFilters ? "filter" : "filter-outline"}
+                      size={22}
+                      color={hasActiveFilters ? "#fff" : "#002C5E"}
+                    />
                   </TouchableOpacity>
                 </View>
-              ) : null}
-            </View>
-
-            {/* Calendar View - shows events for selected day */}
-            {viewMode === 'calendar' && (
-              filteredEvents.length === 0 ? (
-                <View style={styles.noEventSection}>
-                  <Text style={styles.noEventText}>
-                    {t('home.noEvents')}
-                  </Text>
-                </View>
-              ) : (
-                <FlatList
-                  data={filteredEvents}
-                  horizontal={true}
-                  showsHorizontalScrollIndicator={true}
-                  snapToInterval={SNAP_INTERVAL}
-                  decelerationRate="fast"
-                  pagingEnabled={false}
-                  disableIntervalMomentum={true}
-                  contentContainerStyle={{
-                    paddingHorizontal: 20,
-                    paddingBottom: 30,
+              </View>
+            )}
+            {viewMode === "calendar" && (
+              <View style={styles.calendarWrapper}>
+                <Calendar
+                  markingType="custom"
+                  onDayPress={(day) => {
+                    setSelectedDay(day.dateString);
                   }}
-                  ItemSeparatorComponent={() => (
-                    <View style={{ width: SPACING }} />
-                  )}
-                  keyExtractor={(item) => item.id}
-                  renderItem={({ item }) => (
-                  <View style={styles.cardWrapperHorizontal}>
-                    {/* Blue Line */}
-                    <View style={styles.blueLine} />
-
-                    <View style={styles.cardContent}>
-                      <View style={styles.headerRow}>
-                        <View style={styles.headerTextStack}>
-                          <Text style={styles.cardDateTime}>
-                            {item.dateDisplay} • {item.startTime} - {item.endTime}
-                          </Text>
-                          <View style={{ flexDirection: "row", alignItems: "center" }}>
-                            <Text style={styles.cardTitle}>{translatedMap.get(item.id)?.title ?? item.title}</Text>
-                            {item.wheelchairAccessible && (
-                              <Fontisto name="wheelchair" size={18} style={{ marginLeft: 6 }} />
-                            )}
-                          </View>
-                        </View>
-                        <Image
-                          source={EVENT_TYPE_ICONS[item.tag]}
-                          style={styles.typeIcon}
-                          resizeMode="contain"
-                        />
-                      </View>
-
-                      {/* Event Thumbnail */}
-                      {(item.imageUrl ||
-                        (item.images && item.images.length > 0)) && (
-                        <TouchableOpacity
-                          style={styles.thumbnailContainer}
-                          onPress={() => handleImagePress(item)}
-                          accessibilityLabel={`View ${item.title} photos`}
-                          accessibilityRole="button"
-                        >
-                          <Image
-                            source={{
-                              uri: item.images?.[0]?.url || item.imageUrl,
-                            }}
-                            style={styles.thumbnail}
-                            contentFit="cover"
-                            transition={200}
-                          />
-                          {item.images && item.images.length > 1 && (
-                            <View style={styles.imageCountBadge}>
-                              <Ionicons name="images" size={14} color="#fff" />
-                              <Text style={styles.imageCountText}>
-                                {item.images.length}
-                              </Text>
-                            </View>
-                          )}
-                        </TouchableOpacity>
-                      )}
-
-                      {/* Location */}
-                      <View style={styles.infoBox}>
-                        <Ionicons
-                          name="location-sharp"
-                          size={20}
-                          color="#002C5E"
-                          style={styles.infoIcon}
-                        />
-                        <View>
-                          <Text style={styles.infoLabel}>{t('home.location')}</Text>
-                          <Text style={styles.infoText}>{item.location}</Text>
-                        </View>
-                      </View>
-
-                      {/* Availability */}
-                      <View style={styles.infoBox}>
-                        <Ionicons
-                          name="people"
-                          size={20}
-                          color="#002C5E"
-                          style={styles.infoIcon}
-                        />
-                        <View>
-                          <Text style={styles.infoLabel}>{t('home.availability')}</Text>
-                          {isStaff || userRole !== "volunteer" ? (
-                            item.participantSlots ? (
-                              <Text style={styles.infoText}>
-                                {isStaff ? t('home.participant') : ""}{" "}
-                                {item.takenSlots ?? 0}/{item.participantSlots}
-                              </Text>
-                            ) : (
-                              <Text style={styles.infoText}>
-                                {isStaff ? t('home.participant') : ""} {t('home.noCap')}
-                              </Text>
-                            )
-                          ) : null}
-                          {isStaff || userRole === "volunteer" ? (
-                            item.volunteerSlots && item.volunteerSlots > 0 ? (
-                              <Text style={styles.infoText}>
-                                {isStaff ? t('home.volunteer') : ""}{" "}
-                                {item.volunteerTakenSlots ?? 0}/
-                                {item.volunteerSlots}
-                              </Text>
-                            ) : (
-                              <Text style={styles.infoText}>
-                                {isStaff ? t('home.volunteer') : ""} {t('home.notNeeded')}
-                              </Text>
-                            )
-                          ) : null}
-                        </View>
-                      </View>
-
-                      {/* Register Buttons */}
-                      {!isStaff && (
-                        <View style={styles.cardFooter}>
-                          {currTime > new Date(item.dateDisplay) ? (
-                            <View style={styles.registerClosedBtn}>
-                              <Text style={styles.registerClosedBtnText}>
-                                {t('home.registrationClosed')}
-                              </Text>
-                            </View>
-                          ) : item.eventStatus == "cancelled" ? (
-                            <View style={styles.registerCancelBtn}>
-                              <Text style={styles.registerCancelBtnText}>
-                                {t('home.cancelled')}
-                              </Text>
-                            </View>
-                          ) : (
-                            <TouchableOpacity
-                              style={styles.registerBtn}
-                              onPress={() => handleRegister(item)}
-                            >
-                              {(userRole == "volunteer" && item.volunteerSlots <= item.volunteerTakenSlots) ||
-                                ((userRole == "participant" || isGuest) &&
-                                item.participantSlots &&
-                                item.participantSlots <= item.takenSlots) ? (
-                                  <Text style={styles.registerBtnText}>
-                                    {t('home.joinWaitlist')}
-                                  </Text>
-                                ) : (
-                                  <Text style={styles.registerBtnText}>
-                                    {t('home.registerNow')}
-                                  </Text>
-                                )}
-                            </TouchableOpacity>
-                          )}
-                        </View>
-                      )}
-                    </View>
-                  </View>
-                )}
-              />
-              )
+                  markedDates={markedDates}
+                  enableSwipeMonths={true}
+                  style={{ borderRadius: 10 }}
+                  theme={{
+                    backgroundColor: "#000000",
+                    calendarBackground: "#ffffff",
+                    textSectionTitleColor: "#b6c1cd",
+                    selectedDayBackgroundColor: themeColour,
+                    selectedDayTextColor: "#ffffff",
+                    todayTextColor: "#6558f0",
+                    dayTextColor: "black",
+                    textDisabledColor: "lightgray",
+                    arrowColor: themeColour,
+                    textMonthFontSize: 18,
+                    textMonthFontWeight: "bold",
+                    textDayHeaderFontSize: 12,
+                    textDayHeaderFontWeight: "600",
+                    textDayFontSize: 14,
+                    textDayFontWeight: "500",
+                    arrowWidth: 30,
+                    dotColor: themeColour,
+                    selectedDotColor: "white",
+                    // @ts-ignore
+                    "stylesheet.calendar.header": {
+                      header: {
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        borderBottomWidth: 1,
+                        borderBottomColor: "#adafb3",
+                        paddingBottom: 4,
+                        marginBottom: 4,
+                        marginHorizontal: 10,
+                      },
+                    },
+                    "stylesheet.day.basic": {
+                      base: {
+                        width: 28,
+                        height: 28,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      },
+                    },
+                  }}
+                />
+              </View>
             )}
 
-            {/* List View - shows all upcoming events grouped by date */}
-            {viewMode === 'list' && (
-              upcomingEvents.length === 0 ? (
-                <View style={styles.noEventSection}>
-                  <Text style={styles.noEventText}>
-                    {t('home.noUpcomingEvents')}
-                  </Text>
-                </View>
-              ) : (
-                <ScrollView
-                  style={styles.listViewContainer}
-                  contentContainerStyle={styles.listViewContent}
-                  showsVerticalScrollIndicator={true}
-                  nestedScrollEnabled={true}
-                >
-                  {(() => {
-                    let lastDateKey = '';
-                    return upcomingEvents.map((item) => {
-                      const dateKey = formatDate(new Date(item.date));
-                      const showHeader = dateKey !== lastDateKey;
-                      lastDateKey = dateKey;
+            {viewMode === "calendar" && <View style={styles.line} />}
 
-                      const dateObj = new Date(item.date);
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      const tomorrow = new Date(today);
-                      tomorrow.setDate(tomorrow.getDate() + 1);
-                      const eventDateOnly = new Date(dateObj);
-                      eventDateOnly.setHours(0, 0, 0, 0);
+            <View style={styles.bottomContainer}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>{t("home.events")}</Text>
 
-                      let dateLabel = '';
-                      if (eventDateOnly.getTime() === today.getTime()) {
-                        dateLabel = t('home.today');
-                      } else if (eventDateOnly.getTime() === tomorrow.getTime()) {
-                        dateLabel = t('home.tomorrow');
-                      } else {
-                        const day = dateObj.getDate();
-                        const month = dateObj.toLocaleDateString('en-US', { month: 'short' });
-                        const weekday = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
-                        dateLabel = `${weekday}, ${day} ${month}`;
-                      }
+                {isStaff ? (
+                  <View style={styles.staffButton}>
+                    <View style={styles.badge}>
+                      <Text style={styles.badgeText}>{t("home.staff")}</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.createBtn}
+                      onPress={handleCreateEvent}
+                    >
+                      <Text style={styles.createBtnText}>
+                        {t("home.create")}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : null}
+              </View>
 
-                      return (
-                        <React.Fragment key={item.id}>
-                          {showHeader && (
-                            <View style={styles.dateHeader}>
-                              <View style={styles.dateChip}>
-                                <Ionicons name="calendar-outline" size={18} color="#002C5E" style={{ marginRight: 8 }} />
-                                <Text style={styles.dateHeaderText}>{dateLabel}</Text>
-                              </View>
-                              <View/>
-                            </View>
-                          )}
-                          <View style={styles.timelineRow}>
-                            {/* Timeline gutter */}
-                            <View style={styles.timelineGutter}>
-                              <View style={styles.timelineDot} />
-                              <View style={styles.timelineLine} />
-                            </View>
-                            {/* Card */}
-                            <View style={styles.timelineCard}>
-                        <View style={styles.headerRow}>
-                          <View style={styles.headerTextStack}>
-                            <Text style={styles.cardDateTime}>
-                              {item.startTime} - {item.endTime}
-                            </Text>
-                            <View style={{ flexDirection: "row", alignItems: "center" }}>
-                              <Text style={styles.cardTitle}>{translatedMap.get(item.id)?.title ?? item.title}</Text>
-                              {item.wheelchairAccessible && (
-                                <Fontisto name="wheelchair" size={18} style={{ marginLeft: 6 }} />
-                              )}
-                            </View>
-                          </View>
-                          <Image
-                            source={EVENT_TYPE_ICONS[item.tag]}
-                            style={styles.typeIcon}
-                            contentFit="contain"
-                          />
-                        </View>
+              {/* Calendar View - shows events for selected day */}
+              {viewMode === "calendar" &&
+                (filteredEvents.length === 0 ? (
+                  <View style={styles.noEventSection}>
+                    <Text style={styles.noEventText}>{t("home.noEvents")}</Text>
+                  </View>
+                ) : (
+                  <FlatList
+                    data={filteredEvents}
+                    horizontal={true}
+                    showsHorizontalScrollIndicator={true}
+                    snapToInterval={SNAP_INTERVAL}
+                    decelerationRate="fast"
+                    pagingEnabled={false}
+                    disableIntervalMomentum={true}
+                    contentContainerStyle={{
+                      paddingHorizontal: 20,
+                      paddingBottom: 30,
+                    }}
+                    ItemSeparatorComponent={() => (
+                      <View style={{ width: SPACING }} />
+                    )}
+                    keyExtractor={(item) => item.id}
+                    renderItem={({ item }) => (
+                      <View style={styles.cardWrapperHorizontal}>
+                        {/* Blue Line */}
+                        <View style={styles.blueLine} />
 
-                        {/* Event Thumbnail */}
-                        {(item.imageUrl ||
-                          (item.images && item.images.length > 0)) && (
-                          <TouchableOpacity
-                            style={styles.thumbnailContainer}
-                            onPress={() => handleImagePress(item)}
-                            accessibilityLabel={`View ${item.title} photos`}
-                            accessibilityRole="button"
-                          >
-                            <Image
-                              source={{
-                                uri: item.images?.[0]?.url || item.imageUrl,
-                              }}
-                              style={styles.thumbnail}
-                              contentFit="cover"
-                              transition={200}
-                            />
-                            {item.images && item.images.length > 1 && (
-                              <View style={styles.imageCountBadge}>
-                                <Ionicons name="images" size={14} color="#fff" />
-                                <Text style={styles.imageCountText}>
-                                  {item.images.length}
-                                </Text>
-                              </View>
-                            )}
-                          </TouchableOpacity>
-                        )}
-
-                        {/* Location */}
-                        <View style={styles.infoBox}>
-                          <Ionicons
-                            name="location-sharp"
-                            size={20}
-                            color="#002C5E"
-                            style={styles.infoIcon}
-                          />
-                          <View>
-                            <Text style={styles.infoLabel}>{t('home.location')}</Text>
-                            <Text style={styles.infoText}>{item.location}</Text>
-                          </View>
-                        </View>
-
-                        {/* Availability */}
-                        <View style={styles.infoBox}>
-                          <Ionicons
-                            name="people"
-                            size={20}
-                            color="#002C5E"
-                            style={styles.infoIcon}
-                          />
-                          <View>
-                            <Text style={styles.infoLabel}>{t('home.availability')}</Text>
-                            {isStaff || userRole !== "volunteer" ? (
-                              item.participantSlots ? (
-                                <Text style={styles.infoText}>
-                                  {isStaff ? t('home.participant') : ""}{" "}
-                                  {item.takenSlots ?? 0}/{item.participantSlots}
-                                </Text>
-                              ) : (
-                                <Text style={styles.infoText}>
-                                  {isStaff ? t('home.participant') : ""} {t('home.noCap')}
-                                </Text>
-                              )
-                            ) : null}
-                            {isStaff || userRole === "volunteer" ? (
-                              item.volunteerSlots && item.volunteerSlots > 0 ? (
-                                <Text style={styles.infoText}>
-                                  {isStaff ? t('home.volunteer') : ""}{" "}
-                                  {item.volunteerTakenSlots ?? 0}/{item.volunteerSlots}
-                                </Text>
-                              ) : (
-                                <Text style={styles.infoText}>
-                                  {isStaff ? t('home.volunteer') : ""} {t('home.notNeeded')}
-                                </Text>
-                              )
-                            ) : null}
-                          </View>
-                        </View>
-
-                        {/* Register Buttons */}
-                        {!isStaff && (
-                          <View style={styles.cardFooter}>
-                            {currTime > new Date(item.dateDisplay) ? (
-                              <View style={styles.registerClosedBtn}>
-                                <Text style={styles.registerClosedBtnText}>
-                                  {t('home.registrationClosed')}
-                                </Text>
-                              </View>
-                            ) : item.eventStatus === "cancelled" ? (
-                              <View style={styles.registerCancelBtn}>
-                                <Text style={styles.registerCancelBtnText}>
-                                  {t('home.cancelled')}
-                                </Text>
-                              </View>
-                            ) : (
-                              <TouchableOpacity
-                                style={styles.registerBtn}
-                                onPress={() => handleRegister(item)}
+                        <View style={styles.cardContent}>
+                          <View style={styles.headerRow}>
+                            <View style={styles.headerTextStack}>
+                              <Text style={styles.cardDateTime}>
+                                {item.dateDisplay} • {item.startTime} -{" "}
+                                {item.endTime}
+                              </Text>
+                              <View
+                                style={{
+                                  flexDirection: "row",
+                                  alignItems: "center",
+                                }}
                               >
-                                {(userRole === "volunteer" && item.volunteerSlots <= item.volunteerTakenSlots) ||
-                                  ((userRole === "participant" || isGuest) &&
-                                  item.participantSlots &&
-                                  item.participantSlots <= item.takenSlots) ? (
+                                <Text style={styles.cardTitle}>
+                                  {translatedMap.get(item.id)?.title ??
+                                    item.title}
+                                </Text>
+                                {item.wheelchairAccessible && (
+                                  <Fontisto
+                                    name="wheelchair"
+                                    size={18}
+                                    style={{ marginLeft: 6 }}
+                                  />
+                                )}
+                              </View>
+                            </View>
+                            <Image
+                              source={EVENT_TYPE_ICONS[item.tag]}
+                              style={styles.typeIcon}
+                              resizeMode="contain"
+                            />
+                          </View>
+
+                          {/* Event Thumbnail */}
+                          {(item.imageUrl ||
+                            (item.images && item.images.length > 0)) && (
+                            <TouchableOpacity
+                              style={styles.thumbnailContainer}
+                              onPress={() => handleImagePress(item)}
+                              accessibilityLabel={`View ${item.title} photos`}
+                              accessibilityRole="button"
+                            >
+                              <Image
+                                source={{
+                                  uri: item.images?.[0]?.url || item.imageUrl,
+                                }}
+                                style={styles.thumbnail}
+                                contentFit="cover"
+                                transition={200}
+                              />
+                              {item.images && item.images.length > 1 && (
+                                <View style={styles.imageCountBadge}>
+                                  <Ionicons
+                                    name="images"
+                                    size={14}
+                                    color="#fff"
+                                  />
+                                  <Text style={styles.imageCountText}>
+                                    {item.images.length}
+                                  </Text>
+                                </View>
+                              )}
+                            </TouchableOpacity>
+                          )}
+
+                          {/* Location */}
+                          <View style={styles.infoBox}>
+                            <Ionicons
+                              name="location-sharp"
+                              size={20}
+                              color="#002C5E"
+                              style={styles.infoIcon}
+                            />
+                            <View>
+                              <Text style={styles.infoLabel}>
+                                {t("home.location")}
+                              </Text>
+                              <Text style={styles.infoText}>
+                                {item.location}
+                              </Text>
+                            </View>
+                          </View>
+
+                          {/* Availability */}
+                          <View style={styles.infoBox}>
+                            <Ionicons
+                              name="people"
+                              size={20}
+                              color="#002C5E"
+                              style={styles.infoIcon}
+                            />
+                            <View>
+                              <Text style={styles.infoLabel}>
+                                {t("home.availability")}
+                              </Text>
+                              {isStaff || userRole !== "volunteer" ? (
+                                item.participantSlots ? (
+                                  <Text style={styles.infoText}>
+                                    {isStaff ? t("home.participant") : ""}{" "}
+                                    {item.takenSlots ?? 0}/
+                                    {item.participantSlots}
+                                  </Text>
+                                ) : (
+                                  <Text style={styles.infoText}>
+                                    {isStaff ? t("home.participant") : ""}{" "}
+                                    {t("home.noCap")}
+                                  </Text>
+                                )
+                              ) : null}
+                              {isStaff || userRole === "volunteer" ? (
+                                item.volunteerSlots &&
+                                item.volunteerSlots > 0 ? (
+                                  <Text style={styles.infoText}>
+                                    {isStaff ? t("home.volunteer") : ""}{" "}
+                                    {item.volunteerTakenSlots ?? 0}/
+                                    {item.volunteerSlots}
+                                  </Text>
+                                ) : (
+                                  <Text style={styles.infoText}>
+                                    {isStaff ? t("home.volunteer") : ""}{" "}
+                                    {t("home.notNeeded")}
+                                  </Text>
+                                )
+                              ) : null}
+                            </View>
+                          </View>
+
+                          {/* Register Buttons */}
+                          {!isStaff && (
+                            <View style={styles.cardFooter}>
+                              {currTime > new Date(item.dateDisplay) ? (
+                                <View style={styles.registerClosedBtn}>
+                                  <Text style={styles.registerClosedBtnText}>
+                                    {t("home.registrationClosed")}
+                                  </Text>
+                                </View>
+                              ) : item.eventStatus == "cancelled" ? (
+                                <View style={styles.registerCancelBtn}>
+                                  <Text style={styles.registerCancelBtnText}>
+                                    {t("home.cancelled")}
+                                  </Text>
+                                </View>
+                              ) : (
+                                <TouchableOpacity
+                                  style={styles.registerBtn}
+                                  onPress={() => handleRegister(item)}
+                                >
+                                  {(userRole == "volunteer" &&
+                                    item.volunteerSlots <=
+                                      item.volunteerTakenSlots) ||
+                                  ((userRole == "participant" || isGuest) &&
+                                    item.participantSlots &&
+                                    item.participantSlots <=
+                                      item.takenSlots) ? (
                                     <Text style={styles.registerBtnText}>
-                                      {t('home.joinWaitlist')}
+                                      {t("home.joinWaitlist")}
                                     </Text>
                                   ) : (
                                     <Text style={styles.registerBtnText}>
-                                      {t('home.registerNow')}
+                                      {t("home.registerNow")}
                                     </Text>
                                   )}
-                              </TouchableOpacity>
-                            )}
-                          </View>
-                        )}
+                                </TouchableOpacity>
+                              )}
+                            </View>
+                          )}
+                        </View>
                       </View>
-                    </View>
-                  </React.Fragment>
-                      );
-                    });
-                  })()}
-                </ScrollView>
-              )
-            )}
+                    )}
+                  />
+                ))}
+
+              {/* List View - shows all upcoming events grouped by date */}
+              {viewMode === "list" &&
+                (upcomingEvents.length === 0 ? (
+                  <View style={styles.noEventSection}>
+                    <Text style={styles.noEventText}>
+                      {searchQuery || isWheelchairOnly
+                        ? t("events.noResults")
+                        : t("home.noUpcomingEvents")}{" "}
+                    </Text>
+                  </View>
+                ) : (
+                  <ScrollView
+                    style={styles.listViewContainer}
+                    contentContainerStyle={styles.listViewContent}
+                    showsVerticalScrollIndicator={true}
+                    nestedScrollEnabled={true}
+                  >
+                    {(() => {
+                      let lastDateKey = "";
+                      return upcomingEvents.map((item) => {
+                        const dateKey = formatDate(new Date(item.date));
+                        const showHeader = dateKey !== lastDateKey;
+                        lastDateKey = dateKey;
+
+                        const dateObj = new Date(item.date);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const tomorrow = new Date(today);
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        const eventDateOnly = new Date(dateObj);
+                        eventDateOnly.setHours(0, 0, 0, 0);
+
+                        let dateLabel = "";
+                        if (eventDateOnly.getTime() === today.getTime()) {
+                          dateLabel = t("home.today");
+                        } else if (
+                          eventDateOnly.getTime() === tomorrow.getTime()
+                        ) {
+                          dateLabel = t("home.tomorrow");
+                        } else {
+                          const day = dateObj.getDate();
+                          const month = dateObj.toLocaleDateString("en-US", {
+                            month: "short",
+                          });
+                          const weekday = dateObj.toLocaleDateString("en-US", {
+                            weekday: "short",
+                          });
+                          dateLabel = `${weekday}, ${day} ${month}`;
+                        }
+
+                        return (
+                          <React.Fragment key={item.id}>
+                            {showHeader && (
+                              <View style={styles.dateHeader}>
+                                <View style={styles.dateChip}>
+                                  <Ionicons
+                                    name="calendar-outline"
+                                    size={18}
+                                    color="#002C5E"
+                                    style={{ marginRight: 8 }}
+                                  />
+                                  <Text style={styles.dateHeaderText}>
+                                    {dateLabel}
+                                  </Text>
+                                </View>
+                                <View />
+                              </View>
+                            )}
+                            <View style={styles.timelineRow}>
+                              {/* Timeline gutter */}
+                              <View style={styles.timelineGutter}>
+                                <View style={styles.timelineDot} />
+                                <View style={styles.timelineLine} />
+                              </View>
+                              {/* Card */}
+                              <View style={styles.timelineCard}>
+                                <View style={styles.headerRow}>
+                                  <View style={styles.headerTextStack}>
+                                    <Text style={styles.cardDateTime}>
+                                      {item.startTime} - {item.endTime}
+                                    </Text>
+                                    <View
+                                      style={{
+                                        flexDirection: "row",
+                                        alignItems: "center",
+                                      }}
+                                    >
+                                      <Text style={styles.cardTitle}>
+                                        {translatedMap.get(item.id)?.title ??
+                                          item.title}
+                                      </Text>
+                                      {item.wheelchairAccessible && (
+                                        <Fontisto
+                                          name="wheelchair"
+                                          size={18}
+                                          style={{ marginLeft: 6 }}
+                                        />
+                                      )}
+                                    </View>
+                                  </View>
+                                  <Image
+                                    source={EVENT_TYPE_ICONS[item.tag]}
+                                    style={styles.typeIcon}
+                                    contentFit="contain"
+                                  />
+                                </View>
+
+                                {/* Event Thumbnail */}
+                                {(item.imageUrl ||
+                                  (item.images && item.images.length > 0)) && (
+                                  <TouchableOpacity
+                                    style={styles.thumbnailContainer}
+                                    onPress={() => handleImagePress(item)}
+                                    accessibilityLabel={`View ${item.title} photos`}
+                                    accessibilityRole="button"
+                                  >
+                                    <Image
+                                      source={{
+                                        uri:
+                                          item.images?.[0]?.url ||
+                                          item.imageUrl,
+                                      }}
+                                      style={styles.thumbnail}
+                                      contentFit="cover"
+                                      transition={200}
+                                    />
+                                    {item.images && item.images.length > 1 && (
+                                      <View style={styles.imageCountBadge}>
+                                        <Ionicons
+                                          name="images"
+                                          size={14}
+                                          color="#fff"
+                                        />
+                                        <Text style={styles.imageCountText}>
+                                          {item.images.length}
+                                        </Text>
+                                      </View>
+                                    )}
+                                  </TouchableOpacity>
+                                )}
+
+                                {/* Location */}
+                                <View style={styles.infoBox}>
+                                  <Ionicons
+                                    name="location-sharp"
+                                    size={20}
+                                    color="#002C5E"
+                                    style={styles.infoIcon}
+                                  />
+                                  <View>
+                                    <Text style={styles.infoLabel}>
+                                      {t("home.location")}
+                                    </Text>
+                                    <Text style={styles.infoText}>
+                                      {item.location}
+                                    </Text>
+                                  </View>
+                                </View>
+
+                                {/* Availability */}
+                                <View style={styles.infoBox}>
+                                  <Ionicons
+                                    name="people"
+                                    size={20}
+                                    color="#002C5E"
+                                    style={styles.infoIcon}
+                                  />
+                                  <View>
+                                    <Text style={styles.infoLabel}>
+                                      {t("home.availability")}
+                                    </Text>
+                                    {isStaff || userRole !== "volunteer" ? (
+                                      item.participantSlots ? (
+                                        <Text style={styles.infoText}>
+                                          {isStaff ? t("home.participant") : ""}{" "}
+                                          {item.takenSlots ?? 0}/
+                                          {item.participantSlots}
+                                        </Text>
+                                      ) : (
+                                        <Text style={styles.infoText}>
+                                          {isStaff ? t("home.participant") : ""}{" "}
+                                          {t("home.noCap")}
+                                        </Text>
+                                      )
+                                    ) : null}
+                                    {isStaff || userRole === "volunteer" ? (
+                                      item.volunteerSlots &&
+                                      item.volunteerSlots > 0 ? (
+                                        <Text style={styles.infoText}>
+                                          {isStaff ? t("home.volunteer") : ""}{" "}
+                                          {item.volunteerTakenSlots ?? 0}/
+                                          {item.volunteerSlots}
+                                        </Text>
+                                      ) : (
+                                        <Text style={styles.infoText}>
+                                          {isStaff ? t("home.volunteer") : ""}{" "}
+                                          {t("home.notNeeded")}
+                                        </Text>
+                                      )
+                                    ) : null}
+                                  </View>
+                                </View>
+
+                                {/* Register Buttons */}
+                                {!isStaff && (
+                                  <View style={styles.cardFooter}>
+                                    {currTime > new Date(item.dateDisplay) ? (
+                                      <View style={styles.registerClosedBtn}>
+                                        <Text
+                                          style={styles.registerClosedBtnText}
+                                        >
+                                          {t("home.registrationClosed")}
+                                        </Text>
+                                      </View>
+                                    ) : item.eventStatus === "cancelled" ? (
+                                      <View style={styles.registerCancelBtn}>
+                                        <Text
+                                          style={styles.registerCancelBtnText}
+                                        >
+                                          {t("home.cancelled")}
+                                        </Text>
+                                      </View>
+                                    ) : (
+                                      <TouchableOpacity
+                                        style={styles.registerBtn}
+                                        onPress={() => handleRegister(item)}
+                                      >
+                                        {(userRole === "volunteer" &&
+                                          item.volunteerSlots <=
+                                            item.volunteerTakenSlots) ||
+                                        ((userRole === "participant" ||
+                                          isGuest) &&
+                                          item.participantSlots &&
+                                          item.participantSlots <=
+                                            item.takenSlots) ? (
+                                          <Text style={styles.registerBtnText}>
+                                            {t("home.joinWaitlist")}
+                                          </Text>
+                                        ) : (
+                                          <Text style={styles.registerBtnText}>
+                                            {t("home.registerNow")}
+                                          </Text>
+                                        )}
+                                      </TouchableOpacity>
+                                    )}
+                                  </View>
+                                )}
+                              </View>
+                            </View>
+                          </React.Fragment>
+                        );
+                      });
+                    })()}
+                  </ScrollView>
+                ))}
+            </View>
           </View>
         </ScrollView>
       </ThemedView>
+      <Modal
+        visible={isFilterModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsFilterModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.filterMenu}>
+            <View style={styles.filterHeader}>
+              <Text style={styles.filterTitle}>
+                {t("events.filterOptions") || "Filters"}
+              </Text>
+              <TouchableOpacity onPress={() => setIsFilterModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#374151" />
+              </TouchableOpacity>
+            </View>
 
+            <View style={styles.filterSection}>
+              <Text style={styles.filterLabel}>
+                {t("events.accessibility") || "Accessibility"}
+              </Text>
+              <TouchableOpacity
+                style={styles.checkboxRow}
+                onPress={() => setIsWheelchairOnly(!isWheelchairOnly)}
+              >
+                <View
+                  style={[
+                    styles.checkbox,
+                    isWheelchairOnly && styles.checkboxChecked,
+                  ]}
+                >
+                  {isWheelchairOnly && (
+                    <Ionicons name="checkmark" size={16} color="white" />
+                  )}
+                </View>
+                <Text style={styles.checkboxLabel}>
+                  {t("events.wheelchairAccess") || "Wheelchair Accessible"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={styles.applyButton}
+              onPress={() => setIsFilterModalVisible(false)}
+            >
+              <Text style={styles.applyButtonText}>
+                {t("common.apply") || "Apply Filters"}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => {
+                setIsWheelchairOnly(false);
+                setIsFilterModalVisible(false);
+              }}
+              style={styles.resetButton}
+            >
+              <Text style={styles.resetButtonText}>
+                {t("common.reset") || "Reset All"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       {/* Image Gallery Modal */}
       <ImageGalleryModal
         visible={galleryVisible}
@@ -818,8 +1016,9 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
+
     backgroundColor: "#fff",
-    marginTop: -50,
+    marginTop: -45,
     borderRadius: 30,
   },
   calendarWrapper: {
@@ -835,7 +1034,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 13,
   },
   bottomContainer: {
-    paddingTop: 8,
+    paddingTop: -20,
     flex: 1,
   },
   sectionHeader: {
@@ -896,7 +1095,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 4,
-    paddingBottom: 20
+    paddingBottom: 20,
   },
   blueLine: {
     width: 6,
@@ -963,7 +1162,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   wheelchairIcon: {
-    alignSelf: "center"
+    alignSelf: "center",
   },
   typeIcon: {
     width: 60,
@@ -980,7 +1179,7 @@ const styles = StyleSheet.create({
     fontSize: 21,
     fontWeight: "700",
     color: "#002C5E",
-    marginRight: 10
+    marginRight: 10,
   },
   infoBox: {
     flexDirection: "row",
@@ -1009,7 +1208,7 @@ const styles = StyleSheet.create({
   cardFooter: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    marginTop: 4
+    marginTop: 4,
   },
   registerBtn: {
     backgroundColor: "#002C5E",
@@ -1150,5 +1349,120 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 2,
+  },
+  searchContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 5,
+  },
+  searchBarRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  searchBar: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 45,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: "#1F2937",
+  },
+  filterIconButton: {
+    width: 45,
+    height: 45,
+    backgroundColor: "#F3F4F6",
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  filterIconButtonActive: {
+    backgroundColor: "#002C5E",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  filterMenu: {
+    backgroundColor: "white",
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
+    padding: 24,
+    paddingBottom: 40,
+  },
+  filterHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  filterTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#374151",
+  },
+  filterSection: {
+    marginBottom: 20,
+  },
+  filterLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#6B7280",
+    textTransform: "uppercase",
+    marginBottom: 12,
+  },
+  checkboxRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: "#002C5E",
+    marginRight: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  checkboxChecked: {
+    backgroundColor: "#002C5E",
+  },
+  checkboxLabel: {
+    fontSize: 15,
+    color: "#374151",
+  },
+  applyButton: {
+    backgroundColor: "#002C5E",
+    padding: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  applyButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  resetButton: {
+    padding: 14,
+    alignItems: "center",
+  },
+  resetButtonText: {
+    color: "#6B7280",
+    fontSize: 14,
+  },
+  bodyTopPadding: {
+    paddingTop: 20, // THE FIX: This pushes the search bar away from the very top edge
   },
 });
