@@ -60,14 +60,12 @@ export function EventCard({
   const [permission, requestPermission] = useCameraPermissions();
   const [isSignUpsExpanded, setIsSignUpsExpanded] = useState(false);
   const [isAttendanceExpanded, setIsAttendanceExpanded] = useState(false);
-  const [attendanceData, setAttendanceData] = useState<any[]>([]);
-  const [loadingAttendance, setLoadingAttendance] = useState(false);
 
-  const attendedCount = event.participant_att ?? 0;
-  const totalParticipantsSignedUp = event.takenSlots ?? 0;
+  const attendedCount = event.participantAtt || 0;
+  const totalParticipantsSignedUp = event.takenSlots || 0;
 
-  const volunteerAttendedCount = event.volunteer_att ?? 0;
-  const totalVolunteersSignedUp = event.volunteerTakenSlots ?? 0;
+  const volunteerAttendedCount = event.volunteerAtt || 0;
+  const totalVolunteersSignedUp = event.volunteerTakenSlots || 0;
 
   useEffect(() => {
     setCurrentStatus(regStatus);

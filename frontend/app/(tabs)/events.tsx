@@ -9,6 +9,7 @@ import {
   Alert,
   TextInput,
   Modal,
+  RefreshControl,
 } from "react-native";
 import { EventCard } from "@/components/event-card";
 import { Event, FilterTab, filterTabs } from "@/types/event";
@@ -42,11 +43,17 @@ export default function EventsScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
   const [isWheelchairOnly, setIsWheelchairOnly] = useState(false);
-
+  const [refreshing, setRefreshing] = useState(false);
   const hasActiveFilters = isWheelchairOnly;
 
   useEffect(() => {
     checkUserAndLoadEvents();
+  }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await checkUserAndLoadEvents(); // Reuse your existing loading logic
+    setRefreshing(false);
   }, []);
 
   // Refresh data when screen comes into focus (for real-time updates)
@@ -347,6 +354,14 @@ export default function EventsScreen() {
         showsVerticalScrollIndicator={true}
         alwaysBounceVertical={true}
         scrollEnabled={true}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]} // Android spinner color
+            tintColor={colors.primary} // iOS spinner color
+          />
+        }
       >
         {filteredEvents.length > 0 ? (
           filteredEvents.map((event) => (
