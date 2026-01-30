@@ -1,12 +1,13 @@
-const { supabase } = require('../config/supabase');
+const { supabase } = require("../config/supabase");
 
 const EventModel = {
   findAll: async () => {
     console.log("🔍 Backend: Attempting to fetch events from Supabase...");
 
     const { data, error } = await supabase
-      .from('events')
-      .select(`
+      .from("events")
+      .select(
+        `
         *,
         event_images (
           id,
@@ -15,8 +16,9 @@ const EventModel = {
           is_primary,
           caption
         )
-      `)
-      .order('start_time', { ascending: true });
+      `,
+      )
+      .order("start_time", { ascending: true });
 
     if (error) {
       console.error("❌ Backend: Supabase Error:", error.message);
@@ -30,35 +32,44 @@ const EventModel = {
   // Get all images for an event
   getEventImages: async (eventId) => {
     const { data, error } = await supabase
-      .from('event_images')
-      .select('*')
-      .eq('event_id', eventId)
-      .order('display_order', { ascending: true });
+      .from("event_images")
+      .select("*")
+      .eq("event_id", eventId)
+      .order("display_order", { ascending: true });
 
     if (error) throw new Error(error.message);
     return data;
   },
 
   // Add image to event
-  addEventImage: async (eventId, imageUrl, displayOrder = 0, isPrimary = false, caption = null, createdBy = null) => {
+  addEventImage: async (
+    eventId,
+    imageUrl,
+    displayOrder = 0,
+    isPrimary = false,
+    caption = null,
+    createdBy = null,
+  ) => {
     // If setting as primary, unset other primary images first
     if (isPrimary) {
       await supabase
-        .from('event_images')
+        .from("event_images")
         .update({ is_primary: false })
-        .eq('event_id', eventId);
+        .eq("event_id", eventId);
     }
 
     const { data, error } = await supabase
-      .from('event_images')
-      .insert([{
-        event_id: eventId,
-        image_url: imageUrl,
-        display_order: displayOrder,
-        is_primary: isPrimary,
-        caption: caption,
-        created_by: createdBy
-      }])
+      .from("event_images")
+      .insert([
+        {
+          event_id: eventId,
+          image_url: imageUrl,
+          display_order: displayOrder,
+          is_primary: isPrimary,
+          caption: caption,
+          created_by: createdBy,
+        },
+      ])
       .select()
       .single();
 
@@ -69,9 +80,9 @@ const EventModel = {
   // Delete image
   deleteEventImage: async (imageId) => {
     const { error } = await supabase
-      .from('event_images')
+      .from("event_images")
       .delete()
-      .eq('id', imageId);
+      .eq("id", imageId);
 
     if (error) throw new Error(error.message);
   },
@@ -82,10 +93,10 @@ const EventModel = {
 
     // Fetch questions
     const { data: questions, error: qError } = await supabase
-      .from('event_questions')
-      .select('*')
-      .eq('event_id', eventId)
-      .order('display_order', { ascending: true });
+      .from("event_questions")
+      .select("*")
+      .eq("event_id", eventId)
+      .order("display_order", { ascending: true });
 
     if (qError) throw new Error(qError.message);
 
@@ -93,10 +104,10 @@ const EventModel = {
     const questionsWithOptions = await Promise.all(
       questions.map(async (question) => {
         const { data: options, error: oError } = await supabase
-          .from('question_options')
-          .select('*')
-          .eq('question_id', question.id)
-          .order('display_order', { ascending: true });
+          .from("question_options")
+          .select("*")
+          .eq("question_id", question.id)
+          .order("display_order", { ascending: true });
 
         if (oError) throw new Error(oError.message);
 
@@ -104,13 +115,13 @@ const EventModel = {
           id: question.id,
           questionText: question.question_text,
           displayOrder: question.display_order,
-          options: options.map(opt => ({
+          options: options.map((opt) => ({
             id: opt.id,
             optionText: opt.option_text,
-            displayOrder: opt.display_order
-          }))
+            displayOrder: opt.display_order,
+          })),
         };
-      })
+      }),
     );
 
     console.log("✅ Model: Found", questionsWithOptions.length, "questions");
@@ -121,21 +132,23 @@ const EventModel = {
     console.log("🔍 Model: Creating event with questions...");
 
     const { data: event, error: eventError } = await supabase
-      .from('events')
-      .insert([{
-        title: eventData.title,
-        location: eventData.location,
-        start_time: eventData.startTime,
-        end_time: eventData.endTime,
-        participant_slots: eventData.participantSlots,
-        volunteer_slots: eventData.volunteerSlots,
-        taken_slots: 0,
-        volunteer_taken_slots: 0,
-        wheelchair_accessible: eventData.wheelchairAccessible,
-        tag: eventData.tag,
-        reminders: eventData.reminders,
-        image_url: eventData.imageUrl
-      }])
+      .from("events")
+      .insert([
+        {
+          title: eventData.title,
+          location: eventData.location,
+          start_time: eventData.startTime,
+          end_time: eventData.endTime,
+          participant_slots: eventData.participantSlots,
+          volunteer_slots: eventData.volunteerSlots,
+          taken_slots: 0,
+          volunteer_taken_slots: 0,
+          wheelchair_accessible: eventData.wheelchairAccessible,
+          tag: eventData.tag,
+          reminders: eventData.reminders,
+          image_url: eventData.imageUrl,
+        },
+      ])
       .select()
       .single();
 
@@ -148,19 +161,24 @@ const EventModel = {
         event_id: eventId,
         image_url: img.uri,
         display_order: img.displayOrder ?? index,
-        is_primary: img.isPrimary ?? (index === 0),
-        caption: img.caption || null
+        is_primary: img.isPrimary ?? index === 0,
+        caption: img.caption || null,
       }));
 
       const { error: imgError } = await supabase
-        .from('event_images')
+        .from("event_images")
         .insert(imagesPayload);
 
       if (imgError) {
         console.error("❌ Error saving images:", imgError.message);
         // Don't throw - event was created successfully, just images failed
       } else {
-        console.log("✅ Saved", imagesPayload.length, "images for event", eventId);
+        console.log(
+          "✅ Saved",
+          imagesPayload.length,
+          "images for event",
+          eventId,
+        );
       }
     }
 
@@ -168,12 +186,14 @@ const EventModel = {
       for (let i = 0; i < questions.length; i++) {
         const q = questions[i];
         const { data: questionData, error: qError } = await supabase
-          .from('event_questions')
-          .insert([{
-            event_id: eventId,
-            question_text: q.title,
-            display_order: i
-          }])
+          .from("event_questions")
+          .insert([
+            {
+              event_id: eventId,
+              question_text: q.title,
+              display_order: i,
+            },
+          ])
           .select()
           .single();
 
@@ -183,11 +203,11 @@ const EventModel = {
           const optionsPayload = q.options.map((optText, index) => ({
             question_id: questionData.id,
             option_text: optText,
-            display_order: index
+            display_order: index,
           }));
 
           const { error: oError } = await supabase
-            .from('question_options')
+            .from("question_options")
             .insert(optionsPayload);
 
           if (oError) throw new Error(oError.message);
@@ -200,9 +220,9 @@ const EventModel = {
 
   updateStatus: async (id, newStatus) => {
     const { data, error } = await supabase
-      .from('events')
+      .from("events")
       .update({ eventStatus: newStatus })
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -220,6 +240,32 @@ const EventModel = {
 
     if (error) throw new Error(error.message);
     return data;
+  },
+
+  uploadBase64Image: async (base64String) => {
+    // Generate a unique file name
+    const fileName = `public/${Date.now()}_${Math.random().toString(36).substr(2, 9)}.jpg`;
+
+    // Convert Base64 to Buffer
+    const buffer = Buffer.from(base64String, "base64");
+
+    const { data, error } = await supabase.storage
+      .from("event-photos") // Make sure this bucket exists in Supabase
+      .upload(fileName, buffer, {
+        contentType: "image/jpeg",
+        upsert: true,
+      });
+
+    if (error) {
+      console.error("Supabase Storage Error:", error);
+      throw new Error("Failed to upload image to cloud storage");
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("event-photos").getPublicUrl(data.path);
+
+    return publicUrl;
   },
 };
 

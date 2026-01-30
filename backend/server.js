@@ -22,6 +22,9 @@ app.use("/api/announcements", announcementRoute);
 app.use("/api/attendance", attendanceRoute);
 app.use("/api/translate", translateRoute);
 
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
 app.get("/api/v1", async (req, res) => {
   try {
     const result = await db.query("SELECT NOW()");

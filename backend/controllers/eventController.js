@@ -1,5 +1,8 @@
-const { EventModel } = require('../models/eventModel');
-const { translateFieldsWithCache, translateTextsWithCache } = require('../services/translationCacheService');
+const { EventModel } = require("../models/eventModel");
+const {
+  translateFieldsWithCache,
+  translateTextsWithCache,
+} = require("../services/translationCacheService");
 
 const getEvents = async (req, res) => {
   try {
@@ -11,13 +14,19 @@ const getEvents = async (req, res) => {
     const tags = events.map((event) => event.tag || "");
     const locations = events.map((event) => event.location || "");
 
-    const [translatedTitles, translatedReminders, translatedTags, translatedLocations] =
-      await Promise.all([
-        translateTextsWithCache(titles, lang),
-        translateTextsWithCache(reminders, lang),
-        translateTextsWithCache(tags, lang),
-        translateTextsWithCache(locations, lang, { forceTranslate: lang === "zh" }),
-      ]);
+    const [
+      translatedTitles,
+      translatedReminders,
+      translatedTags,
+      translatedLocations,
+    ] = await Promise.all([
+      translateTextsWithCache(titles, lang),
+      translateTextsWithCache(reminders, lang),
+      translateTextsWithCache(tags, lang),
+      translateTextsWithCache(locations, lang, {
+        forceTranslate: lang === "zh",
+      }),
+    ]);
 
     const translatedEvents = events.map((event, index) => ({
       ...event,
@@ -37,6 +46,30 @@ const getEvents = async (req, res) => {
 const createEvent = async (req, res) => {
   try {
     const { questions, ...eventData } = req.body;
+
+    if (eventData.images && eventData.images.length > 0) {
+      const processedImages = await Promise.all(
+        eventData.images.map(async (img) => {
+          // If the frontend sent base64 data, upload it
+          if (img.base64) {
+            console.log("📸 Uploading image to Supabase...");
+            const publicUrl = await EventModel.uploadBase64Image(img.base64);
+
+            // Return the image object with the NEW cloud URL
+            // The Model expects 'uri', so we overwrite 'uri' with the publicUrl
+            return {
+              ...img,
+              uri: publicUrl,
+              base64: undefined, // Clear huge string from memory
+            };
+          }
+          return img;
+        }),
+      );
+
+      // Update eventData with the new array containing Supabase URLs
+      eventData.images = processedImages;
+    }
 
     const eventId = await EventModel.createWithQuestions(eventData, questions);
 
@@ -64,18 +97,21 @@ const createEvent = async (req, res) => {
       });
 
       await translateTextsWithCache(questionTexts, "en");
-      await translateTextsWithCache(questionTexts, "zh", { forceTranslate: true });
+      await translateTextsWithCache(questionTexts, "zh", {
+        forceTranslate: true,
+      });
       await translateTextsWithCache(optionTexts, "en");
-      await translateTextsWithCache(optionTexts, "zh", { forceTranslate: true });
+      await translateTextsWithCache(optionTexts, "zh", {
+        forceTranslate: true,
+      });
     } catch (translationError) {
       console.error("❌ Translation Cache Error:", translationError.message);
     }
 
-    res.status(201).json({ 
-      message: "Event published successfully", 
-      eventId 
+    res.status(201).json({
+      message: "Event published successfully",
+      eventId,
     });
-
   } catch (error) {
     console.error("❌ Controller Error:", error.message);
     res.status(500).json({ error: error.message });
@@ -88,7 +124,9 @@ const getEventQuestions = async (req, res) => {
     const questions = await EventModel.getQuestionsWithOptions(eventId);
     const lang = (req.query.lang || "en").toLowerCase();
 
-    const questionTexts = questions.map((question) => question.questionText || "");
+    const questionTexts = questions.map(
+      (question) => question.questionText || "",
+    );
     const optionTexts = questions.flatMap((question) =>
       (question.options || []).map((option) => option.optionText || ""),
     );
@@ -102,7 +140,8 @@ const getEventQuestions = async (req, res) => {
     let optionIndex = 0;
     const hydrated = questions.map((question, qIndex) => {
       const options = (question.options || []).map((option) => {
-        const translatedOption = translatedOptions[optionIndex] || option.optionText;
+        const translatedOption =
+          translatedOptions[optionIndex] || option.optionText;
         optionIndex += 1;
         return { ...option, optionText: translatedOption };
       });
@@ -137,7 +176,12 @@ const addEventImage = async (req, res) => {
     const { eventId } = req.params;
     const { imageUrl, displayOrder, isPrimary, caption, userId } = req.body;
     const image = await EventModel.addEventImage(
-      eventId, imageUrl, displayOrder, isPrimary, caption, userId
+      eventId,
+      imageUrl,
+      displayOrder,
+      isPrimary,
+      caption,
+      userId,
     );
     res.status(201).json(image);
   } catch (error) {
@@ -150,7 +194,7 @@ const deleteEventImage = async (req, res) => {
   try {
     const { imageId } = req.params;
     await EventModel.deleteEventImage(imageId);
-    res.status(200).json({ message: 'Image deleted' });
+    res.status(200).json({ message: "Image deleted" });
   } catch (error) {
     console.error("❌ Controller Error:", error.message);
     res.status(500).json({ error: error.message });
@@ -161,11 +205,11 @@ const cancelEvent = async (req, res) => {
   try {
     const { eventId } = req.params;
     // We update the status to 'cancelled'
-    const updatedEvent = await EventModel.updateStatus(eventId, 'cancelled');
-    
-    res.status(200).json({ 
-      message: "Event cancelled successfully", 
-      event: updatedEvent 
+    const updatedEvent = await EventModel.updateStatus(eventId, "cancelled");
+
+    res.status(200).json({
+      message: "Event cancelled successfully",
+      event: updatedEvent,
     });
   } catch (error) {
     console.error("❌ Cancel Error:", error.message);
@@ -173,4 +217,12 @@ const cancelEvent = async (req, res) => {
   }
 };
 
-module.exports = { getEvents, createEvent, getEventQuestions, getEventImages, addEventImage, deleteEventImage, cancelEvent };
+module.exports = {
+  getEvents,
+  createEvent,
+  getEventQuestions,
+  getEventImages,
+  addEventImage,
+  deleteEventImage,
+  cancelEvent,
+};
