@@ -1,13 +1,18 @@
 const User = require("../models/userModel");
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
 
 // Logic for Registration
 exports.signup = async (req, res) => {
   const { name, email, password, user_type, phone, guestId } = req.body;
+
+  const hashedPassword = await bcrypt.hash(password, saltRounds);
+
   try {
     const newUser = await User.create(
       name,
       email,
-      password,
+      hashedPassword,
       user_type,
       phone,
       guestId,
@@ -34,7 +39,9 @@ exports.login = async (req, res) => {
   const { email, password, guestId } = req.body;
   try {
     const user = await User.findByEmail(email, guestId);
-    if (!user || user.password !== password) {
+    const match = await bcrypt.compare(password, user.password);
+
+    if (!user || match) {
       return res
         .status(401)
         .json({ success: false, error: "Invalid email or password" });
