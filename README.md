@@ -111,7 +111,7 @@ Instead of forcing users to adapt to the system, Care4You adapts to user behavio
 
 If you have an Android device, you can install the app directly via our APK file.
 
-1. **Download the APK:** [CLICK HERE TO DOWNLOAD ANDROID APK](https://expo.dev/accounts/ys_tey/projects/hack4fun/builds/782dbe0e-b9a5-4bd5-bc6c-b2ab8276a31f)
+1. **Download the APK:** [CLICK HERE TO DOWNLOAD ANDROID APK](https://expo.dev/accounts/jayyy25/projects/hack4fun/builds/dc6300ec-6540-466c-9ce6-4ca6ad6c1eb9)
 2. **Install:** Open the file on your phone.
    - _Note:_ You may need to allow "Install from Unknown Sources" in your settings if prompted.
 3. **Run:** Open the "Care4You" app from your app drawer.
@@ -131,7 +131,7 @@ Since this is a prototype build, it runs on the **iOS Simulator** (part of Xcode
 
 1. Open **Xcode** on your Mac.
 2. Go to the top menu bar: **Xcode** > **Open Developer Tool** > **Simulator**. Wait for the virtual iPhone to boot up.
-3. **Download the iOS Build:** [CLICK HERE TO DOWNLOAD .APP ZIP](https://expo.dev/artifacts/eas/3V8xyBYqqyJsW31gdWmNqY.tar.gz)
+3. **Download the iOS Build:** [CLICK HERE TO DOWNLOAD .APP ZIP](https://expo.dev/accounts/jayyy25/projects/hack4fun/builds/2ef08418-5c39-4e10-a597-da0898d8f50c)
 4. Unzip the file to reveal `hack4fun.app` (or similar).
 5. **Drag and Drop** the `.app` file directly onto the virtual iPhone screen in the Simulator.
 6. The app icon will appear on the home screen. Tap it to launch!
