@@ -1,8 +1,21 @@
-# 🛡️ Care4You | Hack4Good 2026 | Team: Hack4Fun
+<p align="center">
+  <img src="frontend/assets/images/care4youlogo.png" alt="Care4You Logo" width="150"/>
+</p>
+
+# Care4You | Hack4Good 2026 | Team: Hack4Fun</h1>
 
 **Care4You** is a community-driven platform built to bridge the gap between volunteers, participants, and impactful social events. Designed for the **Hack4Good** hackathon, this mobile application streamlines event discovery and registration with a seamless "Virtual Guest" system for immediate engagement.
 
 ---
+
+<br>
+
+<table align="center">
+  <tr>
+    <td><img src="image.png" alt="Onboarding Page" width="300"/></td>
+    <td><img src="image-1.png" alt="Onboarding Page 2" width="300"/></td>
+  </tr>
+</table>
 
 ### ⚠️ The Problem
 
@@ -99,23 +112,27 @@ Instead of forcing users to adapt to the system, Care4You adapts to user behavio
 ### 🚀 Getting Started
 
 ### Option 1: Android Users (Easiest for Android)
+
 If you have an Android device, you can install the app directly via our APK file.
 
 1. **Download the APK:** [CLICK HERE TO DOWNLOAD ANDROID APK](https://expo.dev/accounts/ys_tey/projects/hack4fun/builds/782dbe0e-b9a5-4bd5-bc6c-b2ab8276a31f)
 2. **Install:** Open the file on your phone.
-   - *Note:* You may need to allow "Install from Unknown Sources" in your settings if prompted.
+   - _Note:_ You may need to allow "Install from Unknown Sources" in your settings if prompted.
 3. **Run:** Open the "Care4You" app from your app drawer.
 
 ---
 
 ### Option 2: iOS Users (Requires Mac & Xcode)
+
 Since this is a prototype build, it runs on the **iOS Simulator** (part of Xcode) rather than a physical iPhone.
 
 **Prerequisites:**
+
 - A Mac computer
 - Xcode installed (Free on the App Store)
 
 **Steps:**
+
 1. Open **Xcode** on your Mac.
 2. Go to the top menu bar: **Xcode** > **Open Developer Tool** > **Simulator**. Wait for the virtual iPhone to boot up.
 3. **Download the iOS Build:** [CLICK HERE TO DOWNLOAD .APP ZIP](https://expo.dev/artifacts/eas/3V8xyBYqqyJsW31gdWmNqY.tar.gz)
@@ -126,33 +143,37 @@ Since this is a prototype build, it runs on the **iOS Simulator** (part of Xcode
 ---
 
 ### Option 3: For Developers (Run from Source)
+
 If you want to modify the code or run the development version on your own setup.
 
 **Prerequisites:**
+
 - Node.js installed
 - Expo Go app installed on your physical phone (optional)
 
 **Steps:**
+
 1. **Clone the repository:**
    ```bash
    git clone https://github.com/Hack4Funnn/care4you.git
    ```
 2. **Navigate to frontend directory:**
-    ```bash
+   ```bash
    cd frontend
    ```
 3. **Install dependencies:**
-    ```bash
+   ```bash
    npm install
    ```
 4. **Start the app:**
-    ```bash
+   ```bash
    npx expo start
    ```
 5. **Scan & Run:**
-  - Scan the QR code with the Expo Go app (Android)
-  - Or press `a` to run on Android Emulator / `i` to run on iOS Simulator / `w` to run on local webpage
-  
+
+- Scan the QR code with the Expo Go app (Android)
+- Or press `a` to run on Android Emulator / `i` to run on iOS Simulator / `w` to run on local webpage
+
 ---
 
 ### ✨ Key Features
@@ -168,12 +189,13 @@ If you want to modify the code or run the development version on your own setup.
 
 ### Technologies
 
-| Layer        | Technology                                            |
-| :----------- | :---------------------------------------------------- |
-| **Frontend** | React Native, Expo (Expo Go), Expo Router, TypeScript |
-| **Backend**  | Node.js, Express (Hosted on Google Cloud)             |
-| **Database** | PostgreSQL (Supabase)                                 |
-| **Storage**  | AsyncStorage for local session persistence            |
+| Layer        | Technology                                                     |
+| :----------- | :------------------------------------------------------------- |
+| **Frontend** | React Native, Expo (Expo Go), Expo Router, TypeScript, i18next |
+| **Backend**  | Node.js, Express (Hosted on Google Cloud)                      |
+| **Database** | PostgreSQL (Supabase)                                          |
+| **AI**       | OpenAI API (LLM-powered event translation)                     |
+| **Storage**  | AsyncStorage for local session persistence                     |
 
 ### Project Directory
 
@@ -191,7 +213,7 @@ If you want to modify the code or run the development version on your own setup.
 
 ### 👥 The Team
 
-- **Team Name:** Hack4Fun
+- **Team Name:** BTS CS
 - **Team Lead:** Yi Jie Chong
 - **Developer:** Tan Jay, Tey Yee Siang
 
