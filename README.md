@@ -174,10 +174,10 @@ If you want to modify the code or run the development version on your own setup.
 
 ### ✨ Key Features
 
-- Virtual Guest System: Users can browse and register for events immediately without an account. A unique guest\_ ID is generated locally to track their activity.
-- The Conversion Deal: When a guest eventually signs up or logs in, all their previous event registrations are automatically migrated to their new permanent account.
-- Dynamic Event Registration: Real-time slot tracking for both volunteers and participants, ensuring event organizers have accurate data.
-- Role-Based Access: Specific workflows for Volunteers and Participants to ensure everyone finds the right way to help.
+- **Virtual Guest System:** Users can browse and register for events immediately without an account. A unique guest ID is generated locally to track their activity. When a guest eventually signs up or logs in, all their previous event registrations are automatically migrated to their new permanent account — no re-registration needed.
+- **Announcements (Global & Targeted):** Staff can broadcast announcements to all users globally or target only people registered in a specific event. Users receive real-time updates and notices directly in the app.
+- **Waitlist with Auto-Promotion:** When an event reaches capacity, users are automatically placed on a waitlist. If a confirmed participant withdraws, the next person on the waitlist is promoted into the event — no action needed from the user.
+- **LLM-Powered Translation:** All event details created by staff are automatically translated using an LLM (OpenAI API). Users can toggle between English and Chinese to view events in their preferred language, with translation results cached for performance.
 
 ---
 
