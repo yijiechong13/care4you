@@ -17,7 +17,7 @@
 
 **Problem Statement: "How might we reduce friction in activity sign-ups for both individuals and caregivers, while reducing manual effort for staff in managing and consolidating registration data?"**
 
-- 👵 Elderly users often struggle with account creation before taking action
+- 🧩 Participants with intellectual disabilities may face challenges with complex account creation and multi-step registration flows
 - 🧑‍⚕️ Caregivers need fast, low-friction registration without technical barriers
 - 🧑‍💼 Staff face fragmented registration data and time-consuming manual consolidation
 
